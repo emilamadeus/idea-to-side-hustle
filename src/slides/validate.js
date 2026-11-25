@@ -37,7 +37,7 @@ export default {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Idé</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.4)">Sjekk ideen<br>før du <em>bygger</em>.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.4)">Sjekk ideen<br>før du <em>starter</em>.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};

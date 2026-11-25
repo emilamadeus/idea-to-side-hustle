@@ -9,9 +9,9 @@ import gsap from 'gsap';
 */
 
 const GROUPS = [
-  { stage: 'Idé', tips: ['Lag fire versjoner, velg én', 'Gi den et bilde, ikke en liste', 'Beskriv målet, ikke veien'] },
-  { stage: 'Plan', tips: ['Gi hele omfanget før du starter', 'Planlegg bunken i auto mode', 'La AI-en føre en levende spec', 'Del opp instruksjonsfilene'] },
-  { stage: 'Bygg', tips: ['Én økt per oppgave, én hovedøkt', 'Hjelpere til research', 'En vakt hvert 10. minutt', 'Få varsel når den trenger deg'] },
+  { stage: 'Idé', tips: ['Sjekk ideen før du starter', 'Lag fire versjoner, velg én'] },
+  { stage: 'Plan', tips: ['Beskriv målet, ikke veien', 'Gi hele omfanget før du starter', 'Planlegg bunken i auto mode', 'La AI-en føre en levende spec', 'Del opp instruksjonsfilene'] },
+  { stage: 'Bygg', tips: ['Gi den et bilde, ikke en liste', 'Én økt per oppgave, én hovedøkt', 'Hjelpere til research', 'En vakt hvert 10. minutt', 'Få varsel når den trenger deg'] },
   { stage: 'Kvalitet', tips: ['La den sjekke sitt eget arbeid', 'Vis med skjermbilde', 'Ny økt når den lapper symptomer', 'Medium effort er nok'] },
 ];
 
