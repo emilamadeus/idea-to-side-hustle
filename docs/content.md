@@ -258,8 +258,8 @@ Hooks, connectors (MCP), dictation, AI code review, non-developer uses: not in t
 Each stage opens with a divider slide (src/slides/chapter.js); every slide shows the journey in the top-right corner, current stage lit.
 Title: "Fra idé til startup, med AI".
 0. Cold open (src/slides/opening.js): "Jeg ville finne ut om AI kunne bidra til et hobbyprosjekt." The wish (a finish flag in a thought), then 15 projects as progress bars: one over the finish line, fourteen stopping just short. No mention of the game here.
-1. Idé: validate the idea (src/slides/validate.js: a market map, modern/medieval × static/destructible; the empty square is the gap; illustrative market picture) → prototypes
-2. Plan: describe the goal → full scope → batched planning → living spec → instruction files
+1. Idé: validate the idea (src/slides/validate.js: a market map, modern/medieval × static/destructible; the empty square is the gap; illustrative market picture)
+2. Plan: describe the goal → prototypes → full scope → batched planning → living spec → instruction files
 3. Bygg: visual references → parallel sessions → helpers → watchdog → notifications → always working → gateway → I know a guy
 4. Kvalitet: self-check → show, don't describe → where it fails → model and effort
 5. Lansering: live projects → side quest → Claude ↔ ChatGPT loop (Fab) → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells) → this deck is a web page (finale)

@@ -35,8 +35,8 @@ import projects from './projects.js';
 //   full-scope "Alt fungerer." → fails "Fikset!"; helpers ends on the guard → watchdog;
 //   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop.
 const STAGED = [
-  [validate, prototypes],                                               // 1. Idé
-  [goal, fullScope, planning, spec, mdFiles],                           // 2. Plan
+  [validate],                                                           // 1. Idé
+  [goal, prototypes, fullScope, planning, spec, mdFiles],                           // 2. Plan
   [visualRef, kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
   [selfCheck, show, fails, effort],                                     // 4. Kvalitet
   [projects, sideQuest, assetLoop, launch, htmlDeck],                   // 5. Lansering
