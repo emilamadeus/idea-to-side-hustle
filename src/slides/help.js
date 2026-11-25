@@ -139,4 +139,8 @@ export const HELP = {
     'Prisen: alt må bygges selv.',
   ],
   takeaways: [null],
+  opening: [
+    'Det startet med én idé.',
+    'Det ble noe annet enn planlagt. Resten handler om hvordan.',
+  ],
 };

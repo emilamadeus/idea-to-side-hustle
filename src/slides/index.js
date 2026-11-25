@@ -2,6 +2,7 @@
 import { HELP } from './help.js';
 import { chapter } from './chapter.js';
 import takeaways from './takeaways.js';
+import opening from './opening.js';
 import title from './00-title.js';
 import mdFiles from './md-files.js';
 import goal from './goal.js';
@@ -40,6 +41,7 @@ const STAGED = [
 ];
 export const slides = [
   title,
+  opening, // cold open: the idea, and where it ended up
   ...STAGED.flatMap((group, k) => [chapter(k), ...group.map((s) => Object.assign(s, { stage: k }))]),
   takeaways, // closing: every standalone tip on one page
 ];
