@@ -1,54 +1,53 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { figure, LOOK } from '../engine/characters.js';
-import { FILL } from '../engine/props.js';
 
 /*
   Cold open, right after the title: where the journey starts and where it ended up.
-    0. You, and the idea: a game where everything can break.
-    1. What it turned into: a product on Fab, three live sites, and the game, still at 80 %.
+    0. You, and the wish: one hobby project over the finish line (a checkered flag in a thought).
+    1. Fifteen projects later: one is over the line, fourteen stop just short of it.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     you        x 200–420, y 330–760; thought cloud x 380–780, y 180–440
-    outcomes   x 860–1480: Fab card y 200–360, sites card y 390–560, game bar y 600–700
+    projects   x 860–1480: header y 176; 15 bars x 860–1400, y 210–692; finish line x 1400
 */
+
+const BX = 860, FINISH = 1400, BW = FINISH - BX, BY = 210, ROW = 33, BH = 20;
+// how far each unfinished project got: all close, none over
+const NEAR = [0.9, 0.84, 0.94, 0.88, 0.92, 0.86, 0.95, 0.83, 0.9, 0.93, 0.87, 0.91, 0.85, 0.96];
 
 export default {
   id: 'opening',
-  title: 'Jeg ville lage et spill',
+  title: 'Utgangspunktet',
   steps: 2,
   notes: [
-    'Det startet med en idé: et spill der alt kan knuses.',
-    'Det ble noe annet. Et produkt på Fab, tre nettsider. Og spillet? 80 %. Resten av foredraget: hvordan.',
+    'Jeg ville finne ut om AI kunne hjelpe meg å få ett hobbyprosjekt i mål.',
+    '15 prosjekter senere: ett i mål, fjorten nesten. Resten av foredraget: hvordan.',
   ],
 
   create(ctx) {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Utgangspunktet</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.6)">Jeg ville lage<br>et <em>spill</em>.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2);max-width:calc(var(--u)*34)">Jeg ville finne ut om AI kunne bidra til et <em>hobbyprosjekt</em>.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
 
     const reset = () => { svg.innerHTML = ''; P = {}; };
 
-    // a cart breaking along the grain, drawn small
-    function brokenCart(g, x, y, s) {
-      const c = D.g(g, { transform: `translate(${x} ${y}) scale(${s})` });
-      D.el('rect', { x: -70, y: -46, width: 64, height: 12, rx: 2, transform: 'rotate(-14 -38 -40)', ...FILL('#c98f5a', 2) }, c);
-      D.el('rect', { x: 4, y: -50, width: 66, height: 12, rx: 2, transform: 'rotate(12 37 -44)', ...FILL('#c98f5a', 2) }, c);
-      D.el('rect', { x: -70, y: -24, width: 140, height: 12, rx: 2, ...FILL('#c98f5a', 2) }, c);
-      [-40, 40].forEach((wx, k) => {
-        D.el('circle', { cx: wx + (k ? 16 : 0), cy: 4, r: 24, style: 'fill: none; stroke: #fff3e3', 'stroke-width': 5 }, c);
-        D.p(c, `M${wx + (k ? 16 : 0) - 24} 4 H${wx + (k ? 16 : 0) + 24} M${wx + (k ? 16 : 0)} -20 V28`, '', { style: 'fill: none; stroke: #fff3e3', 'stroke-width': 3 });
-      });
-      D.p(c, 'M-10 -64 l6 -14 M8 -66 l-2 -16 M24 -60 l10 -10', '', { style: 'fill: none; stroke: #ffd23f', 'stroke-width': 4, 'stroke-linecap': 'round' });
-      return c;
-    }
-    function card(g, x, y, w, h) {
-      D.el('rect', { x, y, width: w, height: h, rx: 12, style: 'fill: #1a120c; stroke: #6b5a48', 'stroke-width': 2.5, 'data-bg': '' }, g);
+    // a checkered finish flag
+    function flag(g, x, y, s) {
+      const f = D.g(g, { transform: `translate(${x} ${y}) scale(${s})` });
+      D.p(f, 'M0 0 V150', '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 10, 'stroke-linecap': 'round' });
+      D.p(f, 'M0 0 V150', '', { style: 'fill: none; stroke: #cfc3b2', 'stroke-width': 5, 'stroke-linecap': 'round' });
+      const sq = 22;
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) {
+        D.el('rect', { x: 4 + c * sq, y: 4 + r * sq, width: sq, height: sq, style: `fill: ${(r + c) % 2 ? '#1a120c' : '#fff3e3'}` }, f);
+      }
+      D.el('rect', { x: 4, y: 4, width: 5 * sq, height: 3 * sq, style: 'fill: none; stroke: #1a120c', 'stroke-width': 3 }, f);
+      return f;
     }
 
     const play = (i) => {
@@ -59,39 +58,41 @@ export default {
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.you = figure(svg, { x: 300, y: 760 - 252 * 0.9, s: 0.9, pose: 'stand', arms: 'down', ...LOOK.me, mouth: 'smile', eyes: 'open' });
         tl.fromTo(P.you.root, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.3);
-        // the idea, as a thought
+        // the wish: one project over the line
         const cloud = D.g(svg, { 'data-unit': '' });
         D.p(cloud, 'M430 430 C380 430 372 370 420 360 C400 312 452 270 500 290 C512 236 600 226 626 276 C670 246 742 270 730 322 C780 334 780 424 724 430 Z', '', { style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 2.6 });
-        brokenCart(cloud, 575, 360, 0.9);
+        flag(cloud, 530, 290, 0.78);
         [[392, 458, 10], [366, 484, 7]].forEach(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 2 }, cloud));
         tl.fromTo(cloud, { opacity: 0, scale: 0.7, transformOrigin: '0% 100%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.8)' }, 0.9);
         P.cloud = cloud;
       }
 
       if (i === 1) {
-        // what it turned into
-        const fab = D.g(svg, { 'data-unit': '' });
-        card(fab, 860, 190, 620, 170);
-        D.text(fab, 890, 232, 'FAB · ATLADEUS STUDIO', 'fb', { style: 'font: 700 15px var(--font-mono); letter-spacing: .12em; fill: var(--muted)' });
-        D.text(fab, 890, 278, 'Destructible Medieval', 'f1', { style: 'font: 800 30px var(--font-display); fill: var(--fg)' });
-        D.text(fab, 890, 316, 'Cart and Wagon Props', 'f2', { style: 'font: 800 30px var(--font-display); fill: var(--fg)' });
-        const st = D.stamp(D.g(fab, { 'data-unit': '' }), 1350, 300, 'PUBLISERT', { size: 24, rotate: -6 });
-        const sites = D.g(svg, { 'data-unit': '' });
-        card(sites, 860, 390, 620, 170);
-        D.text(sites, 890, 432, 'LIVE', 'sl', { style: 'font: 700 15px var(--font-mono); letter-spacing: .12em; fill: #8fe3a2' });
-        ['home.atladeus.com', 'wish.atladeus.com', 'app.atladeus.com'].forEach((u, k) => D.text(sites, 890, 474 + k * 34, u, 'su', { style: 'font: 700 24px var(--font-mono); fill: var(--fg)' }));
-        const game = D.g(svg, { 'data-unit': '' });
-        D.text(game, 860, 616, 'Spillet', 'gl', { style: 'font: 700 22px var(--font-mono); fill: var(--fg)' });
-        D.el('rect', { x: 860, y: 634, width: 520, height: 28, rx: 7, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 2 }, game);
-        const fill = D.el('rect', { x: 863, y: 637, width: 0, height: 22, rx: 5, style: 'fill: var(--accent)', 'data-bg': '' }, game);
-        D.text(game, 1400, 656, '80 %', 'gp', { style: 'font: 800 24px var(--font-display); fill: var(--fg)' });
-        tl.fromTo(fab, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 0.2);
-        tl.add(D.slam(st.parentNode), 0.8);
-        tl.fromTo(sites, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 1.3);
-        tl.fromTo(game, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 2.0);
-        tl.to(fill, { attr: { width: 514 * 0.8 }, duration: 1.0, ease: 'power2.out' }, 2.3);
-        P.you.expr(tl, { mouth: 'grin', brows: 'raised' }, 3.0);
-        ctx.focus(tl, [fab, sites, game, P.you.root], 0.2);
+        // fifteen projects: one over the line, fourteen just short
+        const g = D.g(svg);
+        D.text(g, BX, 186, '15 PROSJEKTER', 'ph', { style: 'font: 700 16px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+        const line = D.g(g, { 'data-bg': '' });
+        D.p(line, `M${FINISH} 200 V${BY + 14 * ROW + BH + 10}`, '', { style: 'fill: none; stroke: var(--fg)', 'stroke-width': 3, 'stroke-dasharray': '10 8' });
+        D.text(g, FINISH, 186, 'MÅL', 'fl', { 'text-anchor': 'middle', style: 'font: 700 16px var(--font-mono); letter-spacing: .14em; fill: var(--fg)' });
+        tl.fromTo([g.children[0], line, g.children[2]], { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.2);
+        const fills = [];
+        for (let k = 0; k < 15; k++) {
+          const y = BY + k * ROW;
+          const bar = D.g(g, { 'data-bg': '' });
+          D.el('rect', { x: BX, y, width: BW, height: BH, rx: 6, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 2 }, bar);
+          const done = k === 0;
+          const f = D.el('rect', { x: BX + 2, y: y + 2, width: 0, height: BH - 4, rx: 4, style: `fill: ${done ? '#8fe3a2' : '#a8774c'}` }, bar);
+          fills.push([f, done ? 1 : NEAR[k - 1]]);
+          tl.fromTo(bar, { opacity: 0 }, { opacity: 1, duration: 0.25 }, 0.4 + k * 0.05);
+        }
+        // they all slow down just before the line; only one gets there
+        fills.forEach(([f, v], k) => tl.to(f, { attr: { width: (BW - 4) * v }, duration: k === 0 ? 2.2 : 1.8, ease: k === 0 ? 'power1.inOut' : 'expo.out' }, 1.2 + k * 0.04));
+        const check = D.g(g, { 'data-unit': '' });
+        D.el('circle', { cx: FINISH + 40, cy: BY + BH / 2, r: 16, style: 'fill: #8fe3a2; stroke: #1a120c', 'stroke-width': 2.5 }, check);
+        D.p(check, `M${FINISH + 32} ${BY + 10} l6 6 l10 -11`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+        tl.fromTo(check, { opacity: 0, scale: 0.4, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, 3.4);
+        P.you.expr(tl, { mouth: 'grin', brows: 'raised' }, 3.6);
+        ctx.focus(tl, [g, P.you.root], 0.2);
       }
       return tl;
     };

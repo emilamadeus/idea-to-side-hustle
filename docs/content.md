@@ -257,7 +257,7 @@ Hooks, connectors (MCP), dictation, AI code review, non-developer uses: not in t
 ## Story order [agreed: a journey, set in src/slides/index.js]
 Each stage opens with a divider slide (src/slides/chapter.js); every slide shows the journey in the top-right corner, current stage lit.
 Title: "Fra idé til startup, med AI".
-0. Cold open (src/slides/opening.js): "Jeg ville lage et spill." The idea, then what it became: the Fab pack, three live sites, the game at 80 %.
+0. Cold open (src/slides/opening.js): "Jeg ville finne ut om AI kunne bidra til et hobbyprosjekt." The wish (a finish flag in a thought), then 15 projects as progress bars: one over the finish line, fourteen stopping just short. No mention of the game here.
 1. Idé: validate the idea (src/slides/validate.js: a market map, modern/medieval × static/destructible; the empty square is the gap; illustrative market picture) → prototypes → visual references → describe the goal
 2. Plan: full scope → batched planning → living spec → instruction files
 3. Bygg: parallel sessions → helpers → watchdog → notifications → always working → gateway → I know a guy

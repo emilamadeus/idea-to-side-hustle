@@ -154,7 +154,7 @@ export const HELP = {
     'Publisert, og den selger.',
   ],
   opening: [
-    'Det startet med én idé.',
-    'Det ble noe annet enn planlagt. Resten handler om hvordan.',
+    'Det startet med et ønske om å få ett prosjekt i mål.',
+    '15 prosjekter senere er 1 av dem i mål, og 14 nær målstreken.',
   ],
 };
