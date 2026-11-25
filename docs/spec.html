@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Talk Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<!--
+================================================================================
+AGENT INSTRUCTIONS (not rendered; for AI agents maintaining this file)
+================================================================================
+This file is the living spec for the presentation in this repo. Keep it current
+as you work. It is read by the speaker and pasted from into status updates.
+
+HOW TO UPDATE
+- Edit ONLY the JSON inside <script id="spec-data">. Never hand-edit rendered markup.
+- Task fields:
+    id         stable, never reuse (F = foundation, C = content, A = assets,
+               S = slides, R = rehearsal). New ids continue the sequence.
+    title      short noun phrase.
+    group      one of the ids in "groups".
+    status     "done" | "active" | "todo" | "blocked"
+               "todo" with unfinished deps is shown as Waiting automatically.
+               Use "blocked" only for blockers outside the dependency graph
+               (a decision, material from the speaker, hardware access).
+    blocked    required when status is "blocked": who/what it waits for, concretely.
+    owner      "Claude" | "Speaker" | "Both"
+    deps       ids that must be done first.
+    summary    one sentence, shown collapsed.
+    details    HTML, shown when expanded. Facts, decisions, acceptance criteria.
+    next       the single next action. Keep it current.
+    agent      notes for agents only. Not rendered. Put implementation hints,
+               file paths and traps here.
+    updated    ISO date of last change to this task.
+- Mark "done" only after verifying in the browser, not after writing code.
+- Add one entry to "log" per working session: date + what changed, plain words.
+- Update "project.updated" on every edit.
+- Writing rules from CLAUDE.md apply here too: plain, specific, no filler.
+- Content source of truth is docs/content.md. This file tracks work, not wording.
+================================================================================
+-->
+
+<script type="application/json" id="spec-data">
+{
+  "project": {
+    "name": "Fra idé til startup, med AI",
+    "subtitle": "Live talk, 20–45 min, 10–20 people. Title not final.",
+    "deadline": "2026-12-10",
+    "updated": "2026-11-25"
+  },
+  "groups": [
+    { "id": "F", "name": "Foundation" },
+    { "id": "C", "name": "Content" },
+    { "id": "A", "name": "Material from speaker" },
+    { "id": "S", "name": "Slides" },
+    { "id": "R", "name": "Rehearsal" }
+  ],
+  "tasks": [
+    {
+      "id": "F1", "title": "3D stage and particle engine", "group": "F", "status": "done", "owner": "Claude", "deps": [],
+      "summary": "Persistent three.js world with a shared particle field that morphs between shapes.",
+      "details": "<p>26k particles, bloom, dithered finish pass against AirPlay banding. Shapes: text, nebula, sphere, grid, house, ring, edges, combine.</p>",
+      "next": "",
+      "agent": "src/engine/stage.js, particles.js, shapes.js. morphTo() snapshots mid-flight positions, so morphs can interrupt each other safely.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "F2", "title": "Navigation and build steps", "group": "F", "status": "done", "owner": "Claude", "deps": ["F1"],
+      "summary": "Keys, clicker, steps per slide, overview, blackout, URL keeps position.",
+      "details": "<p>→ / Space / PageDown next, ← / PageUp back, digits + Enter jump, O overview, B blackout, F fullscreen, H hide progress.</p>",
+      "next": "",
+      "agent": "src/engine/deck.js. enter({step}) must render cumulative state for that step.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "F3", "title": "Presenter console", "group": "F", "status": "done", "owner": "Claude", "deps": ["F2"],
+      "summary": "Laptop view with now/next previews, per-step notes, timer; drives the TV window.",
+      "details": "<p>Press P in the audience window. Syncs over BroadcastChannel. Timer starts on the first advance.</p>",
+      "next": "",
+      "agent": "src/presenter/. Previews are iframes with ?view=preview, driven by hash.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "F4", "title": "Visual identity", "group": "F", "status": "done", "owner": "Both", "deps": [],
+      "summary": "Standalone look for this talk: palette, type, motion language, how humor shows up visually.",
+      "details": "<p>Chosen: <b>Arbeidstegning</b>. Arkade colours on an architect's working drawing: warm grid, crop marks, title block per slide, pencil notes. Bricolage Grotesque + Space Mono + Caveat.</p>",
+      "next": "",
+      "agent": "src/theme.js. Other directions deleted. Specimen slide src/slides/02-specimen.js is scaffold; delete once real slides exist.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "F5", "title": "Norwegian characters in particle text", "group": "F", "status": "done", "owner": "Claude", "deps": ["F4"],
+      "summary": "Check æ, ø, å render and sample correctly in particle text with the chosen font.",
+      "details": "<p>Acceptance: \"Arbeidsflyt på større oppgaver\" reads cleanly as particles at TV distance.</p>",
+      "next": "",
+      "agent": "shapes.text() renders to a 2D canvas, then samples alpha. Make sure the font is loaded before sampling (deck.js FONTS list).",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "F6", "title": "Audience phone participation", "group": "F", "status": "todo", "owner": "Claude", "deps": ["C5"],
+      "summary": "QR join, phones send answers, answers appear in the scene in real time.",
+      "details": "<p>Needs a small realtime backend reachable from phones over the internet. Must degrade gracefully if the network fails on the day.</p>",
+      "next": "Pick a hosting approach once placement is agreed.",
+      "agent": "Keep the phone page tiny and fast. Rate-limit and sanitise input: it is shown on a 100\" screen in front of colleagues.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "F7", "title": "Offline-safe build", "group": "F", "status": "todo", "owner": "Claude", "deps": ["F4"],
+      "summary": "A built version that runs without the dev server and with fonts bundled.",
+      "details": "<p>Fallback if Wi-Fi fails: everything except phone participation and live sites works offline.</p>",
+      "next": "",
+      "agent": "Self-host fonts in the build. vite build with base './'.",
+      "updated": "2026-11-25"
+    },
+
+    {
+      "id": "C1", "title": "Content captured", "group": "C", "status": "done", "owner": "Both", "deps": [],
+      "summary": "Speaker's points recorded with a proposed visual for each.",
+      "details": "<p>See docs/content.md.</p>",
+      "next": "",
+      "agent": "",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "C2", "title": "MD instruction files framing", "group": "C", "status": "done", "owner": "Speaker", "deps": ["C1"],
+      "summary": "What 0, 1 and several instruction files change, and which files the speaker uses.",
+      "details": "<p>Speaker's set: CLAUDE.md, AGENTS.md, nested CLAUDE.md, ARCHITECTURE, STATUS, HANDOFF, SPEC, DECISIONS, GOTCHAS, TESTING. Framing in content.md.</p>",
+      "next": "",
+      "agent": "",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "C3", "title": "Story order", "group": "C", "status": "done", "owner": "Both", "deps": ["C1"],
+      "summary": "Order of chapters, where side tracks to personal projects go, and the pacing for 20–45 min.",
+      "details": "<p>Needs a natural place for each personal project and a strong close.</p>",
+      "next": "Journey order set in src/slides/index.js: Idé, Plan, Bygg, Kvalitet, Lansering.",
+      "agent": "",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "C4", "title": "Title", "group": "C", "status": "active", "owner": "Speaker", "deps": ["C3"],
+      "blocked": "Speaker decides. Claude can propose options once the story order exists.",
+      "summary": "Final title of the talk.",
+      "details": "",
+      "next": "Title chosen: Fra idé til startup, med AI. Subtitle not decided.",
+      "agent": "Norwegian. No slogans. Title slide currently uses a placeholder.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "C5", "title": "Phone poll placement", "group": "C", "status": "active", "owner": "Both", "deps": ["C3"],
+      "summary": "Where audience phones add something real, not decoration.",
+      "details": "<p>Proposed: \"How many unfinished side projects do you have?\" during the recursive side-quest story. Possibly a vote on which personal project to open live.</p>",
+      "next": "Agree on 1–2 moments.",
+      "agent": "",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "C6", "title": "Open content questions", "group": "C", "status": "done", "owner": "Speaker", "deps": [],
+      "summary": "Gaps marked [open] in content.md.",
+      "details": "<ul><li>Goal vs implementation: no single anecdote, applies to anything beyond single-file edits</li><li>Lead session tracks which sessions are working, waiting or done</li><li>Watchdog: started by plain request, recurring loop</li><li>Asset pipeline: Atladeus Studio</li><li>Unreal game: about 80% done</li></ul>",
+      "next": "",
+      "agent": "",
+      "updated": "2026-11-25"
+    },
+
+    {
+      "id": "A1", "title": "Captures of atladeus sites", "group": "A", "status": "todo", "owner": "Both", "deps": [],
+      "summary": "Screenshots and short recordings of home, wish and app.atladeus.com.",
+      "details": "<p>home: floor plan to walkable 3D home with technical details, furniture, materials. wish: Christmas wish list for own wishes and planned gifts. app: 3D smart home built from a floor plan, controls the real home through integrated third-party products.</p><p>Live sites are also shown during the talk. Captures are the fallback and the material for transitions.</p>",
+      "next": "Claude captures what it can from the public sites; speaker adds logged-in views.",
+      "agent": "Store in public/media/atladeus/. Keep recordings short and loopable.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "A2", "title": "Unreal game material", "group": "A", "status": "blocked", "owner": "Speaker", "deps": [],
+      "blocked": "Speaker will send footage/screenshots later. Name not needed; game is not deployed.",
+      "summary": "Footage for the side-quest story and the projects section.",
+      "details": "<p>Game is about 80% done. Proposed running gag: a progress bar stuck at 80%.</p>", "next": "", "agent": "", "updated": "2026-11-25"
+    },
+    {
+      "id": "A3", "title": "3D asset pipeline material", "group": "A", "status": "active", "owner": "Both", "deps": [],
+      "summary": "Atladeus Studio: medieval batch concepts and resulting assets, plus the shared file between Claude and ChatGPT.",
+      "details": "<p>Published: <a href=\"https://www.fab.com/listings/ef989a0e-8cc4-4d27-8b2e-fcc50f9b08fc\" target=\"_blank\">Destructible Medieval Cart and Wagon Props</a> on Fab. 24 props, 1,693 fracture pieces, 20 PBR texture sets.</p><p>Still needed from speaker: ChatGPT concept images for the batch, and an example of the shared queue file (can be trimmed).</p>",
+      "next": "Speaker sends concept images. Queue file: illustrative example written (docs/examples/asset-queue.md). Claude pulls listing media.",
+      "agent": "Listing images are public; store copies in public/media/atladeus-studio/. Don't hotlink in the talk.",
+      "updated": "2026-11-25"
+    },
+    {
+      "id": "A4", "title": "Work examples", "group": "A", "status": "done", "owner": "Speaker", "deps": [],
+      "summary": "Camera/DVR work only (support tool dropped).",
+      "details": "<p>Facts from the camera session in content.md. No metrics: the example carries the point.</p>",
+      "next": "", "agent": "", "updated": "2026-11-25"
+    },
+    {
+      "id": "A6", "title": "Gateway tracking material", "group": "A", "status": "done", "owner": "Speaker", "deps": [],
+      "summary": "Example of AI tracking the upstream gateway team's builds.",
+      "details": "<p>Illustrative only. Increasing build numbers; each adds camera features (privacy mode, snapshots, recordings, motion); some builds have nothing camera-related.</p>", "next": "", "agent": "", "updated": "2026-11-25"
+    },
+    {
+      "id": "A5", "title": "Concept → result pairs", "group": "A", "status": "blocked", "owner": "Speaker", "deps": [],
+      "blocked": "Speaker to provide ChatGPT reference images next to what was built from them.",
+      "summary": "Proof for the visual-references point.",
+      "details": "", "next": "", "agent": "", "updated": "2026-11-25"
+    },
+
+    {
+      "id": "S1", "title": "Slide: title", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "F5", "C4"],
+      "summary": "Particle title assembly.",
+      "details": "<p>Works with a placeholder title and look.</p>",
+      "next": "Restyle when F4 lands; swap title when C4 is decided.",
+      "agent": "src/slides/00-title.js",
+      "updated": "2026-11-25"
+    },
+    { "id": "S2", "title": "Slide: MD instruction files", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "C2"], "summary": "One case at a time: 0 files, 1 file, several files, with a case list on the left.", "details": "", "next": "Split into one case at a time; waiting for speaker feedback.", "agent": "src/slides/md-files.js", "updated": "2026-11-25" },
+    { "id": "S3", "title": "Slide: goal, not implementation", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "C6"], "summary": "Attempt 1 dictates the route into road works; attempt 2 (new session) gives the destination and finds a hidden road.", "details": "", "next": "Attempts separated; waiting for speaker feedback.", "agent": "src/slides/goal.js", "updated": "2026-11-25" },
+    { "id": "S4", "title": "Slide: visual references", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "A5"], "summary": "Attempt 1 builds a checklist literally; attempt 2 (new session) attaches a reference image.", "details": "", "next": "Attempts separated; waiting for speaker feedback.", "agent": "src/slides/visual-ref.js", "updated": "2026-11-25" },
+    { "id": "S5", "title": "Slide: full scope first", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "House built room by room grows patches; rebuilt from a blueprint.", "details": "", "next": "Built as a direction check; waiting for speaker feedback.", "agent": "src/slides/full-scope.js. Uses src/engine/draw.js (stepper, drawOn, pencil, stamp).", "updated": "2026-11-25" },
+    { "id": "S6", "title": "Slide: living spec file", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "This spec, shown live. Copy a task's status into a chat message.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/spec.js", "updated": "2026-11-25" },
+    { "id": "S7", "title": "Slide: parallel sessions + lead", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "C6"], "summary": "Kitchen: one cook drowns in tickets; a brigade with a head chef board (cooking, waiting for you, done) serves in parallel.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/kitchen.js. Shared kitchen kit in src/engine/kitchen.js.", "updated": "2026-11-25" },
+    { "id": "S22", "title": "Slide: lead session first, helpers rarely", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Kitchen: head chef cooks, a runner helps with planning; a runner given a dish finishes and never reports back.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/helpers.js. Shared kitchen kit in src/engine/kitchen.js.", "updated": "2026-11-25" },
+    { "id": "S8", "title": "Slide: Claude ↔ ChatGPT shared-file loop", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "A3"], "summary": "Requests one way, images back, looping until done.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/asset-loop.js", "updated": "2026-11-25" },
+    { "id": "S9", "title": "Slide: watchdog", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "C6"], "summary": "Night shift in the same kitchen: guard rounds catch a mutual wait, a sleeper, a memory-full session (handoff) and a helper holding a finished plate.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/watchdog.js. Shared kitchen kit in src/engine/kitchen.js.", "updated": "2026-11-25" },
+    { "id": "S10", "title": "Slide: \"I know a guy\"", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Knowledge map lit up by personal projects.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/know-a-guy.js", "updated": "2026-11-25" },
+    { "id": "S11", "title": "Slide: the recursive side quest", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "A2", "F6"], "summary": "Spilling Gantt: pipelines block and print orders, chain unwinds, developer burns out, ends on which-pipeline-now. Phone poll.", "details": "", "next": "Built as a direction check; waiting for speaker feedback.", "agent": "src/slides/side-quest.js. Uses src/engine/draw.js (stepper, drawOn, pencil, stamp).", "updated": "2026-11-25" },
+    { "id": "S12", "title": "Slides: personal projects", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "A1", "C3"], "summary": "home, wish, app.atladeus.com, with live site moments.", "details": "", "next": "Built; app.atladeus.com refuses iframes (frame-ancestors none), so it shows an open-in-new-tab button. Waiting for speaker feedback.", "agent": "src/slides/projects.js", "updated": "2026-11-25" },
+    { "id": "S13", "title": "Slides: work examples", "group": "S", "status": "done", "owner": "Claude", "deps": ["F4", "A4"], "summary": "Camera service: settings to recording rules via gateway/DVR; four repos in sync; spec vs hardware.", "details": "", "next": "Cut: it explained the product, not the AI work. Its AI point (design asked for exclusion zones; the AI checked the gateway code: they do not exist) is now step 5 of S18.", "agent": "Merged into src/slides/gateway.js (step 5).", "updated": "2026-11-25" },
+    { "id": "S14", "title": "Slide: this deck is a web page", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "S6"], "summary": "Camera pulls back to reveal the browser; HTML vs PowerPoint.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/html-deck.js", "updated": "2026-11-25" },
+
+    { "id": "S15", "title": "Slide: AI verifies its own work", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Two loops: you check every attempt vs. the AI checks and you see the result once.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/self-check.js", "updated": "2026-11-25" },
+    { "id": "S16", "title": "Slide: batched planning", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Drawing set drafted first, built in one pass. Auto mode + 'you are only planning'.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/planning.js", "updated": "2026-11-25" },
+    { "id": "S17", "title": "Slide: show, don't describe", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Screenshot into a fresh agent, issue-prompts out.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/show.js", "updated": "2026-11-25" },
+    { "id": "S18", "title": "Slide: tracking the gateway team", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4", "A6"], "summary": "Departure board of gateway builds; the AI says what can be built now and which changelogs to skip. Last step: the design asked for exclusion zones, the AI checked the gateway code first and found they do not exist.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/gateway.js", "updated": "2026-11-25" },
+    { "id": "S19", "title": "Slide: throwaway prototypes", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "This deck's four identity directions, morphing into the chosen one.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/prototypes.js", "updated": "2026-11-25" },
+    { "id": "S20", "title": "Slide: where it fails", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Confident wrong answers; patching symptoms instead of the cause.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/fails.js", "updated": "2026-11-25" },
+    { "id": "S21", "title": "Slide: model and effort", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Opus 5.5 medium as default; higher effort overbuilds a solution that was already done.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/effort.js", "updated": "2026-11-25" },
+
+    { "id": "S23", "title": "Slide: remote sessions and notifications", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Production line waits at a red gate until a phone tap; laptop closes and the line moves to the cloud.", "details": "", "next": "Built; waiting for speaker feedback.", "agent": "src/slides/remote.js", "updated": "2026-11-25" },
+    { "id": "S24", "title": "Slide: always working (humor)", "group": "S", "status": "active", "owner": "Claude", "deps": ["F4"], "summary": "Notifications at meetings, lunch, dinner, 03:12 and Christmas Eve; a calendar filled with 'jobb (litt)'.", "details": "", "next": "Built as a direction check; waiting for speaker feedback.", "agent": "src/slides/always-working.js. Uses src/engine/draw.js (stepper, drawOn, pencil, stamp).", "updated": "2026-11-25" },
+
+    { "id": "R1", "title": "Venue test on the TV", "group": "R", "status": "todo", "owner": "Speaker", "deps": ["F4"], "summary": "AirPlay extended display, Game mode, check density and text size from the back row.", "details": "<p>Do this early: findings change particle density and type sizes everywhere.</p>", "next": "", "agent": "", "updated": "2026-11-25" },
+    { "id": "R2", "title": "Full run-through", "group": "R", "status": "todo", "owner": "Speaker", "deps": ["S1","S2","S3","S4","S5","S6","S7","S8","S9","S10","S11","S12","S13","S14","S15","S16","S17","S18","S19","S20","S21","S22","S23","S24","F7"], "summary": "Timed run with presenter console and notes.", "details": "", "next": "", "agent": "", "updated": "2026-11-25" }
+  ],
+  "log": [
+    { "date": "2026-11-25", "text": "Title set to Fra idé til startup, med AI (title slide, page title, prototype cards). Talk reordered as a journey: Idé (prototypes, visual references, goal), Plan (full scope, planning, spec, instruction files), Bygg (kitchen, helpers, watchdog, notifications, always working, gateway), Kvalitet (self-check, show, fails, effort), Lansering (know a guy, projects, side quest, asset loop, web page finale)." },
+    { "date": "2026-11-25", "text": "Instruction files reworked as app flow: no walking or walls. 1 file: Claude reads one long CLAUDE.md (sections, token bar) and an outdated line decides; corrected in the chat. Stale STATUS (3 days): Claude starts on finished login and answers Du har helt rett; fix: update STATUS when a task is done. Taller chat phone, case list moved down. All three audits clean." },
+    { "date": "2026-11-25", "text": "Motion pass: new deck.auditMotion() finds things that travel across other things mid-animation. Fixed: instruction files (tally, label, walker behind the scroll, sessions fade in place), planning (blocks leave sideways, rebuild one at a time, final build drops in), kitchen and helpers (tickets lift and drop instead of flying through the rail), night guard and corridor delivery (cuts instead of walking through cooks), prototypes (cards leave before the next arrives, crumple in place), deck-in-itself (window waits for the old slide to go). All three audits clean apart from two deliberate contacts." },
+    { "date": "2026-11-25", "text": "Premium review: side-quest developer redrawn with the character kit (moods as expressions); instruction-file sessions stand on the floor instead of the desk; notification line lifts the gate with it into the cloud; the four identity prototypes now each have a distinctive mini slide (moon sky, huge 80, blueprint house with red correction, working-drawing sheet). Both audits clean." },
+    { "date": "2026-11-25", "text": "Bubbles restyled: speech bubbles are warm paper with a seamless tail, soft shadow and display type (shared by all slides); chat bubbles are messenger shapes without the orange border. New deck.auditMid() samples every step mid-animation for bubbles covering faces; fixed the dinner pop-up, the memory meter and the new sessions walking through the cabinet." },
+    { "date": "2026-11-25", "text": "Camera slide cut (it explained the product, not the AI). Its AI point moved to the gateway slide as a fifth step: design card, question in the chat, AI checks the gateway code, FINNES IKKE stamp." },
+    { "date": "2026-11-25", "text": "Outline pass: filled objects and characters now use a dark ink outline (inkFor in draw.js; very dark fills get a soft warm edge) across the deck instead of the cream outline. Visual reference: one zoom line from the attachment to the photo." },
+    { "date": "2026-11-25", "text": "Visual references reworked: attempt 1 is now a believable but cheap knock-off of the house you had in mind (thought cloud), compared against a dashed outline of the target; attempt 2 fills the outline." },
+    { "date": "2026-11-25", "text": "Focus added to the remaining slides where it helps (full scope patches, side-quest active row via ctx.dim, helpers, watchdog rounds, Fikset!, effort, gateway, camera privacy, notifications, visual references, show). Left without: title, always working (one scene per step), self-check, prototypes, live sites and the deck-in-itself (iframes). Audit clean." },
+    { "date": "2026-11-25", "text": "Visual hierarchy: focus helper dims everything but the step's subject (used on instruction files, goal, spec, kitchen, planning, asset loop, know-a-guy); tip shrinks after step 1; older chat messages fade; help line appears when the step animation ends; title block quieter. Audit now also flags partly overlapping units; fixed the meeting chart and Christmas bubble. Audit clean." },
+    { "date": "2026-11-25", "text": "Step progress indicator: STEG dots in the title block (current dot fills with the step animation, pulses when done) and a progress bar with KLAR in the presenter console, sent over the sync channel." },
+    { "date": "2026-11-25", "text": "Help line added to every build step (src/slides/help.js, rendered by the deck). Token meters added: per-case token bars in the instruction files list (0 files 24k, 1 file 46k, several 7k), and meters on full scope, planning, where it fails and effort. Audit clean." },
+    { "date": "2026-11-25", "text": "Premium pass on illustrations: asset loop enlarged (bigger workers, painting stays on the easel, finished models collect on a wall shelf); notifications slide gets a café window that turns to night and a build machine on the line; goal map route, cars and turn numbers bolder; 0-files case gets a big FORKLART tally. Audit clean." },
+    { "date": "2026-11-25", "text": "First story order set (C3): groundwork, asking well, many sessions, trust but check, from work, side projects, this deck. Callbacks kept in order: helpers → watchdog → always-working (03:12), full scope → fails (Fikset!), side quest → asset loop (80 %)." },
+    { "date": "2026-11-25", "text": "All remaining slides built (S6, S8, S10, S12–S21, S23): living spec with x-ray and live spec reveal, Claude↔ChatGPT asset loop, fog-of-war map, self-check ping-pong, batched planning, show-don't-describe, Fikset! lamp story, gateway departure board, four identity prototypes, effort dial bridge, café/production line notifications, deck-inside-itself, live project sites, camera service. Shared LOOK cast added. Review pass: tips shortened to clear the scene, iframes layered above drawings, knowledge lines on the map, train/stamp overlaps fixed. Full audit clean; production build passes." },
+    { "date": "2026-11-25", "text": "Batch 2: kitchen (S7), helpers (S22) and watchdog (S9) built on a shared kitchen kit. Instruction files now show one case at a time; goal, visual references and full scope show two separate attempts with a FORSØK badge (new session for attempt 2)." },
+    { "date": "2026-11-25", "text": "All prompts now shown as phone conversations (chatPhone): visual references, goal, MD files, full scope (REV messages). Results appear after a thinking animation. Audit respects scrolled-out chat messages." },
+    { "date": "2026-11-25", "text": "Batch 1 of remaining slides built: MD files (three workers, 0/1/10 files, stale-STATUS twist), goal vs route (map, roundabout, road works, bridge), visual references (literal checklist house vs reference). Shared props module added; audit now honours nested units." },
+    { "date": "2026-11-25", "text": "Humor pass: meeting phone reveal, lunch irony, dinner twist (she asks Claude), night alarm and cans, FERIE flip, fourth pipeline, REV 1 cracks the house. Pencil notes removed. Character kit added." },
+    { "date": "2026-11-25", "text": "Side quest rebuilt: blocking bars print order slips, chain unwinds, burnout portrait, which-pipeline-now ending. Layout audit (deck.audit) added; all slides pass." },
+    { "date": "2026-11-25", "text": "First three slides built as a direction check: full scope (drawing to 3D), side quest (spilling Gantt with factory and swatch avalanche), always working (clock, scenes, phone). Drafting toolkit src/engine/draw.js added." },
+    { "date": "2026-11-25", "text": "Added remote sessions/notifications (S23) and always-working humor (S24)." },
+    { "date": "2026-11-25", "text": "Dropped metrics entirely: tips + memorable illustrated examples, humor, concise. A4 done." },
+    { "date": "2026-11-25", "text": "Project descriptions, illustrative queue file and failure story recorded. Camera work facts collected from the camera session; support tool dropped." },
+    { "date": "2026-11-25", "text": "Added lead-vs-helpers point (S22), usage/speed beat for MD files, helper check for the watchdog." },
+    { "date": "2026-11-25", "text": "Every point now has an animated storyboard in content.md (rule added to CLAUDE.md). Gateway example set to illustrative builds (A6 done)." },
+    { "date": "2026-11-25", "text": "Speaker picked everyday-practice topics; added S15–S21 and A6. Slide building on hold until all content is collected." },
+    { "date": "2026-11-25", "text": "Arbeidstegning locked in; other directions removed. Æ/ø/å verified in particle text. Fixed particle shapes overflowing the frame on non-16:9 windows." },
+    { "date": "2026-11-25", "text": "Added Arbeidstegning direction (Arkade + blueprint: warm grid, crop marks, title block). Fixed washed-out backgrounds in all directions (double colour conversion of the clear colour)." },
+    { "date": "2026-11-25", "text": "Theme system added. Three identity directions built and compared on docs/identity.html; F4 waits on the speaker's pick. Norwegian specimen slide added." },
+    { "date": "2026-11-25", "text": "Speaker answered MD file set and open content questions (C2, C6 done). Atladeus Studio Fab listing found; A3 in progress." },
+    { "date": "2026-11-25", "text": "Engine, navigation and presenter console built and verified. Content captured in docs/content.md. Spec created." }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: #f6f6f3; --panel: #ffffff; --fg: #15171c; --muted: #6a6f7d; --line: #e4e4de;
+    --done: #1f9d63; --active: #2d6cdf; --todo: #8a8f9c; --blocked: #d4482c; --wait: #b7860b;
+    --chip: #efefea; --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 16px rgba(0,0,0,.04);
+    --mono: 'JetBrains Mono', ui-monospace, monospace;
+    --sans: 'Inter Tight', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0c0e13; --panel: #13161d; --fg: #e9ecf3; --muted: #8b92a5; --line: #222632;
+      --done: #3ccf8e; --active: #5b9bff; --todo: #7c8396; --blocked: #ff6b4a; --wait: #f0b93a;
+      --chip: #1b1f29; --shadow: none;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0c0e13; --panel: #13161d; --fg: #e9ecf3; --muted: #8b92a5; --line: #222632;
+    --done: #3ccf8e; --active: #5b9bff; --todo: #7c8396; --blocked: #ff6b4a; --wait: #f0b93a;
+    --chip: #1b1f29; --shadow: none;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--fg); font: 15px/1.45 var(--sans); -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+
+  header { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; margin-bottom: 28px; }
+  h1 { font-size: 34px; font-weight: 700; letter-spacing: -.025em; line-height: 1.05; }
+  .sub { color: var(--muted); margin-top: 6px; }
+  .meta { text-align: right; font: 13px var(--mono); color: var(--muted); }
+  .meta b { display: block; font: 700 30px var(--sans); color: var(--fg); letter-spacing: -.02em; }
+
+  .bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: var(--chip); margin-bottom: 10px; }
+  .bar i { display: block; height: 100%; transition: width .6s; }
+  .counts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 26px; }
+  .counts button {
+    all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: 99px; background: var(--chip); font-size: 13px; color: var(--muted);
+  }
+  .counts button b { color: var(--fg); font-weight: 600; }
+  .counts button.on { background: var(--fg); color: var(--bg); }
+  .counts button.on b { color: var(--bg); }
+
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+  .toolbar input {
+    flex: 1; min-width: 200px; padding: 9px 14px; border-radius: 10px; border: 1px solid var(--line);
+    background: var(--panel); color: var(--fg); font: inherit;
+  }
+  .seg { display: inline-flex; background: var(--chip); border-radius: 10px; padding: 3px; }
+  .seg button, .tbtn {
+    all: unset; cursor: pointer; padding: 6px 12px; border-radius: 8px; font-size: 13px; color: var(--muted);
+  }
+  .seg button.on { background: var(--panel); color: var(--fg); box-shadow: var(--shadow); }
+  .tbtn:hover { color: var(--fg); }
+
+  .group { margin-top: 26px; }
+  .group h2 { font: 500 12px var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin-bottom: 10px; display: flex; gap: 10px; }
+  .group h2 span { color: var(--fg); }
+
+  .task { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; box-shadow: var(--shadow); transition: border-color .2s; }
+  .task.flash { border-color: var(--active); }
+  .row { display: grid; grid-template-columns: 22px 52px 1fr auto auto; gap: 12px; align-items: center; padding: 12px 14px; cursor: pointer; }
+  .chev { color: var(--muted); transition: transform .2s; font-size: 12px; text-align: center; }
+  .task.open .chev { transform: rotate(90deg); }
+  .id { font: 500 12px var(--mono); color: var(--muted); }
+  .ttl { font-weight: 600; min-width: 0; }
+  .ttl small { display: block; font-weight: 400; color: var(--muted); font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pill { font: 500 11.5px var(--mono); padding: 3px 9px; border-radius: 99px; white-space: nowrap; display: inline-flex; gap: 6px; align-items: center; }
+  .pill::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .s-done { color: var(--done); background: color-mix(in srgb, var(--done) 12%, transparent); }
+  .s-active { color: var(--active); background: color-mix(in srgb, var(--active) 12%, transparent); }
+  .s-todo, .s-ready { color: var(--todo); background: color-mix(in srgb, var(--todo) 12%, transparent); }
+  .s-blocked { color: var(--blocked); background: color-mix(in srgb, var(--blocked) 12%, transparent); }
+  .s-waiting { color: var(--wait); background: color-mix(in srgb, var(--wait) 12%, transparent); }
+  .copy {
+    all: unset; cursor: pointer; font: 500 12px var(--mono); color: var(--muted);
+    padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line);
+  }
+  .copy:hover { color: var(--fg); border-color: var(--muted); }
+  .copy.ok { color: var(--done); border-color: var(--done); }
+
+  .body { display: none; padding: 0 16px 16px 100px; }
+  .task.open .body { display: block; }
+  .reason { border-left: 3px solid var(--blocked); padding: 6px 12px; margin-bottom: 12px; background: color-mix(in srgb, var(--blocked) 7%, transparent); border-radius: 0 8px 8px 0; }
+  .reason.wait { border-color: var(--wait); background: color-mix(in srgb, var(--wait) 7%, transparent); }
+  .details { color: var(--fg); }
+  .details p, .details ul { margin-bottom: 8px; }
+  .details ul { padding-left: 18px; }
+  .kv { display: grid; grid-template-columns: 90px 1fr; gap: 6px 12px; margin-top: 10px; font-size: 13.5px; }
+  .kv dt { color: var(--muted); font: 12px var(--mono); padding-top: 2px; }
+  .dep { all: unset; cursor: pointer; display: inline-flex; gap: 6px; align-items: center; font: 12px var(--mono); padding: 2px 8px; border-radius: 6px; background: var(--chip); margin: 0 4px 4px 0; }
+  .dep:hover { outline: 1px solid var(--muted); }
+  .dep i { width: 7px; height: 7px; border-radius: 50%; }
+
+  #graph { display: none; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  body.view-graph #graph { display: block; }
+  body.view-graph #list { display: none; }
+  #graph svg { display: block; }
+  #graph .node { cursor: pointer; }
+  #graph .node rect { fill: var(--panel); stroke-width: 1.5; }
+  #graph .node:hover rect { stroke-width: 2.5; }
+  #graph .node text { fill: var(--fg); font: 12px var(--sans); }
+  #graph .node text.nid { fill: var(--muted); font: 10.5px var(--mono); }
+  #graph path { fill: none; stroke: var(--line); stroke-width: 1.5; }
+  #graph path.hot { stroke: var(--muted); }
+  #graph .col { fill: var(--muted); font: 10.5px var(--mono); letter-spacing: .1em; }
+
+  .log { margin-top: 40px; }
+  .log li { list-style: none; display: grid; grid-template-columns: 100px 1fr; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+  .log time { font: 12px var(--mono); color: var(--muted); padding-top: 2px; }
+  .empty { color: var(--muted); padding: 20px; text-align: center; }
+
+  @media (max-width: 640px) {
+    header { grid-template-columns: 1fr; }
+    .meta { text-align: left; }
+    .row { grid-template-columns: 16px 1fr auto; }
+    .row .id, .row .copy { display: none; }
+    .body { padding: 0 14px 14px 14px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1 id="name"></h1><div class="sub" id="subtitle"></div></div>
+    <div class="meta"><b id="days"></b><span id="deadline"></span><br /><span id="updated"></span></div>
+  </header>
+
+  <div class="bar" id="bar"></div>
+  <div class="counts" id="counts"></div>
+
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="Filter tasks" />
+    <div class="seg" id="view">
+      <button data-v="list" class="on">List</button>
+      <button data-v="graph">Dependencies</button>
+    </div>
+    <button class="tbtn" id="expand">Expand all</button>
+    <button class="tbtn" id="copyall">Copy summary</button>
+  </div>
+
+  <div id="list"></div>
+  <div id="graph"></div>
+
+  <section class="log"><div class="group"><h2>Log</h2></div><ul id="log"></ul></section>
+</div>
+
+<script>
+(() => {
+  const data = JSON.parse(document.getElementById('spec-data').textContent);
+  const { project, groups, tasks, log } = data;
+  const byId = Object.fromEntries(tasks.map((t) => [t.id, t]));
+  const LABEL = { done: 'Done', active: 'In progress', todo: 'To do', ready: 'Ready', blocked: 'Blocked', waiting: 'Waiting' };
+  const COLOR = { done: '--done', active: '--active', todo: '--todo', ready: '--todo', blocked: '--blocked', waiting: '--wait' };
+  const store = {
+    get(k, d) { try { return JSON.parse(localStorage.getItem('spec:' + k)) ?? d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem('spec:' + k, JSON.stringify(v)); } catch {} },
+  };
+
+  // Effective status: todo with unfinished deps -> waiting; todo with all deps done -> ready.
+  const openDeps = (t) => (t.deps || []).filter((d) => byId[d] && byId[d].status !== 'done');
+  const eff = (t) => {
+    if (t.status !== 'todo') return t.status;
+    return openDeps(t).length ? 'waiting' : 'ready';
+  };
+  const dependents = (id) => tasks.filter((t) => (t.deps || []).includes(id));
+
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const strip = (html) => { const d = document.createElement('div'); d.innerHTML = html || ''; return d.innerText.trim(); };
+
+  // ---------- header ----------
+  document.getElementById('name').textContent = project.name;
+  document.getElementById('subtitle').textContent = project.subtitle;
+  const dl = new Date(project.deadline + 'T09:00:00');
+  const days = Math.ceil((dl - new Date()) / 864e5);
+  document.getElementById('days').textContent = days > 0 ? `${days} days` : days === 0 ? 'Today' : 'Past';
+  document.getElementById('deadline').textContent = 'to ' + dl.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  document.getElementById('updated').textContent = 'updated ' + project.updated;
+
+  // ---------- counts + bar ----------
+  const order = ['done', 'active', 'ready', 'waiting', 'blocked'];
+  const counts = Object.fromEntries(order.map((s) => [s, 0]));
+  tasks.forEach((t) => counts[eff(t)]++);
+  document.getElementById('bar').innerHTML = order.map((s) =>
+    `<i style="width:${counts[s] / tasks.length * 100}%;background:var(${COLOR[s]})" title="${LABEL[s]}: ${counts[s]}"></i>`).join('');
+
+  let filter = store.get('filter', 'all');
+  const countsEl = document.getElementById('counts');
+  const renderCounts = () => {
+    countsEl.innerHTML = [`<button data-f="all" class="${filter === 'all' ? 'on' : ''}">All <b>${tasks.length}</b></button>`]
+      .concat(order.map((s) => `<button data-f="${s}" class="${filter === s ? 'on' : ''}"><span class="pill s-${s}" style="padding:0;background:none"></span>${LABEL[s]} <b>${counts[s]}</b></button>`)).join('');
+  };
+  countsEl.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    filter = b.dataset.f; store.set('filter', filter); renderCounts(); renderList();
+  });
+
+  // ---------- status text for copy ----------
+  function statusText(t) {
+    const s = eff(t);
+    const lines = [`${t.title} (${t.id}): ${LABEL[s]}`];
+    lines.push(t.summary);
+    if (s === 'blocked' && t.blocked) lines.push(`Blocked: ${t.blocked}`);
+    const od = openDeps(t);
+    if (od.length) lines.push(`Waiting on: ${od.map((d) => `${byId[d].title} (${LABEL[eff(byId[d])].toLowerCase()})`).join(', ')}`);
+    const unblocks = dependents(t.id);
+    if (unblocks.length && s !== 'done') lines.push(`Unblocks: ${unblocks.map((d) => d.title).join(', ')}`);
+    if (t.next) lines.push(`Next: ${t.next}`);
+    lines.push(`Owner: ${t.owner}. Updated ${t.updated}.`);
+    return lines.join('\n');
+  }
+  function summaryText() {
+    const by = (s) => tasks.filter((t) => eff(t) === s);
+    const part = (s) => by(s).length ? `${LABEL[s]} (${by(s).length}): ${by(s).map((t) => t.title).join('; ')}` : '';
+    return [
+      `${project.name}: ${counts.done}/${tasks.length} tasks done, ${days} days to ${project.deadline}.`,
+      part('active'), part('blocked'),
+      by('blocked').map((t) => `  ${t.title}: ${t.blocked}`).join('\n'),
+    ].filter(Boolean).join('\n');
+  }
+  async function copy(text, btn) {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const ta = Object.assign(document.createElement('textarea'), { value: text });
+      document.body.append(ta); ta.select(); document.execCommand('copy'); ta.remove();
+    }
+    const old = btn.textContent; btn.textContent = 'Copied'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = old; btn.classList.remove('ok'); }, 1400);
+  }
+
+  // ---------- list ----------
+  const open = new Set(store.get('open', []));
+  const list = document.getElementById('list');
+  const q = document.getElementById('q');
+
+  function depChip(id) {
+    const d = byId[id]; if (!d) return '';
+    return `<button class="dep" data-go="${id}"><i style="background:var(${COLOR[eff(d)]})"></i>${id} ${esc(d.title)}</button>`;
+  }
+
+  function renderList() {
+    const term = q.value.trim().toLowerCase();
+    const match = (t) => (filter === 'all' || eff(t) === filter) &&
+      (!term || [t.id, t.title, t.summary, strip(t.details), t.blocked, t.next].join(' ').toLowerCase().includes(term));
+    const html = groups.map((g) => {
+      const ts = tasks.filter((t) => t.group === g.id && match(t));
+      if (!ts.length) return '';
+      const done = tasks.filter((t) => t.group === g.id && t.status === 'done').length;
+      const all = tasks.filter((t) => t.group === g.id).length;
+      return `<section class="group"><h2>${esc(g.name)} <span>${done}/${all}</span></h2>${ts.map(card).join('')}</section>`;
+    }).join('');
+    list.innerHTML = html || '<div class="empty">No tasks match.</div>';
+  }
+
+  function card(t) {
+    const s = eff(t);
+    const od = openDeps(t);
+    const unblocks = dependents(t.id);
+    return `<article class="task ${open.has(t.id) ? 'open' : ''}" id="t-${t.id}" data-id="${t.id}">
+      <div class="row">
+        <span class="chev">▶</span>
+        <span class="id">${t.id}</span>
+        <span class="ttl">${esc(t.title)}<small>${esc(t.summary)}</small></span>
+        <span class="pill s-${s}">${LABEL[s]}</span>
+        <button class="copy" data-copy="${t.id}" title="Copy status for this task">Copy status</button>
+      </div>
+      <div class="body">
+        ${s === 'blocked' && t.blocked ? `<div class="reason"><b>Blocked:</b> ${esc(t.blocked)}</div>` : ''}
+        ${s === 'waiting' ? `<div class="reason wait"><b>Waiting on:</b> ${od.map((d) => esc(byId[d].title)).join(', ')}</div>` : ''}
+        <div class="details">${t.details || ''}</div>
+        <dl class="kv">
+          ${t.next ? `<dt>Next</dt><dd>${esc(t.next)}</dd>` : ''}
+          <dt>Owner</dt><dd>${esc(t.owner)}</dd>
+          ${(t.deps || []).length ? `<dt>Needs</dt><dd>${t.deps.map(depChip).join('')}</dd>` : ''}
+          ${unblocks.length ? `<dt>Unblocks</dt><dd>${unblocks.map((u) => depChip(u.id)).join('')}</dd>` : ''}
+          <dt>Updated</dt><dd>${esc(t.updated)}</dd>
+        </dl>
+      </div>
+    </article>`;
+  }
+
+  list.addEventListener('click', (e) => {
+    const c = e.target.closest('[data-copy]');
+    if (c) { e.stopPropagation(); copy(statusText(byId[c.dataset.copy]), c); return; }
+    const go = e.target.closest('[data-go]');
+    if (go) { e.stopPropagation(); focusTask(go.dataset.go); return; }
+    const row = e.target.closest('.row');
+    if (row) {
+      const art = row.parentElement; const id = art.dataset.id;
+      art.classList.toggle('open');
+      art.classList.contains('open') ? open.add(id) : open.delete(id);
+      store.set('open', [...open]);
+    }
+  });
+
+  function focusTask(id) {
+    setView('list');
+    if (filter !== 'all' || q.value) { filter = 'all'; q.value = ''; renderCounts(); }
+    open.add(id); store.set('open', [...open]);
+    renderList();
+    const el = document.getElementById('t-' + id);
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1400);
+  }
+
+  q.addEventListener('input', renderList);
+  document.getElementById('expand').addEventListener('click', (e) => {
+    const allOpen = tasks.every((t) => open.has(t.id));
+    tasks.forEach((t) => allOpen ? open.delete(t.id) : open.add(t.id));
+    e.target.textContent = allOpen ? 'Expand all' : 'Collapse all';
+    store.set('open', [...open]); renderList();
+  });
+  document.getElementById('copyall').addEventListener('click', (e) => copy(summaryText(), e.target));
+
+  // ---------- dependency graph ----------
+  function renderGraph() {
+    const depth = {};
+    const d = (id, seen = new Set()) => {
+      if (depth[id] != null) return depth[id];
+      if (seen.has(id)) return 0;
+      seen.add(id);
+      const t = byId[id];
+      const v = (t.deps || []).filter((x) => byId[x]).reduce((m, x) => Math.max(m, d(x, seen) + 1), 0);
+      return (depth[id] = v);
+    };
+    tasks.forEach((t) => d(t.id));
+    const cols = [];
+    tasks.forEach((t) => (cols[depth[t.id]] ||= []).push(t));
+    const W = 200, H = 46, GX = 70, GY = 12, PAD = 30;
+    const pos = {};
+    cols.forEach((c, ci) => c.forEach((t, ri) => { pos[t.id] = { x: PAD + ci * (W + GX), y: PAD + 20 + ri * (H + GY) }; }));
+    const width = PAD * 2 + cols.length * (W + GX) - GX;
+    const height = PAD * 2 + 20 + Math.max(...cols.map((c) => c.length)) * (H + GY);
+    const edges = tasks.flatMap((t) => (t.deps || []).filter((x) => pos[x]).map((x) => {
+      const a = pos[x], b = pos[t.id];
+      const x1 = a.x + W, y1 = a.y + H / 2, x2 = b.x, y2 = b.y + H / 2, mx = (x1 + x2) / 2;
+      return `<path data-from="${x}" data-to="${t.id}" d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}"/>`;
+    }));
+    const nodes = tasks.map((t) => {
+      const p = pos[t.id], s = eff(t);
+      const title = t.title.length > 28 ? t.title.slice(0, 27) + '…' : t.title;
+      return `<g class="node" data-go="${t.id}" transform="translate(${p.x},${p.y})">
+        <rect width="${W}" height="${H}" rx="9" style="stroke:var(${COLOR[s]})"/>
+        <circle cx="14" cy="${H / 2}" r="4" style="fill:var(${COLOR[s]})"/>
+        <text class="nid" x="26" y="18">${t.id} · ${LABEL[s]}</text>
+        <text x="26" y="34">${esc(title)}</text></g>`;
+    });
+    const heads = cols.map((_, ci) => `<text class="col" x="${PAD + ci * (W + GX)}" y="${PAD}">STAGE ${ci + 1}</text>`);
+    document.getElementById('graph').innerHTML =
+      `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${heads.join('')}${edges.join('')}${nodes.join('')}</svg>`;
+  }
+  const graph = document.getElementById('graph');
+  graph.addEventListener('click', (e) => { const n = e.target.closest('[data-go]'); if (n) focusTask(n.dataset.go); });
+  graph.addEventListener('mouseover', (e) => {
+    const n = e.target.closest('.node'); if (!n) return;
+    const id = n.dataset.go;
+    graph.querySelectorAll('path').forEach((p) => p.classList.toggle('hot', p.dataset.from === id || p.dataset.to === id));
+  });
+
+  // ---------- view switch ----------
+  function setView(v) {
+    document.body.classList.toggle('view-graph', v === 'graph');
+    document.querySelectorAll('#view button').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    store.set('view', v);
+  }
+  document.getElementById('view').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setView(b.dataset.v); });
+
+  // ---------- log ----------
+  document.getElementById('log').innerHTML = [...log].reverse().map((l) => `<li><time>${esc(l.date)}</time><span>${esc(l.text)}</span></li>`).join('');
+
+  renderCounts();
+  renderList();
+  renderGraph();
+  setView(store.get('view', 'list'));
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+/* Slide components in the Arbeidstegning language. Sizes in --u (1% of the 16:9 frame). */
+
+/* The tip: every point's title */
+.tip {
+  font-family: var(--font-display); font-weight: var(--display-weight);
+  letter-spacing: var(--display-tracking); line-height: .98;
+  font-size: calc(var(--u) * 4.6); color: var(--fg);
+}
+.tip em { font-style: normal; color: var(--accent); }
+/* after the first step the tip has been said: it shrinks to a header and steps back */
+.tip { transform-origin: 0 0; transition: transform .7s cubic-bezier(.2,.8,.2,1), opacity .7s; }
+.slide.settled .tip { transform: scale(.62); opacity: .6; }
+
+/* focus: everything that is not this step's subject steps back */
+svg.draw .fx-dim { filter: brightness(.42) saturate(.45); }
+svg.draw > *, svg.draw g { transition: filter .5s; }
+
+/* Help line: one short sentence under the scene that says what the picture can't */
+.help {
+  position: absolute; left: var(--pad); bottom: calc(var(--u) * 3.6); margin: 0;
+  max-width: calc(var(--u) * 64);
+  white-space: nowrap;
+  padding-left: calc(var(--u) * 1.2);
+  border-left: calc(var(--u) * .3) solid var(--accent);
+  font: 600 calc(var(--u) * 1.85) / 1.2 var(--font-display); color: var(--fg);
+}
+.help:empty { display: none; }
+/* slides whose bottom edge is taken put the line top right of the tip */
+.help.top { left: calc(var(--u) * 37.5); bottom: auto; top: calc(var(--u) * 9.5); }
+
+/* Revision table: one row per prompt */
+.revs { display: grid; font: 400 calc(var(--u) * 1.4) / 1.3 var(--font-mono); }
+.revs .rev {
+  position: relative;
+  display: grid; grid-template-columns: calc(var(--u) * 7) 1fr;
+  border-top: 2px solid var(--deco);
+  padding: calc(var(--u) * .8) 0;
+}
+.revs .rev:last-child { border-bottom: 2px solid var(--deco); }
+.revs .rev b { color: var(--accent-2); font-weight: 700; }
+.revs .rev::after {
+  content: ''; position: absolute; left: -2%; right: -2%; top: 50%; height: 4px;
+  background: var(--note); border-radius: 2px; transform: scaleX(0) rotate(-1.5deg); transform-origin: left center;
+}
+.revs .rev.struck::after { transform: scaleX(1) rotate(-1.5deg); transition: transform .35s ease-in; }
+.revs .rev.struck { color: var(--dim); }
+
+/* Paper slip (orders, cards) */
+.slip {
+  position: absolute; white-space: nowrap;
+  background: #fff3e3; color: #1a120c;
+  font: 700 calc(var(--u) * 1.5) / 1.25 var(--font-mono);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.4);
+  box-shadow: 0 calc(var(--u) * .4) calc(var(--u) * 1.2) rgba(0,0,0,.5);
+}
+.slip small { display: block; font-weight: 400; font-size: calc(var(--u) * 1); letter-spacing: .1em; text-transform: uppercase; opacity: .6; margin-bottom: calc(var(--u) * .3); }
+
+/* Big counter */
+.counter { font: 700 calc(var(--u) * 5) / 1 var(--font-mono); color: var(--accent-2); letter-spacing: -.02em; }
+.counter-label { margin-top: calc(var(--u) * .6); font: 400 calc(var(--u) * 1.2) var(--font-mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+
+/* SVG drafting styles */
+svg.draw.full { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+svg.draw path, svg.draw rect.box { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+svg.draw .ln { stroke: var(--fg); stroke-width: 3.5; }
+svg.draw .thin { stroke: var(--muted); stroke-width: 2; }
+svg.draw .acc { stroke: var(--accent); stroke-width: 4; }
+svg.draw .acc2 { stroke: var(--accent-2); stroke-width: 4; }
+svg.draw .water { stroke: #7fd0ff; stroke-width: 3; }
+svg.draw .dash { stroke: var(--muted); stroke-width: 2.5; stroke-dasharray: 10 9; }
+svg.draw .pencil { stroke: var(--note); stroke-width: 4.5; }
+svg.draw .fill-acc { fill: var(--accent); stroke: none; }
+svg.draw .fill-acc2 { fill: var(--accent-2); stroke: none; }
+svg.draw .fill-bg { fill: var(--bg); stroke: none; }
+svg.draw text { fill: var(--muted); }
+svg.draw text.mono { font-family: var(--font-mono); font-size: 22px; letter-spacing: .06em; }
+svg.draw text.mono-lg { font-family: var(--font-mono); font-size: 30px; fill: var(--fg); }
+svg.draw text.head { font-family: var(--font-display); font-weight: 700; font-size: 34px; fill: var(--fg); }
+svg.draw text.pencil-text { font-family: var(--font-note); font-weight: 700; fill: var(--note); }
+svg.draw .stamp-box { fill: none; stroke: var(--accent); stroke-width: 6; }
+svg.draw .stamp-text { font-family: var(--font-mono); font-weight: 700; fill: var(--accent); letter-spacing: .12em; }

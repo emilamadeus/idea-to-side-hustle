@@ -1,0 +1,141 @@
+/*
+  Help lines: one short sentence per build step, shown under the scene (bottom left).
+  They say what the picture can't: the concept, the benefit or the problem.
+  null = no line on that step. Keep them short and concrete; never restate the picture.
+*/
+export const HELP = {
+  'md-files': [
+    'Samme oppgave, tre oppsett av instruksjonsfiler.',
+    '0 filer: hver økt starter fra null. Du forklarer, den gjetter.',
+    '1 fil: alt leses hver gang. Dyrt, og én utdatert linje styrer.',
+    'Flere filer: den leser bare det oppgaven trenger.',
+    'Neste økt fortsetter fra STATUS og HANDOFF.',
+    'En utdatert STATUS sender økten tilbake til ferdig arbeid.',
+    'Derfor er oppdatering av filene en del av oppgaven.',
+  ],
+  spec: [
+    'En HTML-spec som AI-en oppdaterer selv mens den jobber.',
+    'Hver oppgave sier hvorfor den står, og hva den venter på.',
+    'Et skjult lag med regler som bare agentene leser.',
+    'Status til andre er ett klikk unna.',
+    'Denne presentasjonen har sin egen.',
+  ],
+  'full-scope': [
+    'Ett krav om gangen: hver løsning bygger på den forrige.',
+    'Nye krav lappes på det som allerede står.',
+    'Lappene må bære hverandre.',
+    'Til slutt kaller den noe som ikke henger sammen for ferdig.',
+    'Alle krav i én prompt: kjernen designes for hele omfanget.',
+    'Samme krav, én ren konstruksjon, og færre tokens.',
+    'Endres omfanget sent, er det kjernen som sprekker.',
+  ],
+  planning: [
+    'Én og én: hver ny oppgave river opp noe som er bygget.',
+    'Kun planlegging i auto mode. Bare produktvalg kommer til deg.',
+    'Så bygges alt i riktig rekkefølge, én gang.',
+  ],
+  goal: [
+    'Du dikterer hver tekniske beslutning.',
+    'Den følger stegene dine, også når de er feil.',
+    'Beskriv kravet: den finner løsninger du ikke kjente til.',
+  ],
+  'visual-ref': [
+    'Fire ord i prompten. Bildet i hodet ditt følger ikke med.',
+    'Alle krav er krysset av. Det ligner bare ikke.',
+    'Med et bilde treffer den nesten det du så for deg.',
+  ],
+  show: [
+    'Ord blir tolket. Den fikser noe, bare ikke det du mente.',
+    'Et skjermbilde med en sirkel er entydig.',
+    'Vanskelig å forklare? En fersk agent gjør bildet om til prompts.',
+  ],
+  kitchen: [
+    'Én økt gjør alt i rekkefølge. Køen vokser.',
+    'Én økt per oppgave. Hovedøkten vet hvem som venter på deg.',
+    'Du svarer der det trengs. Resten jobber parallelt.',
+  ],
+  helpers: [
+    'Hovedøkten gjør jobben selv. Den har hele konteksten.',
+    'Hjelpere passer til research: kort oppdrag, raskt svar.',
+    'Gir du den hele jobben, kan den bli ferdig uten å si fra.',
+    'Da må noen gå og lete.',
+  ],
+  watchdog: [
+    'En sjekk hvert 10. minutt holder øktene i gang over natta.',
+    'Låst: to økter venter på hverandre.',
+    'Inaktiv: en økt har stoppet uten å si fra.',
+    'Fullt minne: en ny økt tar over med en overlevering.',
+    'Hjelperen er ferdig, men har ikke meldt fra.',
+    'Om morgenen er jobben gjort.',
+  ],
+  remote: [
+    'Uten varsel står jobben stille til du tilfeldigvis sjekker.',
+    'Med varsel tar en beslutning sekunder, uansett hvor du er.',
+    'I skyen fortsetter den, selv med laptopen lukket.',
+  ],
+  'always-working': [
+    'Bivirkningen av økter som alltid sier fra.',
+    null, null, null, null, null, null,
+    'Bestem selv når du svarer.',
+  ],
+  'self-check': [
+    'Du som kontrollør: hver runde venter på deg.',
+    'Den tester selv. Du sjekker bare det den ikke kan bekrefte.',
+  ],
+  fails: [
+    'Lange økter lapper gjerne symptomer.',
+    '«Fikset!» uten at den har sjekket.',
+    'Hver lapp gjør økten lengre og konteksten tyngre.',
+    'Lappene skaper nye feil andre steder.',
+    'Ny økt, be om årsaken: én linje, og lappene kan fjernes.',
+  ],
+  effort: [
+    'Medium: rask, stødig, ferdig.',
+    'Mer effort tviler på det som var bra, og bruker mer tokens.',
+  ],
+  gateway: [
+    'Et annet team leverer. Hva betyr det for deg?',
+    'AI-en leser hver build og sier hva som kan bygges nå.',
+    'Ingenting relevant? Da slipper du å lese den.',
+    'Du leser tavla, ikke changelogene.',
+    'AI-en sjekket gateway-koden før vi bygde mot designet.',
+  ],
+  'know-a-guy': [
+    'Jobben lærer deg én del av kartet.',
+    'Hvert sideprosjekt viser deg noe som finnes.',
+    'Da blir du den folk spør. Om nesten alt.',
+  ],
+  projects: [
+    'Plantegning til 3D-hjem, rett i nettleseren.',
+    'En vanlig webapp med innlogging og deling.',
+    'Ekte smarthjem-enheter styrt fra 3D-modellen.',
+  ],
+  'side-quest': [
+    'Spillet trenger noe som ikke finnes.',
+    'Så det bygges, og spillet venter.',
+    'Det nye prosjektet trenger også noe.',
+    'Tre prosjekter, én utvikler.',
+    'Hvert sideprosjekt blir større enn behovet.',
+    'Sideprosjektet ble et produkt.',
+    'Det opprinnelige prosjektet står på 80 %.',
+    'Oppmerksomheten deles på alt.',
+    null,
+  ],
+  'asset-loop': [
+    'Claude skriver bestillinger i en delt fil.',
+    'ChatGPT lager det som står, og legger det der Claude sa.',
+    'Ingen kopiering mellom vinduer: fila er grensesnittet.',
+    'Resultatet ligger ute på Fab.',
+  ],
+  prototypes: [
+    'Fire ekte versjoner koster mindre enn ett møte om én.',
+    'Du ser forskjellen i stedet for å diskutere den.',
+    'Velg én, kast resten.',
+  ],
+  'html-deck': [
+    'Et vanlig lysbilde kan vise bilder av ting.',
+    'En nettside kan kjøre tingen.',
+    'Alt er tekst, så AI-en kan skrive og endre alt.',
+    'Prisen: alt må bygges selv.',
+  ],
+};

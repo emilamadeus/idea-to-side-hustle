@@ -1,0 +1,219 @@
+/* ------------------------------------------------------------------
+   Design tokens. Everything visual hangs off these.
+   --u is 1% of a 16:9 frame that always fits the window, so layouts
+   look identical on the MacBook (16:10) and the TV (16:9).
+------------------------------------------------------------------- */
+:root {
+  /* Defaults mirror src/theme.js (which sets them at runtime). */
+  --bg: #16100b;
+  --fg: #fff3e3;
+  --muted: #c9ad92;
+  --dim: #74604d;
+  --accent: #ff5a1f;
+  --accent-2: #ffd23f;
+  --note: #ff6f9c;
+  --warn: #ffb35e;
+
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+  --font-note: 'Caveat', cursive;
+
+  --u: min(1vw, 1.7778vh);
+  --frame-w: calc(var(--u) * 100);
+  --frame-h: calc(var(--u) * 56.25);
+  --pad: calc(var(--u) * 5);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-display);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+#app { position: fixed; inset: 0; }
+
+/* ---------- audience view ---------- */
+canvas.stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+.slides {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: var(--frame-w); height: var(--frame-h);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.slide { position: absolute; inset: 0; }
+.slide .interactive, .slide [data-interactive] { pointer-events: auto; }
+
+.hud-progress {
+  position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
+  background: rgba(255,255,255,.04);
+  transition: opacity .6s;
+}
+.hud-progress i {
+  display: block; height: 100%; width: 0;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  transition: width .9s cubic-bezier(.2,.8,.2,1);
+}
+body.hud-off .hud-progress { opacity: 0; }
+
+.blackout {
+  position: absolute; inset: 0; background: #000;
+  opacity: 0; pointer-events: none; transition: opacity .8s;
+}
+body.black .blackout { opacity: 1; }
+
+.jump {
+  position: absolute; right: var(--pad); bottom: var(--pad);
+  font: 500 calc(var(--u) * 2) var(--font-mono);
+  color: var(--accent); opacity: 0; transition: opacity .2s;
+}
+.jump.on { opacity: 1; }
+
+/* ---------- overview ---------- */
+.overview {
+  position: absolute; inset: 0;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u) * 17), 1fr));
+  gap: calc(var(--u) * 1.2);
+  align-content: start;
+  padding: var(--pad);
+  overflow-y: auto;
+  background: rgba(4, 6, 11, .72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  opacity: 0; pointer-events: none; transition: opacity .35s;
+}
+body.overview-open .overview { opacity: 1; pointer-events: auto; }
+.overview button {
+  all: unset; cursor: pointer;
+  aspect-ratio: 16 / 9;
+  padding: calc(var(--u) * 1.2);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: calc(var(--u) * .6);
+  background: rgba(255,255,255,.03);
+  display: flex; flex-direction: column; justify-content: space-between;
+  transition: border-color .2s, background .2s, transform .2s;
+}
+.overview button:hover { border-color: var(--accent); transform: translateY(-2px); }
+.overview button.current { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.overview .n { font: 500 calc(var(--u) * 1) var(--font-mono); color: var(--muted); }
+.overview .t { font: 600 calc(var(--u) * 1.5) / 1.15 var(--font-display); }
+
+/* ---------- shared slide type ---------- */
+.mono { font-family: var(--font-mono); letter-spacing: .02em; }
+.label {
+  font: 500 calc(var(--u) * 1.1) var(--font-mono);
+  text-transform: uppercase; letter-spacing: .14em; color: var(--muted);
+}
+.display {
+  font-weight: var(--display-weight, 700); letter-spacing: var(--display-tracking, -.035em); line-height: .95;
+  font-size: calc(var(--u) * 7);
+}
+.h1 { font-weight: var(--display-weight, 650); letter-spacing: var(--display-tracking, -.03em); line-height: 1; font-size: calc(var(--u) * 4.8); }
+.h2 { font-weight: 600; letter-spacing: -.02em; line-height: 1.1; font-size: calc(var(--u) * 3); }
+.body { font-weight: 400; line-height: 1.35; font-size: calc(var(--u) * 1.9); color: #c9d0e6; }
+.accent { color: var(--accent); }
+
+.pin-tl { position: absolute; left: var(--pad); top: var(--pad); }
+.pin-tr { position: absolute; right: var(--pad); top: var(--pad); text-align: right; }
+.pin-bl { position: absolute; left: var(--pad); bottom: var(--pad); }
+.pin-br { position: absolute; right: var(--pad); bottom: var(--pad); text-align: right; }
+.center { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; }
+
+/* split-text helpers (fx.split) */
+.w { display: inline-block; white-space: nowrap; }
+.c { display: inline-block; will-change: transform, opacity; }
+.line-mask { display: block; overflow: hidden; padding-bottom: .08em; }
+
+/* preview iframes (inside presenter console) */
+body.role-preview .hud-progress { display: none; }
+
+/* pencil note in the margin */
+.note {
+  font-family: var(--font-note); color: var(--note);
+  font-size: calc(var(--u) * 2.1); font-weight: 600;
+  transform: rotate(var(--note-rotate, 0deg));
+  transform-origin: left center;
+}
+.note { font-size: calc(var(--u) * 3.2); font-weight: 700; }
+
+/* backdrop layer between canvas and slides */
+.backdrop { position: absolute; inset: 0; pointer-events: none; }
+.backdrop {
+  /* Grid lines kept at 2px and low contrast: AirPlay smears 1px lines. */
+  background-image:
+    linear-gradient(var(--grid-major, rgba(255,255,255,.07)) 2px, transparent 2px),
+    linear-gradient(90deg, var(--grid-major, rgba(255,255,255,.07)) 2px, transparent 2px),
+    linear-gradient(var(--grid-minor, rgba(255,255,255,.035)) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-minor, rgba(255,255,255,.035)) 1px, transparent 1px);
+  background-size:
+    calc(var(--u) * 10) calc(var(--u) * 10), calc(var(--u) * 10) calc(var(--u) * 10),
+    calc(var(--u) * 2) calc(var(--u) * 2), calc(var(--u) * 2) calc(var(--u) * 2);
+  background-position: center center;
+  /* Grid only outside the 16:9 frame: cut a frame-sized hole with a mask. */
+  -webkit-mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
+  -webkit-mask-size: 100% 100%, var(--frame-w) var(--frame-h);
+  -webkit-mask-position: 0 0, center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-image: linear-gradient(#000, #000), linear-gradient(#000, #000);
+  mask-size: 100% 100%, var(--frame-w) var(--frame-h);
+  mask-position: 0 0, center;
+  mask-repeat: no-repeat;
+  mask-composite: exclude;
+}
+
+/* drawing furniture: crop marks + title block, inside the 16:9 frame */
+.deco {
+  position: absolute; left: 50%; top: 50%;
+  width: var(--frame-w); height: var(--frame-h);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.deco::before {
+  /* Sheet edge: where the drafting grid stops and the drawing sheet begins. */
+  content: ''; position: absolute; inset: 0;
+  border: 2px solid var(--deco); opacity: .45;
+}
+.deco .crop { position: absolute; width: calc(var(--u) * 2.2); height: calc(var(--u) * 2.2); border: 0 solid var(--deco); }
+.deco .crop.tl { left: calc(var(--u) * 2); top: calc(var(--u) * 2); border-width: 2px 0 0 2px; }
+.deco .crop.tr { right: calc(var(--u) * 2); top: calc(var(--u) * 2); border-width: 2px 2px 0 0; }
+.deco .crop.bl { left: calc(var(--u) * 2); bottom: calc(var(--u) * 2); border-width: 0 0 2px 2px; }
+.deco .crop.br { right: calc(var(--u) * 2); bottom: calc(var(--u) * 2); border-width: 0 2px 2px 0; }
+.title-block {
+  position: absolute; right: calc(var(--u) * 3); bottom: calc(var(--u) * 3);
+  display: grid; grid-template-columns: auto auto auto;
+  border: 2px solid var(--deco);
+  font: 400 calc(var(--u) * .78) var(--font-mono); color: var(--muted);
+  text-transform: uppercase; letter-spacing: .08em;
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  opacity: .6;
+}
+.title-block > div { padding: calc(var(--u) * .45) calc(var(--u) * .8); border-left: 2px solid var(--deco); }
+.title-block > div:first-child { border-left: 0; }
+.title-block b { display: block; font-weight: 700; color: var(--fg); font-size: calc(var(--u) * .95); letter-spacing: .04em; }
+.title-block .tb-sheet b { color: var(--accent-2); }
+/* step dots: past filled, current fills as its animation plays, glows when it is time to click */
+.title-block .tb-dots { display: flex; gap: calc(var(--u) * .35); align-items: center; height: calc(var(--u) * 1.2); }
+.tb-dots i {
+  --p: 0;
+  width: calc(var(--u) * .85); height: calc(var(--u) * .85); border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--muted);
+}
+.tb-dots i.past { background: var(--accent-2); box-shadow: none; }
+.tb-dots i.cur {
+  background: conic-gradient(var(--accent) calc(var(--p) * 360deg), transparent 0);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.tb-dots i.cur.ready { background: var(--accent); animation: tb-ready 1.4s ease-in-out infinite; }
+@keyframes tb-ready {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); }
+  50% { box-shadow: 0 0 0 calc(var(--u) * .35) color-mix(in srgb, var(--accent) 0%, transparent); }
+}
