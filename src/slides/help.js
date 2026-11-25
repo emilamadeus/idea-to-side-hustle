@@ -139,6 +139,13 @@ export const HELP = {
     'Prisen: alt må bygges selv.',
   ],
   takeaways: [null],
+  launch: [
+    'Ferdig er ikke solgt. Butikksiden må lages.',
+    'Teksten skrives fra det som faktisk er i pakken.',
+    'Bildene selger pakken før noen har åpnet den.',
+    'Prisen settes etter hva lignende pakker koster.',
+    'Publisert, og den selger.',
+  ],
   opening: [
     'Det startet med én idé.',
     'Det ble noe annet enn planlagt. Resten handler om hvordan.',

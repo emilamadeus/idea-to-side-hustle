@@ -262,7 +262,7 @@ Title: "Fra idé til startup, med AI".
 2. Plan: full scope → batched planning → living spec → instruction files
 3. Bygg: parallel sessions → helpers → watchdog → notifications → always working → gateway → I know a guy
 4. Kvalitet: self-check → show, don't describe → where it fails → model and effort
-5. Lansering: live projects → side quest → Claude ↔ ChatGPT loop (Fab) → this deck is a web page (finale)
+5. Lansering: live projects → side quest → Claude ↔ ChatGPT loop (Fab) → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells) → this deck is a web page (finale)
 Closing: takeaways (src/slides/takeaways.js), every standalone tip on one page.
 Callbacks that depend on order: full scope's "Alt fungerer." sets up "Fikset!"; helpers ends on the guard (watchdog next); always working reuses the watchdog's 03:12 message; the side quest's 80 % returns in the asset loop.
 

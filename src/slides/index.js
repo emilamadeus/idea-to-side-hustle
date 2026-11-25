@@ -3,6 +3,7 @@ import { HELP } from './help.js';
 import { chapter } from './chapter.js';
 import takeaways from './takeaways.js';
 import opening from './opening.js';
+import launch from './launch.js';
 import title from './00-title.js';
 import mdFiles from './md-files.js';
 import goal from './goal.js';
@@ -37,7 +38,7 @@ const STAGED = [
   [fullScope, planning, spec, mdFiles],                                 // 2. Plan
   [kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
   [selfCheck, show, fails, effort],                                     // 4. Kvalitet
-  [projects, sideQuest, assetLoop, htmlDeck],                           // 5. Lansering
+  [projects, sideQuest, assetLoop, launch, htmlDeck],                   // 5. Lansering
 ];
 export const slides = [
   title,
