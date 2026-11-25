@@ -138,4 +138,5 @@ export const HELP = {
     'Alt er tekst, så AI-en kan skrive og endre alt.',
     'Prisen: alt må bygges selv.',
   ],
+  takeaways: [null],
 };

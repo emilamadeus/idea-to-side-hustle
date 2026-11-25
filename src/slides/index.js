@@ -1,6 +1,7 @@
 // To add a slide: copy _template.js, then import it here.
 import { HELP } from './help.js';
 import { chapter } from './chapter.js';
+import takeaways from './takeaways.js';
 import title from './00-title.js';
 import mdFiles from './md-files.js';
 import goal from './goal.js';
@@ -40,6 +41,7 @@ const STAGED = [
 export const slides = [
   title,
   ...STAGED.flatMap((group, k) => [chapter(k), ...group.map((s) => Object.assign(s, { stage: k }))]),
+  takeaways, // closing: every standalone tip on one page
 ];
 
 // Help lines live in help.js so all on-screen copy can be edited in one place.
