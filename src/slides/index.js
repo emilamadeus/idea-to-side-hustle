@@ -4,6 +4,7 @@ import { chapter } from './chapter.js';
 import takeaways from './takeaways.js';
 import opening from './opening.js';
 import launch from './launch.js';
+import validate from './validate.js';
 import title from './00-title.js';
 import mdFiles from './md-files.js';
 import goal from './goal.js';
@@ -34,7 +35,7 @@ import projects from './projects.js';
 //   full-scope "Alt fungerer." → fails "Fikset!"; helpers ends on the guard → watchdog;
 //   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop.
 const STAGED = [
-  [prototypes, visualRef, goal],                                        // 1. Idé
+  [validate, prototypes, visualRef, goal],                              // 1. Idé
   [fullScope, planning, spec, mdFiles],                                 // 2. Plan
   [kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
   [selfCheck, show, fails, effort],                                     // 4. Kvalitet

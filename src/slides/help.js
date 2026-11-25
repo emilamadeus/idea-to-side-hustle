@@ -139,6 +139,11 @@ export const HELP = {
     'Prisen: alt må bygges selv.',
   ],
   takeaways: [null],
+  validate: [
+    'Spør før du bygger: hva finnes, hva koster det, hva mangler.',
+    'Kartet viser hvor det er trangt.',
+    'Det tomme feltet er ideen verdt å bygge.',
+  ],
   launch: [
     'Ferdig er ikke solgt. Butikksiden må lages.',
     'Teksten skrives fra det som faktisk er i pakken.',

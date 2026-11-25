@@ -258,7 +258,7 @@ Hooks, connectors (MCP), dictation, AI code review, non-developer uses: not in t
 Each stage opens with a divider slide (src/slides/chapter.js); every slide shows the journey in the top-right corner, current stage lit.
 Title: "Fra idé til startup, med AI".
 0. Cold open (src/slides/opening.js): "Jeg ville lage et spill." The idea, then what it became: the Fab pack, three live sites, the game at 80 %.
-1. Idé: prototypes → visual references → describe the goal
+1. Idé: validate the idea (src/slides/validate.js: a market map, modern/medieval × static/destructible; the empty square is the gap; illustrative market picture) → prototypes → visual references → describe the goal
 2. Plan: full scope → batched planning → living spec → instruction files
 3. Bygg: parallel sessions → helpers → watchdog → notifications → always working → gateway → I know a guy
 4. Kvalitet: self-check → show, don't describe → where it fails → model and effort
