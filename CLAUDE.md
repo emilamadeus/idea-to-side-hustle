@@ -51,7 +51,7 @@ All talk content, the speaker's points and proposed visuals live in `docs/conten
 - Speaker notes are short, practical cues, not scripts.
 
 ## Running
-- `npm run dev` → http://localhost:5180 (audience). Press **P** to open the presenter console. Spec: /docs/spec.html.
+- `npm run dev` → http://localhost:5180 (audience). Press **P** to open the presenter console (Chrome places it on the other screen after a one-time window-management permission). Spec: /docs/spec.html.
 - Step progress: the title block's STEG dots show how far the current build step has played (filling ring, then a solid pulsing dot = time to click); the console shows the same as a bar and KLAR. Slides built on `D.stepper` report this automatically.
 - Keys: →/Space/PageDown next · ←/PageUp back · digits+Enter jump · O overview · B or . blackout · F fullscreen · H hide progress bar. T in console toggles timer.
 

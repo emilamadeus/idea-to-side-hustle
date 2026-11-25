@@ -294,6 +294,34 @@ function toggleOverview(deck, force) {
   if (open) document.querySelector('.overview button.current')?.scrollIntoView({ block: 'center' });
 }
 
+/*
+  Open the presenter console on the other screen (the laptop) when the audience window is on
+  the TV. Uses Chrome's window-management permission (asked once); without it, or in a browser
+  that lacks it, the console opens where the browser puts it. From a fullscreen window macOS
+  would otherwise open it in the same fullscreen space, on top of the audience view.
+*/
+async function openPresenter(hint) {
+  const url = `${location.pathname}?presenter${location.hash}`;
+  let features = 'popup,width=1440,height=900';
+  try {
+    if ('getScreenDetails' in window) {
+      const sd = await window.getScreenDetails();
+      const here = sd.currentScreen;
+      const same = (s) => s.availLeft === here.availLeft && s.availTop === here.availTop;
+      const others = sd.screens.filter((s) => !same(s));
+      const target = others.find((s) => s.isInternal) || others[0];
+      if (target) features = `popup,left=${target.availLeft},top=${target.availTop},width=${target.availWidth},height=${target.availHeight}`;
+    }
+  } catch { /* permission denied or unsupported: default placement */ }
+  const w = window.open(url, 'presenter', features);
+  if (!w) {
+    // the permission prompt can use up the key press; the second press opens it
+    hint.textContent = 'Trykk P igjen';
+    hint.classList.add('on');
+    setTimeout(() => hint.classList.remove('on'), 2500);
+  }
+}
+
 function bindKeys(deck, app) {
   let digits = '';
   const jump = app.querySelector('.jump');
@@ -324,7 +352,7 @@ function bindKeys(deck, app) {
         else document.documentElement.requestFullscreen();
         break;
       case 'p': case 'P':
-        window.open(`${location.pathname}?presenter${location.hash}`, 'presenter', 'popup,width=1440,height=900');
+        openPresenter(jump);
         break;
     }
   });
