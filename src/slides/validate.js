@@ -10,6 +10,9 @@ import { chatPhone, FILL } from '../engine/props.js';
     2. Betalingsvilje: they already pay extra for small sacks at the petrol station.
     3. Konkurranse: plenty sell firewood, almost nobody delivers on a schedule.
     4. Levere: the ordering and routes can be built; summer earns nothing. Verdict: start small.
+    5. The bigger picture (cards cleared): AI gives you every link of the value chain without
+       much capital. The catch is that everyone else gets it too, so the market fills up. The
+       openings: a niche nobody covers, or a product that reaches very many customers.
   The answers are illustrative.
 
   Layout zones (svg units):
@@ -17,7 +20,10 @@ import { chatPhone, FILL } from '../engine/props.js';
     chat       x 80–520, y 262–782
     cards      2×2, x 600–1480, y 170–740 (each 420×270): label y+38, question y+72,
                drawing y+92–202, answer y+244, status badge top right
+    step 5     chain label y 272, links y 290–380 (x 80–1520); row labels y 456;
+               market x 80–1000, y 470–750 (niche top right); reach x 1060–1500, y 470–750
 */
+const CHAIN = ['Idé', 'Produkt', 'Markedsføring', 'Salg', 'Levering'];
 
 const CX = [600, 1060], CY = [170, 470], CW = 420, CH = 270;
 const CHECKS = [
@@ -37,13 +43,14 @@ const MUTED = { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 2.5, 'stro
 export default {
   id: 'validate',
   title: 'Sjekk ideen først',
-  steps: 5,
+  steps: 6,
   notes: [
     'Et hverdagseksempel: ved levert på døra, som abonnement. Fire spørsmål før jeg starter.',
     'Hvem er kunden?',
     'Vil de betale? De gjør det allerede, bare dyrere og tyngre.',
     'Konkurransen: mange selger ved, nesten ingen leverer fast.',
     'Kan jeg levere? Ja, om vinteren. Så da starter jeg smått: vinter, én bydel.',
+    'Det store bildet: AI gir deg hele verdikjeden uten store investeringer. Men det får alle andre også. Så: finn en nisje, eller lag noe som når veldig mange.',
   ],
 
   create(ctx) {
@@ -167,6 +174,60 @@ export default {
         const t = answer(i - 1, tl);
         if (i === 4) P.chat.user(tl, 'Da starter vi med vinter, i én bydel.', t + 1.8);
         ctx.focus(tl, [P.cards[i - 1].g, P.chat.root], 0.1);
+      }
+
+      if (i === 5) {
+        // one example at a time: the firewood cards leave before the bigger picture
+        tl.to([...P.cards.map((c) => c.g), P.chat.root], { opacity: 0, duration: 0.4 }, 0);
+        // the value chain, every link with AI, little capital
+        const chain = D.g(svg);
+        D.text(chain, 80, 268, 'VERDIKJEDEN · AI I HVERT LEDD · LITE KAPITAL', 'vl', { style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+        CHAIN.forEach((name, k) => {
+          const x = 80 + k * 302;
+          const link = D.g(chain, { 'data-unit': '' });
+          D.el('rect', { x, y: 290, width: 230, height: 90, rx: 10, style: 'fill: #1d1510; stroke: #6b5a48', 'stroke-width': 2.5, 'data-bg': '' }, link);
+          D.text(link, x + 20, 328, name, 'vn', { style: 'font: 800 22px var(--font-display); fill: var(--fg)' });
+          D.el('rect', { x: x + 20, y: 344, width: 44, height: 24, rx: 12, style: 'fill: #ffd23f; stroke: #1a120c', 'stroke-width': 2 }, link);
+          D.text(link, x + 42, 361, 'AI', 'va', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-mono); fill: #1a120c' });
+          tl.fromTo(link, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.35 }, 0.6 + k * 0.3);
+          if (k < CHAIN.length - 1) {
+            const ar = D.p(chain, `M${x + 240} 335 H${x + 292} M${x + 282} 326 L${x + 292} 335 L${x + 282} 344`, '', { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 3, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'data-bg': '' });
+            tl.fromTo(ar, { opacity: 0 }, { opacity: 1, duration: 0.25 }, 0.8 + k * 0.3);
+          }
+        });
+        tl.fromTo(chain.firstChild, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.5);
+        // the catch: everyone else has the same tools, the market fills up
+        const market = D.g(svg);
+        D.text(market, 80, 452, 'KONKURRANSE', 'ml', { style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+        D.el('rect', { x: 80, y: 470, width: 920, height: 280, rx: 12, style: 'fill: #16100b; stroke: #4a3c30', 'stroke-width': 2, 'data-bg': '' }, market);
+        const others = D.g(market, { 'data-bg': '' });
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 14; c++) {
+          if (c >= 12 && r <= 1) continue; // the niche stays open
+          D.el('rect', { x: 110 + c * 62, y: 494 + r * 62, width: 40, height: 40, rx: 6, ...FILL('#6b5a48', 2) }, others);
+        }
+        tl.fromTo(market.children[0], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.4);
+        tl.fromTo(market.children[1], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.4);
+        tl.fromTo(others.children, { opacity: 0, scale: 0.6, transformOrigin: '50% 50%', transformBox: 'fill-box' }, { opacity: 1, scale: 1, duration: 0.2, stagger: { each: 0.02, from: 'random' } }, 2.6);
+        // opening 1: the niche
+        const niche = D.g(svg, { 'data-unit': '' });
+        D.el('rect', { x: 840, y: 480, width: 146, height: 128, rx: 10, style: 'fill: none; stroke: var(--accent)', 'stroke-width': 3, 'stroke-dasharray': '10 7', 'data-bg': '' }, niche);
+        D.el('rect', { x: 893, y: 515, width: 40, height: 40, rx: 6, ...FILL('#ff5a1f', 2) }, niche);
+        D.text(niche, 1000, 452, 'NISJE', 'nl', { 'text-anchor': 'end', style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--accent)' });
+        tl.fromTo(niche, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 4.0);
+        // opening 2: reach very many customers
+        const reach = D.g(svg);
+        D.text(reach, 1060, 452, 'MANGE KUNDER', 'rl', { style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--accent)' });
+        const fan = D.g(reach, { 'data-bg': '' });
+        const dots = D.g(reach, { 'data-bg': '' });
+        for (let r = 0; r < 6; r++) for (let c = 0; c < 5; c++) {
+          const cx = 1290 + c * 46, cy = 490 + r * 48;
+          D.p(fan, `M1140 610 L${cx} ${cy}`, '', { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 2 });
+          D.el('circle', { cx, cy, r: 9, ...FILL('#cfc3b2', 2) }, dots);
+        }
+        const you = D.el('rect', { x: 1080, y: 584, width: 52, height: 52, rx: 8, ...FILL('#ff5a1f', 2.5), 'data-unit': '' }, reach);
+        tl.fromTo([reach.firstChild, you], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.8);
+        tl.fromTo(fan, { opacity: 0 }, { opacity: 0.8, duration: 0.6 }, 5.1);
+        tl.fromTo(dots.children, { opacity: 0, scale: 0.4, transformOrigin: '50% 50%', transformBox: 'fill-box' }, { opacity: 1, scale: 1, duration: 0.25, stagger: 0.02 }, 5.2);
       }
       return tl;
     };

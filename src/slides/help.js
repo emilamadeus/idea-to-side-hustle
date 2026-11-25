@@ -147,6 +147,7 @@ export const HELP = {
     'Betaler de allerede for noe lignende, er det et godt tegn.',
     'Mange tilbydere er greit. Se etter det ingen gjør.',
     'Kan du levere, og lønner det seg hele året?',
+    'AI gjør hele verdikjeden billig. Derfor blir det trangt.',
   ],
   launch: [
     'Ferdig er ikke solgt. Butikksiden må lages.',
