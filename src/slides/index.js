@@ -1,5 +1,6 @@
 // To add a slide: copy _template.js, then import it here.
 import { HELP } from './help.js';
+import { chapter } from './chapter.js';
 import title from './00-title.js';
 import mdFiles from './md-files.js';
 import goal from './goal.js';
@@ -24,39 +25,21 @@ import remote from './remote.js';
 import htmlDeck from './html-deck.js';
 import projects from './projects.js';
 
-// Story order (spec C3): a journey from idea to launch. Reordering is just moving lines
-// here; slide content is independent. Callbacks that depend on order:
+// Story order (spec C3): a journey from idea to launch, in five stages. Each stage opens
+// with a divider (chapter(k)); every slide in a stage gets `stage` so the corner marker can
+// show where we are. Reordering is just moving lines. Callbacks that depend on order:
 //   full-scope "Alt fungerer." → fails "Fikset!"; helpers ends on the guard → watchdog;
 //   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop.
+const STAGED = [
+  [prototypes, visualRef, goal],                                        // 1. Idé
+  [fullScope, planning, spec, mdFiles],                                 // 2. Plan
+  [kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
+  [selfCheck, show, fails, effort],                                     // 4. Kvalitet
+  [projects, sideQuest, assetLoop, htmlDeck],                           // 5. Lansering
+];
 export const slides = [
   title,
-  // 1. Idé: find out what you want
-  prototypes,
-  visualRef,
-  goal,
-  // 2. Plan: the whole scope, written down
-  fullScope,
-  planning,
-  spec,
-  mdFiles,
-  // 3. Bygg: many sessions at once
-  kitchen,
-  helpers,
-  watchdog,
-  remote,
-  alwaysWorking,
-  gateway,
-  // 4. Kvalitet: trust, but check
-  selfCheck,
-  show,
-  fails,
-  effort,
-  // 5. Lansering: what it turned into
-  knowAGuy,
-  projects,
-  sideQuest,
-  assetLoop,
-  htmlDeck,
+  ...STAGED.flatMap((group, k) => [chapter(k), ...group.map((s) => Object.assign(s, { stage: k }))]),
 ];
 
 // Help lines live in help.js so all on-screen copy can be edited in one place.

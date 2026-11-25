@@ -167,6 +167,14 @@ class Deck {
     const help = document.createElement('p');
     help.className = def.helpAt === 'top' ? 'help top' : 'help';
     el.appendChild(help);
+    // journey marker: where on the way from idea to launch this slide sits
+    if (def.stage !== undefined && !def.id.startsWith('kap-')) {
+      const j = document.createElement('div');
+      j.className = 'journey';
+      j.innerHTML = ['Idé', 'Plan', 'Bygg', 'Kvalitet', 'Lansering']
+        .map((n, k) => `<span class="${k < def.stage ? 'past' : k === def.stage ? 'cur' : ''}">${n}</span>`).join('<i></i>');
+      el.appendChild(j);
+    }
     this.current = { def, inst, el, ctx, help };
     this.index = index;
     this.step = step;
