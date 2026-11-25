@@ -142,9 +142,11 @@ export const HELP = {
   ],
   takeaways: [null],
   validate: [
-    'Spør før du bygger: hva finnes, hva koster det, hva mangler.',
-    'Kartet viser hvor det er trangt.',
-    'Det tomme feltet er ideen verdt å bygge.',
+    'Fire spørsmål før du bruker en time på å bygge.',
+    'Uten en konkret kunde finnes det ingen idé.',
+    'Betaler de allerede for noe lignende, er det et godt tegn.',
+    'Mange tilbydere er greit. Se etter det ingen gjør.',
+    'Kan du levere, og lønner det seg hele året?',
   ],
   launch: [
     'Ferdig er ikke solgt. Butikksiden må lages.',

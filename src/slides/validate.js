@@ -3,34 +3,47 @@ import * as D from '../engine/draw.js';
 import { chatPhone, FILL } from '../engine/props.js';
 
 /*
-  Check the idea before building it. A market map in four squares: modern / medieval props,
-  static / destructible. Claude fills it with what already exists; the empty square is the
-  gap worth building for.
-    0. The question, in the chat.
-    1. The map fills: plenty of static packs, some destructible modern ones.
-    2. Medieval and destructible: nearly empty. That is the one to build.
-  The market picture is illustrative.
+  Check the idea before starting. One everyday idea (firewood delivered to the door, as a
+  subscription) run through four checks, one card at a time, each answered in the chat.
+    0. The idea and the four questions; the cards are empty.
+    1. Kunde: city people with a fireplace and no car.
+    2. Betalingsvilje: they already pay extra for small sacks at the petrol station.
+    3. Konkurranse: plenty sell firewood, almost nobody delivers on a schedule.
+    4. Levere: the ordering and routes can be built; summer earns nothing. Verdict: start small.
+  The answers are illustrative.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     chat       x 80–520, y 262–782
-    map        column heads y 180–200; row heads x 580–700; cells x 720–1460, y 220–680
+    cards      2×2, x 600–1480, y 170–740 (each 420×270): label y+38, question y+72,
+               drawing y+92–202, answer y+244, status badge top right
 */
 
-const CELLS = [
-  { col: 0, row: 0, n: 14 }, { col: 1, row: 0, n: 12 },
-  { col: 0, row: 1, n: 5 }, { col: 1, row: 1, n: 0 },
+const CX = [600, 1060], CY = [170, 470], CW = 420, CH = 270;
+const CHECKS = [
+  { n: '01', label: 'KUNDE', q: 'Hvem er kunden?', a: 'Bor i by, har peis, mangler bil', ok: true },
+  { n: '02', label: 'BETALINGSVILJE', q: 'Vil de betale?', a: 'Betaler alt ekstra for små sekker', ok: true },
+  { n: '03', label: 'KONKURRANSE', q: 'Hvem gjør det i dag?', a: 'Mange selger, få leverer fast', ok: true },
+  { n: '04', label: 'LEVERE', q: 'Kan du bygge og levere?', a: 'Ja, men bare om vinteren', ok: false },
 ];
-const CX = [720, 1100], CY = [220, 460], CW = 360, CH = 220;
+const REPLIES = [
+  'Folk i byen med peis og uten bil. I dag bærer de sekker fra bensinstasjonen.',
+  'Ja. De betaler allerede ekstra for små sekker. Levering på døra er verdt mer.',
+  'Mange selger ved. Nesten ingen leverer fast på døra i byen.',
+  'Bestilling og ruter kan du bygge. Men om sommeren tjener du ingenting.',
+];
+const MUTED = { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
 
 export default {
   id: 'validate',
   title: 'Sjekk ideen først',
-  steps: 3,
+  steps: 5,
   notes: [
-    'Før jeg bygger noe: finnes det fra før, hva koster det, og hva mangler?',
-    'Kartet fylles. Massevis av statiske pakker. Noen som kan knuses, men moderne.',
-    'Middelalder som kan knuses: nesten ingenting. Den bygger jeg.',
+    'Et hverdagseksempel: ved levert på døra, som abonnement. Fire spørsmål før jeg starter.',
+    'Hvem er kunden?',
+    'Vil de betale? De gjør det allerede, bare dyrere og tyngre.',
+    'Konkurransen: mange selger ved, nesten ingen leverer fast.',
+    'Kan jeg levere? Ja, om vinteren. Så da starter jeg smått: vinter, én bydel.',
   ],
 
   create(ctx) {
@@ -43,11 +56,89 @@ export default {
     let P = {};
 
     const reset = () => { svg.innerHTML = ''; P = {}; };
-    const pack = (g, x, y) => {
-      const b = D.g(g, { 'data-bg': '' });
-      D.el('rect', { x, y, width: 46, height: 36, rx: 3, ...FILL('#8a6a4a', 2) }, b);
-      D.p(b, `M${x} ${y + 10} H${x + 46}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2 });
+
+    // ── the four drawings, each in a 380×110 box at (x, y) ──
+    function drawCustomer(g, x, y) {
+      // a block of flats, one window lit by a fire; an empty log basket
+      D.el('rect', { x: x + 40, y: y + 4, width: 150, height: 106, rx: 3, ...FILL('#5a4a3c', 2.5) }, g);
+      for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
+        const lit = r === 1 && c === 2;
+        D.el('rect', { x: x + 54 + c * 34, y: y + 14 + r * 32, width: 22, height: 20, rx: 2, style: `fill: ${lit ? '#ffb04a' : '#2a1f17'}; stroke: #1a120c`, 'stroke-width': 2 }, g);
+      }
+      D.el('rect', { x: x + 150, y: y - 14, width: 16, height: 20, ...FILL('#4a3c30', 2) }, g);
+      // empty basket
+      D.p(g, `M${x + 240} ${y + 70} L${x + 250} ${y + 110} H${x + 320} L${x + 330} ${y + 70} Z`, '', FILL('#8a6a4a', 2.5));
+      D.p(g, `M${x + 246} ${y + 84} H${x + 324} M${x + 249} ${y + 98} H${x + 321}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2 });
+      D.text(g, x + 285, y + 56, 'tom', 'ce', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-mono); letter-spacing: .1em; fill: var(--muted)' });
+    }
+    function sack(g, x, y, s = 1) {
+      const k = D.g(g, { transform: `translate(${x} ${y}) scale(${s})` });
+      D.p(k, 'M-34 0 L-28 -62 H28 L34 0 Z', '', FILL('#c9ad92', 2.5));
+      [-16, 0, 16].forEach((dx) => D.el('circle', { cx: dx, cy: -68, r: 9, ...FILL('#9a6a42', 2) }, k));
+      return k;
+    }
+    function drawPay(g, x, y) {
+      // the shop where they buy small sacks today, and a sack with a hefty price tag
+      D.el('rect', { x: x + 10, y: y + 20, width: 110, height: 90, rx: 6, ...FILL('#3a4a5a', 2.5) }, g);
+      D.el('rect', { x: x + 22, y: y + 32, width: 40, height: 44, rx: 3, ...FILL('#ffd23f', 2) }, g);
+      D.el('rect', { x: x + 70, y: y + 32, width: 38, height: 30, rx: 3, style: 'fill: #1a120c; stroke: #1a120c', 'stroke-width': 2 }, g);
+      sack(g, x + 200, y + 110, 0.85);
+      D.p(g, `M${x + 222} ${y + 52} L${x + 252} ${y + 40}`, '', { style: 'fill: none; stroke: #cfc3b2', 'stroke-width': 2.5 });
+      D.p(g, `M${x + 264} ${y + 22} H${x + 352} V${y + 58} H${x + 264} L${x + 252} ${y + 40} Z`, '', FILL('#fff3e3', 2.5));
+      D.text(g, x + 308, y + 47, 'kr kr kr', 'pt', { 'text-anchor': 'middle', style: 'font: 800 17px var(--font-display); fill: #1a120c' });
+    }
+    function pump(g, x, y) {
+      D.el('rect', { x, y, width: 34, height: 60, rx: 4, ...FILL('#8a8f96', 2.5) }, g);
+      D.el('rect', { x: x + 6, y: y + 8, width: 22, height: 14, rx: 2, style: 'fill: #1a120c' }, g);
+      D.p(g, `M${x + 34} ${y + 18} q16 4 12 30`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 4, 'stroke-linecap': 'round' });
+    }
+    function drawCompetition(g, x, y) {
+      // three sellers with sacks, and a delivery route nobody drives
+      [0, 1, 2].forEach((k) => { pump(g, x + 4 + k * 66, y + 50); sack(g, x + 56 + k * 66, y + 110, 0.42); });
+      D.p(g, `M${x + 236} ${y + 96} C${x + 276} ${y + 50} ${x + 324} ${y + 110} ${x + 368} ${y + 56}`, '', { ...MUTED, 'stroke-dasharray': '8 8' });
+      D.el('circle', { cx: x + 368, cy: y + 56, r: 8, ...FILL('#6b5a48', 2) }, g);
+      D.text(g, x + 300, y + 30, 'ingen fast', 'cr', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-mono); letter-spacing: .06em; fill: var(--muted)' });
+    }
+    function drawDeliver(g, x, y) {
+      // a van that runs loaded in winter and stands empty in summer
+      const van = (vx, vy, tone) => {
+        D.p(g, `M${vx} ${vy} V${vy - 44} H${vx + 70} L${vx + 92} ${vy - 24} V${vy} Z`, '', FILL(tone, 2.5));
+        D.el('rect', { x: vx + 72, y: vy - 40, width: 14, height: 14, rx: 2, style: 'fill: #a9c6d6; stroke: #1a120c', 'stroke-width': 2 }, g);
+        [vx + 20, vx + 70].forEach((cx) => D.el('circle', { cx, cy: vy, r: 10, ...FILL('#2a1d14', 2.5) }, g));
+      };
+      const flake = (cx, cy) => D.p(g, `M${cx - 14} ${cy} H${cx + 14} M${cx - 7} ${cy - 12} L${cx + 7} ${cy + 12} M${cx + 7} ${cy - 12} L${cx - 7} ${cy + 12}`, '', { style: 'fill: none; stroke: #a9c6d6', 'stroke-width': 3, 'stroke-linecap': 'round' });
+      flake(x + 30, y + 20);
+      van(x + 40, y + 100, '#ff5a1f');
+      sack(g, x + 76, y + 54, 0.3);
+      D.text(g, x + 92, y + 26, 'vinter', 'dw', { style: 'font: 700 15px var(--font-mono); letter-spacing: .06em; fill: var(--muted)' });
+      D.p(g, `M${x + 186} ${y + 6} V${y + 108}`, '', { style: 'fill: none; stroke: #4a3c30', 'stroke-width': 2, 'stroke-dasharray': '6 6' });
+      D.el('circle', { cx: x + 222, cy: y + 20, r: 12, ...FILL('#ffd23f', 2) }, g);
+      van(x + 236, y + 100, '#6b5a48');
+      D.text(g, x + 246, y + 26, 'sommer', 'ds', { style: 'font: 700 15px var(--font-mono); letter-spacing: .06em; fill: var(--muted)' });
+    }
+    const DRAW = [drawCustomer, drawPay, drawCompetition, drawDeliver];
+
+    function badge(g, x, y, ok) {
+      const b = D.g(g, { 'data-unit': '' });
+      D.el('circle', { cx: x, cy: y, r: 17, style: `fill: ${ok ? '#8fe3a2' : '#ffd23f'}; stroke: #1a120c`, 'stroke-width': 2.5 }, b);
+      if (ok) D.p(b, `M${x - 8} ${y} l5 6 l11 -12`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+      else D.p(b, `M${x - 8} ${y} H${x + 8}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 4, 'stroke-linecap': 'round' });
       return b;
+    }
+
+    const answer = (k, tl) => {
+      const c = P.cards[k], x = CX[k % 2], y = CY[Math.floor(k / 2)];
+      const t = P.chat.think(tl, 0.1, 1.0);
+      P.chat.reply(tl, REPLIES[k], t);
+      tl.to(c.slot, { opacity: 0, duration: 0.3 }, t);
+      const art = D.g(c.g, { 'data-bg': '' });
+      DRAW[k](art, x + 20, y + 92);
+      const a = D.text(c.g, x + 24, y + 244, CHECKS[k].a, 'ca', { style: 'font: 700 20px var(--font-display); fill: var(--fg)' });
+      const b = badge(c.g, x + CW - 34, y + 34, CHECKS[k].ok);
+      tl.fromTo(art, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.5 }, t + 0.2);
+      tl.fromTo(a, { opacity: 0 }, { opacity: 1, duration: 0.4 }, t + 0.5);
+      tl.fromTo(b, { opacity: 0, scale: 0.4, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, t + 0.9);
+      return t;
     };
 
     const play = (i) => {
@@ -58,46 +149,24 @@ export default {
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.chat = chatPhone(svg, 80, 262, 440, 520, { app: 'Claude', size: 18 });
         tl.fromTo(P.chat.root, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
-        P.chat.user(tl, 'Ødeleggbare props til Unreal. Finnes det fra før, hva koster det, og hva mangler?', 0.8);
-        // the empty map
-        const map = D.g(svg);
-        ['Moderne', 'Middelalder'].forEach((h, k) => D.text(map, CX[k] + CW / 2, 196, h, 'ch', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); letter-spacing: .12em; fill: var(--muted)' }));
-        ['Statiske', 'Kan knuses'].forEach((h, k) => D.text(map, 700, CY[k] + CH / 2 + 6, h, 'rh', { 'text-anchor': 'end', style: 'font: 700 18px var(--font-mono); letter-spacing: .06em; fill: var(--muted)' }));
-        P.cells = CELLS.map((c) => {
-          const cell = D.g(map, { 'data-unit': '' });
-          D.el('rect', { x: CX[c.col], y: CY[c.row], width: CW, height: CH, rx: 10, style: 'fill: #1d1510; stroke: #4a3c30', 'stroke-width': 2, 'data-bg': '' }, cell);
-          return { ...c, g: cell };
-        });
-        tl.fromTo(map, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.5);
-        P.map = map;
-      }
-
-      if (i === 1) {
-        // the map fills with what exists
-        const t = P.chat.think(tl, 0.1, 1.2);
-        P.chat.reply(tl, 'Mange middelalderpakker, men statiske. Noen kan knuses, men de er moderne.', t + 1.6);
-        P.cells.forEach((c, k) => {
-          for (let n = 0; n < c.n; n++) {
-            const x = CX[c.col] + 22 + (n % 6) * 56, y = CY[c.row] + 24 + Math.floor(n / 6) * 52;
-            const b = pack(c.g, x, y);
-            tl.fromTo(b, { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.25, ease: 'bounce.out' }, t + 0.1 + k * 0.3 + n * 0.04);
-          }
+        P.chat.user(tl, 'Idé: ved levert på døra, som abonnement. Hvem kjøper, vil de betale, hvem gjør det i dag, og kan jeg levere?', 0.8);
+        // four empty cards, the questions only
+        P.cards = CHECKS.map((c, k) => {
+          const x = CX[k % 2], y = CY[Math.floor(k / 2)];
+          const g = D.g(svg, { 'data-unit': '' });
+          D.el('rect', { x, y, width: CW, height: CH, rx: 12, style: 'fill: #1d1510; stroke: #4a3c30', 'stroke-width': 2.5, 'data-bg': '' }, g);
+          D.text(g, x + 24, y + 38, `${c.n}  ${c.label}`, 'cl', { style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+          D.text(g, x + 24, y + 72, c.q, 'cq', { style: 'font: 800 24px var(--font-display); fill: var(--fg)' });
+          const slot = D.el('rect', { x: x + 24, y: y + 92, width: CW - 48, height: 118, rx: 8, style: 'fill: none; stroke: #3a2f26', 'stroke-width': 2, 'stroke-dasharray': '8 6', 'data-bg': '' }, g);
+          tl.fromTo(g, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4 }, 1.2 + k * 0.15);
+          return { g, slot };
         });
       }
 
-      if (i === 2) {
-        // the gap
-        const gap = P.cells[3];
-        const ring = D.el('rect', { x: CX[1] - 6, y: CY[1] - 6, width: CW + 12, height: CH + 12, rx: 14, style: 'fill: none; stroke: var(--accent-2)', 'stroke-width': 5, opacity: 0, 'data-bg': '' }, svg);
-        tl.fromTo(ring, { opacity: 0 }, { opacity: 1, duration: 0.2, repeat: 3, yoyo: true }, 0.2);
-        tl.set(ring, { opacity: 1 }, 1.0);
-        const label = D.g(svg, { 'data-unit': '' });
-        D.text(label, CX[1] + CW / 2, CY[1] + CH / 2 - 4, 'Nesten tomt', 'gl', { 'text-anchor': 'middle', style: 'font: 800 30px var(--font-display); fill: var(--accent-2)' });
-        D.text(label, CX[1] + CW / 2, CY[1] + CH / 2 + 30, 'middelalder som kan knuses', 'gs', { 'text-anchor': 'middle', style: 'font: 600 19px var(--font-display); fill: var(--fg)' });
-        tl.fromTo(label, { opacity: 0, scale: 0.9, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(2)' }, 0.6);
-        P.chat.reply(tl, 'Middelalder som kan knuses: nesten ingenting. Prisnivå: midt i markedet.', 0.8);
-        P.chat.user(tl, 'Da bygger vi den.', 2.0);
-        ctx.focus(tl, [gap.g, ring, label, P.chat.root], 0.2);
+      if (i >= 1 && i <= 4) {
+        const t = answer(i - 1, tl);
+        if (i === 4) P.chat.user(tl, 'Da starter vi med vinter, i én bydel.', t + 1.8);
+        ctx.focus(tl, [P.cards[i - 1].g, P.chat.root], 0.1);
       }
       return tl;
     };
