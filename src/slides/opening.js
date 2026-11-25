@@ -15,6 +15,7 @@ import { figure, LOOK } from '../engine/characters.js';
 
 const BX = 860, FINISH = 1400, BW = FINISH - BX, BY = 210, ROW = 33, BH = 20;
 // how far each unfinished project got: all close, none over
+const DONE = 6; // the finished one, seventh on the list
 const NEAR = [0.9, 0.84, 0.94, 0.88, 0.92, 0.86, 0.95, 0.83, 0.9, 0.93, 0.87, 0.91, 0.85, 0.96];
 
 export default {
@@ -80,16 +81,16 @@ export default {
           const y = BY + k * ROW;
           const bar = D.g(g, { 'data-bg': '' });
           D.el('rect', { x: BX, y, width: BW, height: BH, rx: 6, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 2 }, bar);
-          const done = k === 0;
+          const done = k === DONE;
           const f = D.el('rect', { x: BX + 2, y: y + 2, width: 0, height: BH - 4, rx: 4, style: `fill: ${done ? '#8fe3a2' : '#a8774c'}` }, bar);
-          fills.push([f, done ? 1 : NEAR[k - 1]]);
+          fills.push([f, done ? 1 : NEAR[k - (k > DONE ? 1 : 0)]]);
           tl.fromTo(bar, { opacity: 0 }, { opacity: 1, duration: 0.25 }, 0.4 + k * 0.05);
         }
         // they all slow down just before the line; only one gets there
-        fills.forEach(([f, v], k) => tl.to(f, { attr: { width: (BW - 4) * v }, duration: k === 0 ? 2.2 : 1.8, ease: k === 0 ? 'power1.inOut' : 'expo.out' }, 1.2 + k * 0.04));
+        fills.forEach(([f, v], k) => tl.to(f, { attr: { width: (BW - 4) * v }, duration: k === DONE ? 2.2 : 1.8, ease: k === DONE ? 'power1.inOut' : 'expo.out' }, 1.2 + k * 0.04));
         const check = D.g(g, { 'data-unit': '' });
-        D.el('circle', { cx: FINISH + 40, cy: BY + BH / 2, r: 16, style: 'fill: #8fe3a2; stroke: #1a120c', 'stroke-width': 2.5 }, check);
-        D.p(check, `M${FINISH + 32} ${BY + 10} l6 6 l10 -11`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+        D.el('circle', { cx: FINISH + 40, cy: BY + DONE * ROW + BH / 2, r: 16, style: 'fill: #8fe3a2; stroke: #1a120c', 'stroke-width': 2.5 }, check);
+        D.p(check, `M${FINISH + 32} ${BY + DONE * ROW + 10} l6 6 l10 -11`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
         tl.fromTo(check, { opacity: 0, scale: 0.4, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, 3.4);
         P.you.expr(tl, { mouth: 'grin', brows: 'raised' }, 3.6);
         ctx.focus(tl, [g, P.you.root], 0.2);
