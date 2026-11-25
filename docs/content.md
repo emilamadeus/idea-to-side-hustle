@@ -39,7 +39,7 @@ Point: requirements matter more than technical instructions; the model often pic
   3. Distance and effort counters for both routes.
 - Applies to most work beyond single-file edits. No single anecdote; use an illustrated generic case.
 
-## Visual references beat descriptions [given] — built (src/slides/visual-ref.js): a thought cloud shows the house you have in mind. Attempt 1 (list prompt) builds the cheap knock-off: grey flat-roofed box, orange paint for "varm", a heat pump, mismatched plastic windows, kitchen, sofa and bed in one window; every box ticked, but it doesn't look like what you had in mind. Attempt 2 (new session, ChatGPT reference attached) builds close to the picture, a little plainer.
+## Visual references beat descriptions [given] — built (src/slides/visual-ref.js): a thought cloud shows the house you have in mind. Attempt 1 (list prompt) builds the cheap knock-off: grey flat-roofed box, orange paint for "varm", a heat pump, mismatched plastic windows, kitchen, sofa and bed in one window; every box ticked, but it doesn't look like what you had in mind. Attempt 2 (new session, ChatGPT reference attached) builds close to the picture, a little plainer. Then the real thing: the ChatGPT concept sheet and detail grid for the game, and the Unreal screenshot built from them (steps 3–4).
 Point: models check off text bullet points instead of reaching the actual target. A ChatGPT concept image gives a target to match.
 - Storyboard [proposed]:
   1. A checklist ("moderne", "varm", "åpen planløsning", "store vinduer") is fed in. The AI builds a house, ticking each box as it goes.

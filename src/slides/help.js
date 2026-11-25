@@ -43,6 +43,8 @@ export const HELP = {
     'Fire ord i prompten. Bildet i hodet ditt følger ikke med.',
     'Alle krav er krysset av. Det ligner bare ikke.',
     'Med et bilde treffer den nesten det du så for deg.',
+    'Ekte referanser: hele huset, og detaljene hver for seg.',
+    'Resultatet i spillet ligger tett på referansen.',
   ],
   show: [
     'Ord blir tolket. Den fikser noe, bare ikke det du mente.',

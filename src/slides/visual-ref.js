@@ -11,6 +11,8 @@ import { chatPhone, attempt, FILL } from '../engine/props.js';
        plastic windows, kitchen, sofa and bed seen through one window.
     2. Attempt 2, a new session: the thought becomes a real reference image (made in ChatGPT).
        The house is built against it: close to the picture, a little plainer.
+    3. The real thing: the ChatGPT concept sheet and detail grid used for the game.
+    4. The detail grid leaves; the game screenshot from Unreal takes its place.
 
   Layout zones (svg units):
     tip         x 80–540, y 110–240
@@ -18,7 +20,10 @@ import { chatPhone, attempt, FILL } from '../engine/props.js';
     attempt     x 560–900, y 140–174
     build area  x 600–1290, y 360–760 ; thought cloud / polaroid x 1200–1480, y 150–440
     thought dots y 250–300, from the cloud back to the prompt in the phone
+    photos      (steps 3–4) left x 100–720, right x 840–1500, y 270–683; labels y 718
 */
+const MEDIA = './media/visual-ref/';
+const PHOTO_Y = 270;
 
 const REQ = ['Moderne', 'Varm', 'Åpen planløsning', 'Store vinduer'];
 const PROMPT = 'Lag et hus. Moderne, varmt, åpen planløsning og store vinduer.';
@@ -72,11 +77,13 @@ const miniHouse = (g, x, y, w, h) => targetPic(g, x, y, w, h);
 export default {
   id: 'visual-ref',
   title: 'Visuelle referanser',
-  steps: 3,
+  steps: 5,
   notes: [
     'En helt vanlig prompt. Og bildet du har i hodet.',
     'Alle fire krav er oppfylt. Det ligner bare ikke på det du så for deg.',
     'Forsøk 2, ny økt. Bildet fra hodet ditt, laget i ChatGPT, sendt med. Nå treffer den.',
+    'Ekte eksempel fra spillet: konseptark og detaljer laget i ChatGPT.',
+    'Og slik ble det i Unreal.',
   ],
 
   create(ctx) {
@@ -88,6 +95,20 @@ export default {
     const tip = ctx.$('.tip');
     let P = {};
     let loops = [];
+    // preload so the photos never pop in half-decoded
+    ['concept-chatgpt', 'details-chatgpt', 'game-unreal'].forEach((f) => { new Image().src = `${MEDIA}${f}.webp`; });
+
+    // a real image in a UI frame, with a small label under it
+    function photo(file, x, w, h, label) {
+      const g = D.g(svg, { 'data-unit': '' });
+      const id = `vr-clip-${file}`;
+      const cp = D.el('clipPath', { id }, g);
+      D.el('rect', { x, y: PHOTO_Y, width: w, height: h, rx: 10 }, cp);
+      D.el('image', { href: `${MEDIA}${file}.webp`, x, y: PHOTO_Y, width: w, height: h, preserveAspectRatio: 'xMidYMid slice', 'clip-path': `url(#${id})`, 'data-bg': '' }, g);
+      D.el('rect', { x, y: PHOTO_Y, width: w, height: h, rx: 10, style: 'fill: none; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, g);
+      D.text(g, x, PHOTO_Y + h + 34, label, 'pl', { style: 'font: 700 15px var(--font-mono); letter-spacing: .12em; fill: var(--muted)' });
+      return g;
+    }
 
     // attempt 1: the knock-off, built one checklist item at a time
     function cheapHouse() {
@@ -129,6 +150,7 @@ export default {
         P.att = attempt(svg, 560, 140);
         P.att.show(tl, 'FORSØK 1', 0.5);
         const ground = D.p(svg, `M560 ${GROUND} H1480`, 'thin');
+        P.ground = ground;
         tl.add(D.drawOn(ground, { duration: 0.6 }), 0.5);
         // what you actually have in mind
         const cloud = D.g(svg, { 'data-unit': '' });
@@ -201,6 +223,26 @@ export default {
         tl.fromTo(good, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }, t1);
         P.chat.reply(tl, 'Bygget etter referansen.', t1 + 0.6);
         ctx.focus(tl, [good, pol, zoom, P.chat.root, P.att.g], 0.4);
+        P.scene = [good, pol, zoom, P.chat.root, P.att.g, P.ground];
+      }
+
+      if (i === 3) {
+        // the illustration leaves; the real references from the game arrive
+        tl.to(P.scene, { opacity: 0, duration: 0.4 }, 0);
+        P.concept = photo('concept-chatgpt', 100, 620, 413, 'REFERANSE · CHATGPT');
+        P.details = photo('details-chatgpt', 840, 620, 413, 'DETALJER · CHATGPT');
+        tl.fromTo(P.concept, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 0.5);
+        tl.fromTo(P.details, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 1.0);
+      }
+
+      if (i === 4) {
+        // one leaves before the next arrives: the detail grid out, the game in
+        tl.to(P.details, { opacity: 0, duration: 0.4 }, 0);
+        const arrow = D.g(svg, { 'data-bg': '' });
+        D.p(arrow, `M740 ${PHOTO_Y + 206} H812 M796 ${PHOTO_Y + 192} L814 ${PHOTO_Y + 206} L796 ${PHOTO_Y + 220}`, '', { style: 'fill: none; stroke: var(--accent)', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+        const game = photo('game-unreal', 840, 660, 413, 'I SPILLET · UNREAL');
+        tl.fromTo(arrow, { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.4 }, 0.5);
+        tl.fromTo(game, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.6 }, 0.8);
       }
       return tl;
     };
