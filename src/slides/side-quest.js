@@ -149,10 +149,12 @@ export default {
       tl.to(splash, { opacity: 0, duration: 0.4 }, 1.2);
       return tl;
     }
-    // Slip prints out of the bar (top-down reveal); later it falls into the drip.
-    const printSlip = (slip, rot) => gsap.fromTo(slip,
-      { opacity: 1, clipPath: 'inset(0 0 100% 0)', rotation: 0, y: 0 },
-      { clipPath: 'inset(0 0 0% 0)', rotation: rot, duration: 0.9, ease: 'steps(9)' });
+    // Slip feeds out of the bar (a smooth top-down reveal, settling at a slight tilt); later it
+    // falls into the drip.
+    const printSlip = (slip, rot) => gsap.timeline()
+      .fromTo(slip, { opacity: 1, clipPath: 'inset(0 0 100% 0)', rotation: 0, y: -6 },
+        { clipPath: 'inset(0 0 0% 0)', y: 0, duration: 1.0, ease: 'power2.out' }, 0)
+      .to(slip, { rotation: rot, duration: 0.6, ease: 'back.out(2)' }, 0.75);
     const dropSlip = (slip) => gsap.to(slip, { y: 60, opacity: 0, rotation: '+=14', duration: 0.5, ease: 'power2.in' });
 
     // Deadline: dashed vertical line + label under the chart + pencil multiplier.
