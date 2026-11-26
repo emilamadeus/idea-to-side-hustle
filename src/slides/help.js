@@ -33,7 +33,7 @@ export const HELP = {
   ],
   planning: [
     'Én og én: hver ny oppgave river opp noe som er bygget.',
-    'Hele produktspecen først. Bare produktvalg kommer til deg.',
+    'Du beskriver hva som må fungere. AI-en spør og planlegger.',
     'Så bygges alt i riktig rekkefølge, én gang.',
   ],
   goal: [
