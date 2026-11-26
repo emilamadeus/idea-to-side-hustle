@@ -467,12 +467,12 @@ export default {
         if (canvas) tl.to(canvas, { opacity: 0, duration: 0.6 }, 0);
         tl.to(zTex, { opacity: 0, duration: 0.3 }, 0);
         const rem = P.assetBlock;
-        cutTo(tl, AFTER3.assetRest - rem.w + 14, ROW.asset, 0.1);
+        cutTo(tl, AFTER3.assetRest + 2, ROW.asset, 0.1);           // the pushed rest starts here
         tl.call(() => typing(), null, 0.7);
         tl.to([rem.hatch, rem.zig], { opacity: 0, duration: 0.4 }, 0.3);
         const s = { v: 0 };
         tl.to(s, { v: 1, duration: 2.4, ease: 'power1.inOut', onUpdate: () => { rem.rfill.setAttribute('width', rem.w * s.v); setPct(P.asset, ASSET.block + (1 - ASSET.block) * s.v); } }, 0.7);
-        tl.to(P.dev.g, { x: AFTER3.assetRest - 40, duration: 2.4, ease: 'power1.inOut' }, 0.7);
+        tl.to(P.dev.g, { x: AFTER3.assetRest + rem.w + 2, duration: 2.4, ease: 'power1.inOut' }, 0.7);
         tl.call(() => stopTyping(), null, 3.1);
         counter(zAsset, 5000000, 3, 'expo.in', 0.4, tl);
         P.subA = D.text(svg, 120, ROW.asset + 40, '5 000 000 assets', 'mono', { style: 'font: 400 18px var(--font-mono); fill: var(--accent-2)' });
@@ -488,8 +488,8 @@ export default {
         stopTyping();
         tl.to(zAsset, { opacity: 0, duration: 0.3 }, 0);
         const rem = P.gameBlock;
-        const gx = AFTER3.gameRest - rem.w;
-        cutTo(tl, gx + 14, ROW.game, 0.1);
+        const gx = AFTER3.gameRest;                                 // the pushed rest starts here
+        cutTo(tl, gx + 2, ROW.game, 0.1);
         tl.to([rem.hatch, rem.zig], { opacity: 0, duration: 0.4 }, 0.2);
         const target = (GAME.final - GAME.block) / (1 - GAME.block);
         tl.call(() => typing(), null, 0.7);
@@ -515,7 +515,8 @@ export default {
         svg.insertBefore(spot, svg.firstChild.nextSibling);
         tl.to(spot, { opacity: 0.08, duration: 0.4 }, 0);
         slump(tl, 14, 0, 0.5);
-        const at = { game: [AFTER3.gameRest - 30, ROW.game], asset: [AFTER3.assetRest - 30, ROW.asset], tex: [TEX.x + TEX.w - 30, ROW.tex] };
+        const gEnd = AFTER3.gameRest + P.gameBlock.w * ((GAME.final - GAME.block) / (1 - GAME.block));
+        const at = { game: [gEnd + 2, ROW.game], asset: [AFTER3.assetRest + P.assetBlock.w + 2, ROW.asset], tex: [TEX.x + TEX.w + 12, ROW.tex] };
         const order = ['asset', 'tex', 'game', 'tex', 'asset', 'game'];
         P.th = think(tl, 'Hvilken nå?', 0.6);
         const hop = gsap.timeline({ repeat: -1 });
