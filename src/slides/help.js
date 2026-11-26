@@ -60,7 +60,7 @@ export const HELP = {
     'Hovedsessionen gjør jobben selv. Den har hele konteksten.',
     'Hjelpere passer til research: kort oppdrag, raskt svar.',
     'Gir du den hele jobben, kan den bli ferdig uten å si fra.',
-    'Hovedsessionen må selv gå og lete, etter å ha ventet.',
+    'Leaden må avbryte sitt arbeid for å sjekke status på hjelperens jobb.',
   ],
   watchdog: [
     'Sjekk hvert 10. minutt holder sessionene i gang over natta.',
