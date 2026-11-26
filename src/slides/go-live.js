@@ -24,7 +24,8 @@ import { liveMap } from '../engine/livemap.js';
   X empties the shop (rehearsal), C closes it again.
 
   Layout zones (svg units):
-    step 0–1  browser x 330–1270, y 150–710 · button x 640–960, y 735–795
+    tip       x 80–540, y 110–240
+    step 0–1  browser x 580–1520, y 150–710 · button x 890–1210, y 735–795
               (step 1: browser scaled to x 80–550, y 250–530; QR card x 876–1324, y 146–594,
                "Bestill ved." y 680, address y 728)
     step 2–3  feed x 80–520, y 236–640 · small QR x 80–190, y 662–772 · map (DOM) x 580–1520, y 140–780
@@ -64,7 +65,10 @@ export default {
 
   create(ctx) {
     const { el, stage, shapes, fx } = ctx;
-    el.innerHTML = `<div class="pin-tl label">Lansering</div>`;
+    el.innerHTML = `
+      <div class="pin-tl label">Lansering</div>
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.4)">Lanser før det<br>er <em>perfekt</em>.</h2>`;
+    const tip = ctx.$('.tip');
     const svg = D.stage(el);
     const control = new URLSearchParams(location.search).get('view') !== 'preview';
     let P = {};
@@ -129,16 +133,18 @@ export default {
 
     // ---- step 0–1: the browser and the button ----
     function browser() {
+      // drawn at x 330 and moved right, clear of the tip at top left
       const g = D.g(svg, { 'data-unit': '' });
-      D.el('rect', { x: 330, y: 150, width: 940, height: 560, rx: 16, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3 }, g);
-      D.el('rect', { x: 332, y: 152, width: 936, height: 48, rx: 14, style: 'fill: #1d1510' }, g);
-      [0, 1, 2].forEach((k) => D.el('circle', { cx: 358 + k * 20, cy: 176, r: 6, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, g));
-      D.el('rect', { x: 470, y: 161, width: 660, height: 30, rx: 15, style: 'fill: #2a1d14' }, g);
-      const lock = D.g(g, { opacity: 0 });
+      const b = D.g(g, { transform: 'translate(250 0)' });
+      D.el('rect', { x: 330, y: 150, width: 940, height: 560, rx: 16, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3 }, b);
+      D.el('rect', { x: 332, y: 152, width: 936, height: 48, rx: 14, style: 'fill: #1d1510' }, b);
+      [0, 1, 2].forEach((k) => D.el('circle', { cx: 358 + k * 20, cy: 176, r: 6, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, b));
+      D.el('rect', { x: 470, y: 161, width: 660, height: 30, rx: 15, style: 'fill: #2a1d14' }, b);
+      const lock = D.g(b, { opacity: 0 });
       D.el('rect', { x: 490, y: 175, width: 12, height: 10, rx: 2, style: 'fill: #8fe3a2' }, lock);
       D.p(lock, 'M492.5 175 v-3 a3.5 3.5 0 0 1 7 0 v3', '', { style: 'fill: none; stroke: #8fe3a2', 'stroke-width': 2 });
-      const addr = D.text(g, 512, 182, 'localhost:8787', 'ad', { style: 'font: 700 16px var(--font-mono); fill: var(--muted)' });
-      const page = D.g(g, { 'data-bg': '' });
+      const addr = D.text(b, 512, 182, 'localhost:8787', 'ad', { style: 'font: 700 16px var(--font-mono); fill: var(--muted)' });
+      const page = D.g(b, { 'data-bg': '' });
       varmPeis(page, 340, 206, 920, 496, { bar: true });
       return { g, addr, lock };
     }
@@ -146,9 +152,9 @@ export default {
       // a real button: clicking it (or the clicker) takes the step
       const g = D.g(svg, { 'data-unit': '', 'data-interactive': '', style: 'cursor: pointer' });
       g.addEventListener('click', () => { if (step === 0) ctx.deck?.next(); });
-      const glow = D.el('rect', { x: 630, y: 727, width: 340, height: 76, rx: 38, style: 'fill: #ff5a1f', opacity: 0.25 }, g);
-      D.el('rect', { x: 640, y: 735, width: 320, height: 60, rx: 30, ...FILL('#ff5a1f', 3) }, g);
-      D.text(g, 800, 775, 'Gå live', 'gl', { 'text-anchor': 'middle', style: 'font: 800 28px var(--font-display); fill: #1a120c' });
+      const glow = D.el('rect', { x: 880, y: 727, width: 340, height: 76, rx: 38, style: 'fill: #ff5a1f', opacity: 0.25 }, g);
+      D.el('rect', { x: 890, y: 735, width: 320, height: 60, rx: 30, ...FILL('#ff5a1f', 3) }, g);
+      D.text(g, 1050, 775, 'Gå live', 'gl', { 'text-anchor': 'middle', style: 'font: 800 28px var(--font-display); fill: #1a120c' });
       return { g, glow };
     }
     // the QR code as one crisp path
@@ -238,6 +244,7 @@ export default {
       if (i === 0) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
+        tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.win = browser();
         P.btn = goButton();
         tl.fromTo(P.win.g, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 0.2);
@@ -262,7 +269,7 @@ export default {
         tl.to(P.win.lock, { opacity: 1, duration: 0.2 }, 0.66);
         tl.call(() => !instant && send({ type: 'open' }), null, 0.66);
         // the window steps aside; the QR code arrives
-        tl.to(P.win.g, { scale: 0.5, x: -250, y: 100, svgOrigin: '330 150', duration: 0.8, ease: 'power3.inOut' }, 1.5);
+        tl.to(P.win.g, { scale: 0.5, x: -500, y: 100, svgOrigin: '580 150', duration: 0.8, ease: 'power3.inOut' }, 1.5);
         P.qr = D.g(svg, { 'data-unit': '' });
         qr(P.qr, 876, 146, 448, 30);
         D.text(P.qr, 1100, 680, 'Bestill ved.', 'qb', { 'text-anchor': 'middle', style: 'font: 800 60px var(--font-display); fill: var(--fg)' });
