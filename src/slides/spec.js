@@ -10,8 +10,8 @@ import { chatPhone, FILL } from '../engine/props.js';
     3. A colleague asks for status; "Kopier status" drops a short summary into the reply. 👍
     4. They ask about one task; that row's own copy button drops all of it: status, why, what
        it waits for, the plan.
-    5. Each task also has "✻ prompt": a short prompt for that task, written from where it stands.
-       Pasted into Claude, which picks it up.
+    5. Each task also has "✻ prompt": a one-line prompt with the task's id (check its status in
+       the spec and go from there). Pasted into Claude, which reads the spec and picks it up.
     6. The page becomes the real spec of this talk, live.
 
   Layout zones (svg units):
@@ -48,7 +48,7 @@ export default {
     'Røntgen: det skjulte laget som bare agentene leser.',
     'Kollega spør om status. Kopier, lim inn.',
     'Spør de om én oppgave, kopierer du den: status, hvorfor, hva den venter på, planen.',
-    'Hver oppgave har også en ferdig prompt, skrevet ut fra hvor den står. Lim inn, så fortsetter Claude.',
+    'Hver oppgave har også en prompt-knapp: «Sjekk status på K3 og fortsett derfra.» Claude leser specen selv.',
     'Og dette er specen for denne presentasjonen.',
   ],
 
@@ -236,9 +236,9 @@ export default {
         tl.fromTo(fly, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 1.7);
         tl.to(fly, { x: -640, y: 160, opacity: 0, duration: 0.6, ease: 'power2.in' }, 1.8);
         tl.to(cur, { opacity: 0, duration: 0.3 }, 2.0);
-        claude.user(tl, ['Fortsett: varsel når kamera går', 'offline. Blokkert til gateway', 'build 412 er ute. Da: lytt på', 'event-strømmen, varsle innen', 'ett minutt, oppdater specen.'], 2.3);
+        claude.user(tl, ['Sjekk status på K3 i spec.html', 'og fortsett derfra.'], 2.3);
         const t = claude.think(tl, 3.1, 1.0);
-        claude.reply(tl, 'Build 412 er ute. Starter på varselet.', t);
+        claude.reply(tl, 'K3 venter på G7. Build 412 er ute nå, så jeg starter på K3.', t);
         ctx.focus(tl, [claude.root, r.g, cur, fly], 0.3);
         P.chat = claude;
       }

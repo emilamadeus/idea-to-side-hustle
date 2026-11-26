@@ -67,7 +67,7 @@ Point: for bigger work, the AI keeps an HTML spec up to date as it works: titles
   2. X-ray mode: the page slides apart to show the hidden layer only agents read (the instruction comment and agent notes).
   3. A colleague asks for status. "Kopier status" drops a short, readable summary into the reply (Opptaksregler: ferdig. Privacy mode: i arbeid. Offline-varsel: venter på gateway build 412.); they react with a thumbs up.
   4. They ask about one task. That row's own copy button drops everything about it: status, why it is blocked, what it waits for, the plan.
-  5. Each task also has a "✻ prompt" button: a short prompt for that task, written from where it stands. Pasted into Claude, which picks it up ("Build 412 er ute. Starter på varselet.").
+  5. Each task also has a "✻ prompt" button: one line with the task id, "Sjekk status på K3 i spec.html og fortsett derfra." Claude reads the spec itself: "K3 venter på G7. Build 412 er ute nå, så jeg starter på K3."
   6. The page becomes this talk's own spec, live.
 
 ## Parallel sessions with a master session [given]
