@@ -37,8 +37,8 @@ import goLive from './go-live.js';
 //   1. The journey from idea to launch, five stages; each opens with chapter(k) and its slides get
 //      `stage` so the corner marker shows where we are. Only slides that move the product forward.
 //   2. Arbeidsflyt: how you run the AI day to day (sessions, helpers, watchdog, remote, effort, work).
-//   3. Bak kulissene: side effects and the meta finale.
-//   4. Ekte prosjekter: the speaker's live sites, and the Fab pack that sold.
+//   3. Bak kulissene: side effects.
+//   4. Ekte prosjekter: the speaker's live sites, the Fab pack that sold, and the meta finale.
 // Slides in parts 2–4 get `part`, which the corner marker shows instead of the journey.
 // Callbacks that depend on order: full-scope "Alt fungerer." → fails "Fikset!"; helpers → watchdog;
 //   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop (right after it).
@@ -51,8 +51,8 @@ const STAGED = [
 ];
 const PARTS = [
   { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, gateway] },
-  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, knowAGuy, alwaysWorking, htmlDeck] },
-  { name: 'Ekte prosjekter', slides: [projects, launch] },
+  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, knowAGuy, alwaysWorking] },
+  { name: 'Ekte prosjekter', slides: [projects, launch, htmlDeck] },
 ];
 export const slides = [
   title,
