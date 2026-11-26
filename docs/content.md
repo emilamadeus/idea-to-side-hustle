@@ -206,8 +206,12 @@ Point: scope up a batch of tasks before any implementation. Always run in auto m
   2. Attempt 2, new session in auto mode, "Kun planlegging": you hand over the spec (Ved på døra, uten å bære · Folk i byen med peis · Vipps, SMS før levering · Ikke nå: sommersalg) and everything that has to work, in your own words and order ("Må fungere": Bestilling, Abonnement, Pause, Varsler, Kunder, Bydeler). The build order is the AI's job. It asks what it needs ("Skal kundene kunne pause abonnementet?" "Ja." · "Betaler de per levering eller per måned?" "Per levering."), then "Da har jeg det jeg trenger." and numbers the sections itself: Bydeler 1, Kunder 2, Abonnement 3, Pause 4, Bestilling 5, Varsler 6.
   3. Built in one pass, in that order.
 
-## Skills / custom commands [given, aside]
-Point: used rarely, only for very specific, very repetitive workflows (e.g. the ChatGPT skill in the asset pipeline). Not a section of its own; mention where it appears.
+## Skills / custom commands [given; a page of its own in Del 2]
+Point: turn what you repeat into a skill. Used rarely, for very specific and repetitive workflows.
+- The real example, from the 3D asset pipeline (the asset loop): Claude does all the modelling, but to hit the target quality and look of each asset it needs reference/concept images. Claude described in the shared file exactly how it wanted those images, and wrote a skill for ChatGPT that delivers exactly the concept images Claude asks for, in the style Claude asks for, saved to folders the prompt decides in advance.
+- Usage became one line: "<concept-image-skill> <era> <category> <sub-category> <amount>", e.g. "concept-image-skill medieval castle furniture 50".
+- The output comes back consistent: the same style every time, as Claude envisioned it, in a form that fits Claude's workflow.
+- Triggered two ways: by the speaker manually, or by ChatGPT reading the order from the shared file.
 
 ## Show, don't describe [given]
 - Built: src/slides/show.js. The firewood order page on a phone.
