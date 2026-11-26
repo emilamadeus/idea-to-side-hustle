@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 
 /*
-  Zoom-out: the slides as panels floating in the particle space, joined as a linked list.
+  Zoom-out: the slides as panels floating in the particle space, joined as a linked list by
+  streams of light particles that run from edge to edge through the gaps, never across a panel.
     level 1  the current section (e.g. Plan) in a gently curved row
     level 2  the whole talk: one column per section, in talk order, joined into one chain
   The current slide starts as a full-size panel exactly over the 16:9 frame, so the slide
@@ -16,7 +17,6 @@ import gsap from 'gsap';
 
 const ACCENT = new THREE.Color('#ff5a1f');
 const EDGE = new THREE.Color('#5a4636');
-const LINK = '#8a6a4a';
 const STAGES = ['Idé', 'Plan', 'Bygg', 'Kvalitet', 'Lansering'];
 
 export function createZoom(deck, stage) {
@@ -95,32 +95,92 @@ export function createZoom(deck, stage) {
   }
   const labels = groups.map((g) => label(g.name));
 
-  // the chain between consecutive panels: thick enough for AirPlay (no 1px lines)
-  let links = [];
-  const linkMat = new THREE.MeshBasicMaterial({ color: LINK, transparent: true, opacity: 0, toneMapped: false });
-  const nodeGeo = new THREE.SphereGeometry(1, 12, 8);
-  function rebuildLinks(layout, r) {
-    links.forEach((m) => { world.remove(m); m.geometry.dispose?.(); });
-    links = [];
-    const order = layout.order;
-    for (let k = 0; k < order.length - 1; k++) {
-      const a = layout.pos[order[k]], b = layout.pos[order[k + 1]];
-      const A = new THREE.Vector3(a.x, a.y, a.z - 0.05), B = new THREE.Vector3(b.x, b.y, b.z - 0.05);
-      const len = A.distanceTo(B);
-      const tube = new THREE.Mesh(new THREE.CylinderGeometry(r, r, len, 8), linkMat);
-      tube.position.copy(A).add(B).multiplyScalar(0.5);
-      tube.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), B.clone().sub(A).normalize());
-      world.add(tube);
-      links.push(tube);
-      // a node where the chain leaves each panel
-      const dir = B.clone().sub(A).normalize();
-      const out = A.clone().add(dir.multiplyScalar(Math.min(len * 0.5, (a.s * W0) * 0.5 * Math.abs(dir.x) + (a.s * H0) * 0.5 * Math.abs(dir.y) + 0.12)));
-      const node = new THREE.Mesh(nodeGeo, linkMat);
-      node.scale.setScalar(r * 2.6);
-      node.position.copy(out);
-      world.add(node);
-      links.push(node);
+  // the chain between consecutive panels: streams of light particles. Each stream runs from
+  // the edge of one panel to the edge of the next, recomputed every frame (the panels float),
+  // and goes round through the gaps (never across a panel): straight down a column, straight
+  // along a row, or an elbow through the gap between two columns.
+  const dot = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d');
+    const g = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.35, 'rgba(255,220,180,.55)'); g.addColorStop(1, 'rgba(255,160,90,0)');
+    x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  })();
+  const streamMat = new THREE.PointsMaterial({ size: 0.12, map: dot, transparent: true, opacity: 0, depthWrite: false,
+    blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true, toneMapped: false });
+  const K = 46; // particles per stream
+  let streams = [];
+  function rebuildStreams(L) {
+    streams.forEach((st) => { world.remove(st.points); st.points.geometry.dispose(); });
+    streams = [];
+    const warm = new THREE.Color('#ff7a2f'), cream = new THREE.Color('#ffe2b8');
+    for (let k = 0; k < L.order.length - 1; k++) {
+      const geom = new THREE.BufferGeometry();
+      const pos = new Float32Array(K * 3), col = new Float32Array(K * 3);
+      const phase = new Float32Array(K), wob = new Float32Array(K);
+      for (let j = 0; j < K; j++) {
+        phase[j] = Math.random(); wob[j] = Math.random() * Math.PI * 2;
+        const c = warm.clone().lerp(cream, Math.random()).multiplyScalar(0.8 + Math.random() * 0.7);
+        col.set([c.r, c.g, c.b], j * 3);
+      }
+      geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geom.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const points = new THREE.Points(geom, streamMat);
+      points.frustumCulled = false;
+      world.add(points);
+      streams.push({ a: L.order[k], b: L.order[k + 1], points, phase, wob });
     }
+    streamMat.size = L.r * 4.4;
+  }
+  // where a panel is right now (it floats and lifts), and its half size including the edge
+  const box = (p) => {
+    const s = p.holder.scale.x, k = p.mesh.scale.x;
+    return {
+      x: p.holder.position.x, y: p.holder.position.y + p.mesh.position.y * s, z: p.holder.position.z + p.mesh.position.z * s,
+      hw: (W0 / 2) * s * k * 1.035, hh: (H0 / 2) * s * k * 1.06,
+    };
+  };
+  function route(A, B, m) {
+    const dx = B.x - A.x, dy = B.y - A.y;
+    if (Math.abs(dx) < A.hw * 0.5) { // same column
+      const sy = Math.sign(dy) || -1;
+      return [[A.x, A.y + sy * (A.hh + m), A.z], [B.x, B.y - sy * (B.hh + m), B.z]];
+    }
+    const sx = Math.sign(dx);
+    const ax = A.x + sx * (A.hw + m), bx = B.x - sx * (B.hw + m);
+    if (Math.abs(dy) < A.hh * 0.5) return [[ax, A.y, A.z], [bx, B.y, B.z]]; // same row
+    const mx = (A.x + sx * A.hw + B.x - sx * B.hw) / 2; // the middle of the gap between the columns
+    const mz = (A.z + B.z) / 2;
+    return [[ax, A.y, A.z], [mx, A.y, mz], [mx, B.y, mz], [bx, B.y, B.z]];
+  }
+  function flowStreams(t) {
+    const m = layout ? layout.r * 2.2 : 0.1;
+    streams.forEach((st) => {
+      const pts = route(box(panels[st.a]), box(panels[st.b]), m);
+      const seg = [], len = [];
+      let total = 0;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const [x0, y0, z0] = pts[i], [x1, y1, z1] = pts[i + 1];
+        const l = Math.hypot(x1 - x0, y1 - y0, z1 - z0);
+        seg.push([x0, y0, z0, x1, y1, z1, l]); len.push(total); total += l;
+      }
+      const arr = st.points.geometry.attributes.position.array;
+      for (let j = 0; j < K; j++) {
+        const u = ((st.phase[j] + t * 0.55 / Math.max(total, 0.3)) % 1) * total;
+        let i = seg.length - 1;
+        while (i > 0 && len[i] > u) i--;
+        const [x0, y0, z0, x1, y1, z1, l] = seg[i];
+        const f = l ? (u - len[i]) / l : 0;
+        // a little sideways wobble, across the direction of travel
+        const w = Math.sin(t * 2.4 + st.wob[j]) * layout.r * 1.4;
+        const nx = l ? -(y1 - y0) / l : 0, ny = l ? (x1 - x0) / l : 0;
+        arr[j * 3] = x0 + (x1 - x0) * f + nx * w;
+        arr[j * 3 + 1] = y0 + (y1 - y0) * f + ny * w;
+        arr[j * 3 + 2] = z0 + (z1 - z0) * f;
+      }
+      st.points.geometry.attributes.position.needsUpdate = true;
+    });
   }
 
   // ── layouts ──
@@ -128,8 +188,8 @@ export function createZoom(deck, stage) {
   function layoutSection(gi) {
     const items = groups[gi].items, n = items.length;
     const cam = { pos: [0, 0, 16], look: [0, 0, -4] }, zP = -4, d = 16 - zP;
-    const s = Math.min(0.3, (0.86 * viewW(d)) / (n * 1.22 * W0));
-    const step = 1.22 * W0 * s;
+    const s = Math.min(0.28, (0.9 * viewW(d)) / (n * 1.42 * W0));
+    const step = 1.42 * W0 * s;
     const pos = {};
     items.forEach((i, k) => {
       const x = (k - (n - 1) / 2) * step;
@@ -172,8 +232,8 @@ export function createZoom(deck, stage) {
 
   function apply(L, { dur = 1.4, from = null } = {}) {
     layout = L;
-    rebuildLinks(L, L.r);
-    gsap.fromTo(linkMat, { opacity: 0 }, { opacity: 0.9, duration: 0.5, delay: dur * 0.6 });
+    rebuildStreams(L);
+    gsap.fromTo(streamMat, { opacity: 0 }, { opacity: 1, duration: 0.6, delay: dur * 0.7 });
     panels.forEach((p) => {
       const t = L.pos[p.i];
       gsap.killTweensOf([p.holder.position, p.holder.scale, p.mat, p.edgeMat]);
@@ -237,7 +297,7 @@ export function createZoom(deck, stage) {
     const p = panels[open];
     panels.forEach((q) => { if (q !== p) gsap.to([q.mat, q.edgeMat], { opacity: 0, duration: 0.4 }); });
     labels.forEach((m) => gsap.to(m.material, { opacity: 0, duration: 0.3 }));
-    gsap.to(linkMat, { opacity: 0, duration: 0.3 });
+    gsap.to(streamMat, { opacity: 0, duration: 0.3 });
     p.holder.visible = true;
     gsap.to(p.holder.position, { x: 0, y: 0, z: 0, duration: 1.1, ease: 'power3.inOut' });
     gsap.to(p.holder.scale, { x: 1, y: 1, z: 1, duration: 1.1, ease: 'power3.inOut' });
@@ -291,6 +351,7 @@ export function createZoom(deck, stage) {
       m.scale.set(k, k, 1); p.edge.scale.set(1.035 * k, 1.06 * k, 1);
       m.position.z = p.lift.v * 0.6; p.edge.position.z = m.position.z - 0.02;
     });
+    if (streams.length) flowStreams(t);
     if (level && !busy) {
       const h = pick();
       if (h !== hover) { hover = h; document.body.style.cursor = h >= 0 ? 'pointer' : ''; paintEdges(); }
