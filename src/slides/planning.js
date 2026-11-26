@@ -4,7 +4,8 @@ import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
 
 /*
   Tip: plan the whole batch first, build after. Example: the firewood subscription from the
-  idea stage (ordering, notifications, customers, delivery zones, subscription, routes).
+  idea stage. Step 0 asks for what a founder would, in that order: ordering, a subscription
+  every 14 days, pause in January, one district at a time; each breaks what is built.
     0. Attempt 1: one task at a time. Each new task needs something under an earlier one,
        so the stack comes apart and is rebuilt. Twice.
     1. Attempt 2 (new session): the whole product spec goes in with the prompt (goal, users,
@@ -23,8 +24,8 @@ import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
 
 const BASE = 740, BW = 220, BH = 64, BX = 1040 - BW / 2;
 // the firewood subscription from the idea stage
-const COLORS = { Bestilling: '#c4562a', Varsler: '#9a4a22', Kunder: '#55603a', Abonnement: '#2f5b5a', Soner: '#7e2f45', Ruter: '#3c4a5c' };
-const FINAL = ['Soner', 'Kunder', 'Abonnement', 'Bestilling', 'Ruter', 'Varsler'];
+const COLORS = { Bestilling: '#c4562a', Varsler: '#9a4a22', Kunder: '#55603a', Abonnement: '#2f5b5a', Bydeler: '#7e2f45', Pause: '#3c4a5c' };
+const FINAL = ['Bydeler', 'Kunder', 'Abonnement', 'Pause', 'Bestilling', 'Varsler'];
 // the product spec handed over before any work starts
 const SPEC = [
   ['MÅL', 'Ved på døra, uten å bære'],
@@ -45,7 +46,7 @@ export default {
   title: 'Planlegg først',
   steps: 3,
   notes: [
-    'Én oppgave om gangen: hver ny oppgave må under en gammel. Rives og bygges på nytt.',
+    'Én forespørsel om gangen, slik en gründer tenker dem: bestilling, abonnement, pause, én bydel. Hver river opp det som er bygget.',
     'Ny session i auto mode. Hele produktspecen går inn først: mål, brukere, alle funksjoner, krav, hva som ikke er med. «Kun planlegging.» Bare produktbeslutninger kommer til deg.',
     'Så bygges alt i én runde.',
   ],
@@ -106,35 +107,36 @@ export default {
         P.ground = D.p(svg, `M600 ${BASE} H1480`, 'thin');
         P.site = D.g(svg);
         const b = {};
-        ['Bestilling', 'Varsler', 'Kunder', 'Soner'].forEach((n) => { b[n] = block(P.site, n); gsap.set(b[n], { opacity: 0 }); });
+        ['Bestilling', 'Abonnement', 'Pause', 'Bydeler'].forEach((n) => { b[n] = block(P.site, n); gsap.set(b[n], { opacity: 0 }); });
         const c = P.chat;
-        // 1. ordering, 2. notifications: fine so far
-        c.user(tl, 'Lag bestilling.', 0.8);
+        // the requests a founder actually makes, in the order they think of them; each one
+        // breaks what is built, for a reason anyone can see
+        c.user(tl, 'Lag bestilling av ved.', 0.8);
         let t = c.think(tl, 1.3, 0.8);
         c.reply(tl, 'Ferdig.', t);
         drop(tl, b.Bestilling, 0, t);
         P.tok.set(tl, 5, t);
-        c.user(tl, 'Lag varsler.', t + 0.6);
+        c.user(tl, 'Gjør det til abonnement, hver 14. dag.', t + 0.6);
         t = c.think(tl, t + 1.0, 0.8);
-        c.reply(tl, 'Ferdig.', t);
-        drop(tl, b.Varsler, 1, t);
-        P.tok.set(tl, 10, t);
-        // 3. a customer register: must go under ordering; the stack comes apart
-        c.user(tl, 'Lag kunderegister.', t + 0.6);
-        t = c.think(tl, t + 1.0, 0.8);
-        c.reply(tl, 'Bestillingen må skrives om først.', t);
-        scatter(tl, [b.Varsler, b.Bestilling], t + 0.3);
-        P.tok.set(tl, 22, t + 0.3, 1.4);
-        drop(tl, b.Kunder, 0, t + 1.0);
-        stack(tl, [b.Kunder, b.Bestilling, b.Varsler], t + 1.6);
-        // 4. delivery zones: under the customers this time
-        c.user(tl, 'Lag leveringssoner.', t + 3.3);
+        c.reply(tl, 'Bestillingen må skrives om: den kan bare én levering.', t);
+        scatter(tl, [b.Bestilling], t + 0.3);
+        P.tok.set(tl, 14, t + 0.3, 1.2);
+        drop(tl, b.Abonnement, 0, t + 1.0);
+        stack(tl, [b.Abonnement, b.Bestilling], t + 1.6);
+        c.user(tl, 'Kunden skal kunne pause i januar.', t + 3.0);
+        t = c.think(tl, t + 3.4, 0.8);
+        c.reply(tl, 'Abonnementet må skrives om: det har ingen pause.', t);
+        scatter(tl, [b.Bestilling, b.Abonnement], t + 0.3);
+        P.tok.set(tl, 26, t + 0.3, 1.2);
+        drop(tl, b.Pause, 0, t + 1.0);
+        stack(tl, [b.Pause, b.Abonnement, b.Bestilling], t + 1.6);
+        c.user(tl, 'Lever én bydel om gangen.', t + 3.3);
         t = c.think(tl, t + 3.7, 0.8);
-        c.reply(tl, 'Kunderegisteret må skrives om først.', t);
-        scatter(tl, [b.Varsler, b.Bestilling, b.Kunder], t + 0.3);
+        c.reply(tl, 'Bestilling og abonnement må skrives om: ingen av dem vet hvor kunden bor.', t);
+        scatter(tl, [b.Bestilling, b.Abonnement, b.Pause], t + 0.3);
         P.tok.set(tl, 38, t + 0.3, 1.4);
-        drop(tl, b.Soner, 0, t + 1.0);
-        stack(tl, [b.Soner, b.Kunder, b.Bestilling, b.Varsler], t + 1.6);
+        drop(tl, b.Bydeler, 0, t + 1.0);
+        stack(tl, [b.Bydeler, b.Pause, b.Abonnement, b.Bestilling], t + 1.6);
       }
 
       if (i === 1) {

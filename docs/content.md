@@ -202,8 +202,8 @@ Point: the AI checks the result before the speaker does. The speaker only confir
 - Built: src/slides/planning.js.
 Point: scope up a batch of tasks before any implementation. Always run in auto mode (avoids accidentally implementing while in plan mode); tell the agent in words that it is only planning. It should only ask about product decisions, or when it can't give the best answer itself.
 - Storyboard [built]: the firewood subscription from the idea stage, as a stack of blocks.
-  1. Attempt 1, one task at a time: bestilling, varsler, then a customer register that has to go under the ordering ("Bestillingen må skrives om først."), then delivery zones under the customers ("Kunderegisteret må skrives om først."). The stack comes apart twice; tokens climb.
-  2. Attempt 2, new session in auto mode: the whole product spec goes in first (Ved på døra, uten å bære · Folk i byen med peis · Alle seks, i sammenheng · Vipps, SMS før levering · Ikke nå: sommersalg), "Kun planlegging". Six sheets go up: Soner, Kunder, Abonnement, Bestilling, Ruter, Varsler. One product question: "Skal kundene kunne pause abonnementet?" "Ja."
+  1. Attempt 1, one request at a time, in the order a founder thinks of them: "Lag bestilling av ved." → "Gjør det til abonnement, hver 14. dag." (the ordering only knew one delivery) → "Kunden skal kunne pause i januar." (the subscription had no pause) → "Lever én bydel om gangen." (nothing knew where the customer lives). The stack comes apart three times; tokens climb to 38k.
+  2. Attempt 2, new session in auto mode: the whole product spec goes in first (Ved på døra, uten å bære · Folk i byen med peis · Alle seks, i sammenheng · Vipps, SMS før levering · Ikke nå: sommersalg), "Kun planlegging". Six sheets go up: Bydeler, Kunder, Abonnement, Pause, Bestilling, Varsler. One product question: "Skal kundene kunne pause abonnementet?" "Ja."
   3. Built in one pass, in that order.
 
 ## Skills / custom commands [given, aside]
