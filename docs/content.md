@@ -201,10 +201,10 @@ Point: the AI checks the result before the speaker does. The speaker only confir
 ## Batched planning [given]
 - Built: src/slides/planning.js.
 Point: scope up a batch of tasks before any implementation. Always run in auto mode (avoids accidentally implementing while in plan mode); tell the agent in words that it is only planning. It should only ask about product decisions, or when it can't give the best answer itself.
-- Storyboard [proposed]: an architect's wall.
-  1. Without: a crew starts on the ground floor before the stairs are drawn; walls get moved later.
-  2. With: every task is drafted as a sheet and pinned to the wall first (planning, in auto mode, told "kun planlegging"). Only cards marked "produktbeslutning" come to you.
-  3. Then the whole set is built in one pass.
+- Storyboard [built]: the firewood subscription from the idea stage, as a stack of blocks.
+  1. Attempt 1, one task at a time: bestilling, varsler, then a customer register that has to go under the ordering ("Bestillingen må skrives om først."), then delivery zones under the customers ("Kunderegisteret må skrives om først."). The stack comes apart twice; tokens climb.
+  2. Attempt 2, new session in auto mode: the whole product spec goes in first (Ved på døra, uten å bære · Folk i byen med peis · Alle seks, i sammenheng · Vipps, SMS før levering · Ikke nå: sommersalg), "Kun planlegging". Six sheets go up: Soner, Kunder, Abonnement, Bestilling, Ruter, Varsler. One product question: "Skal kundene kunne pause abonnementet?" "Ja."
+  3. Built in one pass, in that order.
 
 ## Skills / custom commands [given, aside]
 Point: used rarely, only for very specific, very repetitive workflows (e.g. the ChatGPT skill in the asset pipeline). Not a section of its own; mention where it appears.

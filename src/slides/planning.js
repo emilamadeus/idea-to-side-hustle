@@ -3,7 +3,8 @@ import * as D from '../engine/draw.js';
 import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
 
 /*
-  Tip: plan the whole batch first, build after.
+  Tip: plan the whole batch first, build after. Example: the firewood subscription from the
+  idea stage (ordering, notifications, customers, delivery zones, subscription, routes).
     0. Attempt 1: one task at a time. Each new task needs something under an earlier one,
        so the stack comes apart and is rebuilt. Twice.
     1. Attempt 2 (new session): the whole product spec goes in with the prompt (goal, users,
@@ -21,15 +22,16 @@ import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
 */
 
 const BASE = 740, BW = 220, BH = 64, BX = 1040 - BW / 2;
-const COLORS = { Innlogging: '#c4562a', Varsler: '#9a4a22', Roller: '#55603a', Kamera: '#2f5b5a', Deling: '#7e2f45', Logg: '#3c4a5c' };
-const FINAL = ['Roller', 'Innlogging', 'Deling', 'Kamera', 'Varsler', 'Logg'];
+// the firewood subscription from the idea stage
+const COLORS = { Bestilling: '#c4562a', Varsler: '#9a4a22', Kunder: '#55603a', Abonnement: '#2f5b5a', Soner: '#7e2f45', Ruter: '#3c4a5c' };
+const FINAL = ['Soner', 'Kunder', 'Abonnement', 'Bestilling', 'Ruter', 'Varsler'];
 // the product spec handed over before any work starts
 const SPEC = [
-  ['MÅL', 'Se hjemmet fra appen'],
-  ['BRUKERE', 'Eier, familie, gjest'],
+  ['MÅL', 'Ved på døra, uten å bære'],
+  ['BRUKERE', 'Folk i byen med peis'],
   ['FUNKSJONER', 'Alle seks, i sammenheng'],
-  ['KRAV', 'Personvern, varsel ved feil'],
-  ['IKKE NÅ', 'Opptak i skyen'],
+  ['KRAV', 'Vipps, SMS før levering'],
+  ['IKKE NÅ', 'Sommersalg'],
 ];
 // the spec as a tiny document, for the attachment chip
 function specChip(g, x, y, w, h) {
@@ -104,35 +106,35 @@ export default {
         P.ground = D.p(svg, `M600 ${BASE} H1480`, 'thin');
         P.site = D.g(svg);
         const b = {};
-        ['Innlogging', 'Varsler', 'Roller', 'Deling'].forEach((n) => { b[n] = block(P.site, n); gsap.set(b[n], { opacity: 0 }); });
+        ['Bestilling', 'Varsler', 'Kunder', 'Soner'].forEach((n) => { b[n] = block(P.site, n); gsap.set(b[n], { opacity: 0 }); });
         const c = P.chat;
-        // 1. login, 2. notifications: fine so far
-        c.user(tl, 'Lag innlogging.', 0.8);
+        // 1. ordering, 2. notifications: fine so far
+        c.user(tl, 'Lag bestilling.', 0.8);
         let t = c.think(tl, 1.3, 0.8);
         c.reply(tl, 'Ferdig.', t);
-        drop(tl, b.Innlogging, 0, t);
+        drop(tl, b.Bestilling, 0, t);
         P.tok.set(tl, 5, t);
         c.user(tl, 'Lag varsler.', t + 0.6);
         t = c.think(tl, t + 1.0, 0.8);
         c.reply(tl, 'Ferdig.', t);
         drop(tl, b.Varsler, 1, t);
         P.tok.set(tl, 10, t);
-        // 3. roles: must go under login; the stack comes apart
-        c.user(tl, 'Lag roller.', t + 0.6);
+        // 3. a customer register: must go under ordering; the stack comes apart
+        c.user(tl, 'Lag kunderegister.', t + 0.6);
         t = c.think(tl, t + 1.0, 0.8);
-        c.reply(tl, 'Innloggingen må skrives om først.', t);
-        scatter(tl, [b.Varsler, b.Innlogging], t + 0.3);
+        c.reply(tl, 'Bestillingen må skrives om først.', t);
+        scatter(tl, [b.Varsler, b.Bestilling], t + 0.3);
         P.tok.set(tl, 22, t + 0.3, 1.4);
-        drop(tl, b.Roller, 0, t + 1.0);
-        stack(tl, [b.Roller, b.Innlogging, b.Varsler], t + 1.6);
-        // 4. sharing: under roles this time
-        c.user(tl, 'Lag deling.', t + 3.3);
+        drop(tl, b.Kunder, 0, t + 1.0);
+        stack(tl, [b.Kunder, b.Bestilling, b.Varsler], t + 1.6);
+        // 4. delivery zones: under the customers this time
+        c.user(tl, 'Lag leveringssoner.', t + 3.3);
         t = c.think(tl, t + 3.7, 0.8);
-        c.reply(tl, 'Rollene må skrives om først.', t);
-        scatter(tl, [b.Varsler, b.Innlogging, b.Roller], t + 0.3);
+        c.reply(tl, 'Kunderegisteret må skrives om først.', t);
+        scatter(tl, [b.Varsler, b.Bestilling, b.Kunder], t + 0.3);
         P.tok.set(tl, 38, t + 0.3, 1.4);
-        drop(tl, b.Deling, 0, t + 1.0);
-        stack(tl, [b.Deling, b.Roller, b.Innlogging, b.Varsler], t + 1.6);
+        drop(tl, b.Soner, 0, t + 1.0);
+        stack(tl, [b.Soner, b.Kunder, b.Bestilling, b.Varsler], t + 1.6);
       }
 
       if (i === 1) {
@@ -173,8 +175,8 @@ export default {
           return { s, x, y };
         });
         // the one product decision comes to you as a question
-        P.chat.reply(tl, 'Skal gjester kunne se kameraene?', t + 2.3);
-        P.chat.user(tl, 'Nei.', t + 3.4);
+        P.chat.reply(tl, 'Skal kundene kunne pause abonnementet?', t + 2.3);
+        P.chat.user(tl, 'Ja.', t + 3.4);
         P.doc = doc; P.zoom = zoom;
         ctx.focus(tl, [doc, zoom, P.wall, P.chat.root, P.att.g], 0.6);
       }
