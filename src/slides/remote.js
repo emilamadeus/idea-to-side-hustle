@@ -10,18 +10,19 @@ import { codeApp } from '../engine/console.js';
        the wait runs to 2 h 40 min.
     1. Attempt 2 (new session), notifications: same question; the phone lights up, you open
        it there and answer "Ja"; the laptop session carries on.
-    2. Cloud sessions when the machine isn't running: you start one from the phone; it runs in
-       the cloud (clone, fix, test, commit, notify) and you lock the phone. The commit lands on
-       GitHub; the notification wakes the phone with a short vibration. The cloud keeps running.
+    2. Cloud sessions when the machine isn't running: the phone sends the task, then you lock it.
+       The cloud works through five slow stages: klon (ping to GitHub, pong back), rett, test,
+       commit (ping to GitHub, the commit lands), varsle (ping to the phone, which wakes and
+       vibrates). Then the cloud idles, its spinner still turning.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     phone      x 126–394, y 248–768 (screen inset 8; status bar y +24–40; home bar y PH-18)
     attempt    x 560–960, y 120–154
     app        x 560–1480, y 170–760
-    step 2     arrow x 404–486 (y 470) and back x 404–470 (y 612); cloud x 470–1140, y 240–650
-               with Claude's spinner (y 360–480), status line y 524, five stage pills x 636–1058,
-               y 556–594, progress bar y 608; arrow x 1140–1180; GitHub x 1186–1480, y 360–590
+    step 2     task arrow x 404–500 (y 440), notify arrow back (y 612); cloud x 470–1110, y 240–650:
+               spinner y 360–470, status y 524, stage pills x 600–992 y 556–592, bar y 604;
+               ping/pong arrows x 1084–1194 (y 440 out, y 500 back); GitHub x 1206–1480, y 330–600
 */
 
 const AX = 560, AY = 170, AW = 920, AH = 590;
@@ -197,105 +198,132 @@ export default {
         tl.to(a.children[1], { opacity: 0, duration: 0.2 }, 0.3);
         tl.fromTo([head, ...[...ph.children].slice(1, 3)], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.5);
         tl.fromTo(bub, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3 }, 0.8);
-        // task sent: you lock the phone (the screen goes dark)
-        const off = D.el('rect', { x: PX + 8, y: PY + 8, width: PW - 16, height: PH - 16, rx: 33, style: 'fill: #000', opacity: 0 }, P.ph.g);
-        tl.to(off, { opacity: 1, duration: 0.35 }, 1.4);
-        tl.set([a, P.ph.appBg, P.ph.sbTime], { opacity: 0 }, 1.8);
-        // phone → cloud
+        // timing: the task goes out, the phone is locked a little later, then five slow stages
+        const S = 2.6;                 // seconds per stage
+        const T0 = 3.0;                // the stages start
+        const ST = (k) => T0 + k * S;  // start of stage k (0 klon, 1 rett, 2 test, 3 commit, 4 varsle)
+        const END = ST(5);
+        // arrows (each one way, shown when used)
         const arrow = (x1, x2, y) => {
           const g = D.g(svg, { 'data-bg': '' });
-          D.p(g, `M${x1} ${y} H${x2 - 12}`, '', { style: 'fill: none; stroke: #6fa8c8', 'stroke-width': 3, 'stroke-dasharray': '8 7' });
-          D.p(g, `M${x2 - 14} ${y - 8} L${x2} ${y} L${x2 - 14} ${y + 8} Z`, '', { style: 'fill: #6fa8c8' });
+          const dir = x2 > x1 ? 1 : -1;
+          D.p(g, `M${x1} ${y} H${x2 - dir * 12}`, '', { style: 'fill: none; stroke: #6fa8c8', 'stroke-width': 3, 'stroke-dasharray': '8 7' });
+          D.p(g, `M${x2 - dir * 14} ${y - 8} L${x2} ${y} L${x2 - dir * 14} ${y + 8} Z`, '', { style: 'fill: #6fa8c8' });
           return g;
         };
-        const a1 = arrow(PX + PW + 14, 486, 470);
-        tl.fromTo(a1, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.2);
-        // the cloud, working
+        // a message travelling along an arrow, once
+        const packet = (label, x1, x2, y, at, dur = 1.0) => {
+          const w = label.length * 9 + 22;
+          const g = D.g(svg, { 'data-bg': '', opacity: 0 });
+          D.p(g, rr(-w / 2, -13, w, 26, [13, 13, 13, 13]), '', { style: 'fill: #e6f2fa' });
+          D.text(g, 0, 5, label, 'pk', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-mono); fill: #121a20' });
+          tl.fromTo(g, { x: x1, y, opacity: 0 }, { opacity: 1, duration: 0.15, immediateRender: false }, at);
+          tl.fromTo(g, { x: x1 }, { x: x2, duration: dur, ease: 'power1.inOut', immediateRender: false }, at);
+          tl.to(g, { opacity: 0, duration: 0.15 }, at + dur);
+          return g;
+        };
+        // the task goes to the cloud
+        const aUp = arrow(PX + PW + 14, 500, 440);
+        tl.fromTo(aUp, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.1);
+        packet('oppgave', PX + PW + 50, 470, 440, 1.3, 1.0);
+        // then you lock the phone (the screen goes dark)
+        const off = D.el('rect', { x: PX + 8, y: PY + 8, width: PW - 16, height: PH - 16, rx: 33, style: 'fill: #000', opacity: 0 }, P.ph.g);
+        tl.to(off, { opacity: 1, duration: 0.5 }, 2.6);
+        tl.set([a, P.ph.appBg, P.ph.sbTime], { opacity: 0 }, 3.1);
+        tl.to(aUp, { opacity: 0.25, duration: 0.4 }, 2.6);
+        // the cloud
         const sky = D.g(svg, { 'data-bg': '' });
-        D.p(sky, 'M560 640 C480 640 470 540 540 520 C510 420 600 350 690 382 C700 270 860 240 900 320 C950 240 1090 270 1080 370 C1130 380 1140 470 1100 510 C1140 560 1120 650 1060 640 Z', '', { style: 'fill: #121a20; stroke: #6fa8c8', 'stroke-width': 3 });
-        tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.3);
-        // inside the cloud: no window, just Claude at work. It keeps running: the spinner turns,
-        // the status line moves through the stages, the active stage travels along, data flows.
+        D.p(sky, 'M560 640 C480 640 470 540 540 520 C510 420 600 350 690 382 C700 270 860 240 900 320 C950 240 1080 270 1070 370 C1110 380 1110 470 1080 510 C1110 560 1100 650 1040 640 Z', '', { style: 'fill: #121a20; stroke: #6fa8c8', 'stroke-width': 3 });
+        tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.6);
+        // GitHub, waiting with the last commit
+        const gh = D.g(svg, { 'data-unit': '' });
+        D.p(gh, rr(1206, 330, 274, 270, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--fg)', 'stroke-width': 2.5 });
+        D.text(gh, 1224, 366, 'GitHub', 'gh', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
+        D.text(gh, 1224, 390, 'kamera-api · main', 'gr', mono(400, 15, MUTED));
+        D.p(gh, 'M1218 406 H1468', '', { style: 'fill: none; stroke: #30363d', 'stroke-width': 2 });
+        const oldC = D.g(gh);
+        D.text(oldC, 1224, 436, 'e81b2d0', 'go1', mono(700, 15, MUTED));
+        D.text(oldC, 1224, 460, 'Forrige endring', 'go2', { style: 'font: 600 16px var(--font-display); fill: #9a8a78' });
+        const newC = D.g(gh, { opacity: 0 });
+        D.p(newC, rr(1224, 486, 96, 26, [13, 13, 13, 13]), '', { style: 'fill: #238636' });
+        D.text(newC, 1272, 504, 'a3f9c12', 'gn', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-mono); fill: #fff' });
+        D.text(newC, 1224, 536, 'Fiks varsel-feilen', 'gt', { style: 'font: 700 17px var(--font-display); fill: #f3e9da' });
+        D.text(newC, 1224, 564, '✓ 41 tester bestått', 'gc', mono(700, 15, OK));
+        tl.fromTo(gh, { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.4 }, 1.9);
+        // inside the cloud: Claude at work
         const GL = ['✻', '✶', '✳', '✢', '✳', '✶'];
         const work = D.g(svg, { 'data-unit': '' });
-        const star = D.text(work, 800, 446, '✻', 'cs', { 'text-anchor': 'middle', style: 'font: 700 100px var(--font-mono); fill: #ff7a2f' });
-        const say = D.text(work, 800, 524, '', 'cw', { 'text-anchor': 'middle', style: 'font: 700 24px var(--font-mono); fill: #ff7a2f' });
-        tl.fromTo(work, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.6);
+        const star = D.text(work, 790, 446, '✻', 'cs', { 'text-anchor': 'middle', style: 'font: 700 100px var(--font-mono); fill: #ff7a2f' });
+        const say = D.text(work, 790, 524, 'Starter …', 'cw', { 'text-anchor': 'middle', style: 'font: 700 24px var(--font-mono); fill: #ff7a2f' });
+        tl.fromTo(work, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.9);
         const STAGES = [['klon', 'Kloner kamera-api'], ['rett', 'Retter varsler.ts'], ['test', 'Kjører testene'], ['commit', 'Committer'], ['varsle', 'Sender varsel']];
-        const CYC = 7.5; // one stage every 1.5 s
-        // the first round: the commit lands after its commit stage, the notification after the last
-        const T0 = 1.6, AT_COMMIT = T0 + CYC * 4 / 5, AT_NOTIFY = T0 + CYC;
         const pills = STAGES.map(([l], k) => {
-          const x = 636 + k * 86, y = 556;
+          const x = 600 + k * 80, y = 556;
           const sg = D.g(svg, { 'data-unit': '' });
-          const pill = D.p(sg, rr(x, y, 78, 38, [19, 19, 19, 19]), '', { style: 'fill: #121a20; stroke: #4a6a80', 'stroke-width': 2.5 });
-          const label = D.text(sg, x + 39, y + 25, l, 'cl', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-display); fill: #9fb8c8' });
-          tl.fromTo(sg, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7 + k * 0.08);
-          return { sg, pill, label };
+          const pill = D.p(sg, rr(x, y, 72, 36, [18, 18, 18, 18]), '', { style: 'fill: #121a20; stroke: #4a6a80', 'stroke-width': 2.5 });
+          const label = D.text(sg, x + 36, y + 24, l, 'cl', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-display); fill: #9fb8c8' });
+          tl.fromTo(sg, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.0 + k * 0.08);
+          return { pill, label };
         });
         const bar = D.g(svg, { 'data-bg': '' });
-        D.p(bar, rr(640, 608, 420, 8, [4, 4, 4, 4]), '', { style: 'fill: #1c2a34' });
-        const fill = D.el('rect', { x: 640, y: 608, width: 0, height: 8, rx: 4, style: 'fill: #ff7a2f' }, bar);
-        tl.fromTo(bar, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7);
+        D.p(bar, rr(600, 604, 392, 8, [4, 4, 4, 4]), '', { style: 'fill: #1c2a34' });
+        const fill = D.el('rect', { x: 600, y: 604, width: 0, height: 8, rx: 4, style: 'fill: #ff7a2f' }, bar);
+        tl.fromTo(bar, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.0);
         const paint = (t) => {
-          // t: seconds of running time
-          const ph = (t % CYC) / CYC, k = Math.min(4, Math.floor(ph * 5));
-          star.textContent = GL[Math.floor(t * 4) % GL.length];
-          say.textContent = `${STAGES[k][1]} … ${Math.floor(t * 0.8)}m`;
-          fill.setAttribute('width', 420 * ph);
+          const k = Math.min(4, Math.floor(t / S));
+          star.textContent = GL[Math.floor(t * 3) % GL.length];
+          star.setAttribute('transform', `scale(${1 + 0.05 * Math.sin(t * 2.2)})`);
+          star.setAttribute('transform-origin', '790 412');
+          say.textContent = `${STAGES[k][1]} … ${Math.floor(t * 0.7)}m`;
+          fill.setAttribute('width', 392 * Math.min(1, t / (5 * S)));
           pills.forEach((p, n) => {
             const on = n === k, done = n < k;
             p.pill.setAttribute('style', on ? 'fill: #2a1d12; stroke: #ff7a2f' : done ? `fill: #142218; stroke: ${OK}` : 'fill: #121a20; stroke: #4a6a80');
-            p.label.setAttribute('style', `font: 700 15px var(--font-display); fill: ${on ? '#ffb08a' : done ? OK : '#9fb8c8'}`);
+            p.label.setAttribute('style', `font: 700 14px var(--font-display); fill: ${on ? '#ffb08a' : done ? OK : '#9fb8c8'}`);
           });
-          star.setAttribute('transform', `scale(${1 + 0.06 * Math.sin(t * 2.5)})`);
-          star.setAttribute('transform-origin', '800 412');
         };
-        paint(0);
-        // data flowing along an arrow, on a loop
-        const flow = (x1, x2, y) => {
-          const dots = [0, 1, 2].map(() => D.el('circle', { cx: x1, cy: y, r: 5, style: 'fill: #e6f2fa', opacity: 0, 'data-bg': '' }, svg));
-          const end = x2 > x1 ? x2 - 14 : x2 + 14;
-          return () => dots.forEach((d, k) => loops.push(gsap.fromTo(d, { attr: { cx: x1 }, opacity: 1 }, { attr: { cx: end }, opacity: 0.2, duration: 1.8, ease: 'none', repeat: -1, delay: k * 0.6 })));
-        };
-        const flow1 = flow(PX + PW + 14, 486, 470), flow2 = flow(1140, 1180, 470);
-        tl.call(() => {
-          flow1();
-          const run = { t: 0 };
-          loops.push(gsap.to(run, { t: 600, duration: 600, ease: 'none', onUpdate: () => paint(run.t) }));
-        }, null, 1.6);
-        // cloud → GitHub
-        const a2 = arrow(1140, 1180, 470);
-        tl.fromTo(a2, { opacity: 0 }, { opacity: 1, duration: 0.3 }, AT_COMMIT - 0.1);
-        tl.call(() => flow2(), null, AT_COMMIT);
-        const gh = D.g(svg, { 'data-unit': '' });
-        D.p(gh, rr(1186, 360, 294, 230, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--fg)', 'stroke-width': 2.5 });
-        D.text(gh, 1206, 396, 'GitHub', 'gh', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
-        D.text(gh, 1206, 420, 'kamera-api · main', 'gr', mono(400, 15, MUTED));
-        D.p(gh, `M1200 436 H1466`, '', { style: 'fill: none; stroke: #30363d', 'stroke-width': 2 });
-        D.p(gh, rr(1206, 452, 96, 26, [13, 13, 13, 13]), '', { style: 'fill: #238636' });
-        D.text(gh, 1254, 470, 'Commit', 'go', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-display); fill: #fff' });
-        D.text(gh, 1314, 471, 'a3f9c12', 'gn', mono(700, 16, MUTED));
-        D.text(gh, 1206, 508, 'Fiks varsel-feilen', 'gt', { style: 'font: 700 17px var(--font-display); fill: #f3e9da' });
-        D.text(gh, 1206, 540, '✓ 41 tester bestått', 'gc', mono(700, 15, OK));
-        D.text(gh, 1206, 566, '+6 −2 · 1 fil', 'gf', mono(400, 14, MUTED));
-        tl.fromTo(gh, { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.4 }, AT_COMMIT + 0.2);
-        // and back on the phone
-        // the notification stage: the cloud sends it back to your phone
-        const a3 = D.g(svg, { 'data-bg': '' });
-        D.p(a3, 'M470 612 H418', '', { style: 'fill: none; stroke: #6fa8c8', 'stroke-width': 3, 'stroke-dasharray': '8 7' });
-        D.p(a3, 'M418 604 L404 612 L418 620 Z', '', { style: 'fill: #6fa8c8' });
-        tl.fromTo(a3, { opacity: 0 }, { opacity: 1, duration: 0.3 }, AT_NOTIFY - 1.5);
-        const flow3 = flow(470, 404, 612);
-        tl.call(() => flow3(), null, AT_NOTIFY - 1.4);
-        // the notification wakes the phone: lock screen, banner, a short vibration
-        tl.call(() => { P.ph.time.textContent = '18:32'; }, null, AT_NOTIFY - 0.1);
-        tl.set(P.ph.lock, { opacity: 1 }, AT_NOTIFY - 0.1);
-        tl.to(off, { opacity: 0, duration: 0.3 }, AT_NOTIFY - 0.1);
+        const run = { t: 0 };
+        tl.fromTo(run, { t: 0 }, { t: 5 * S - 0.01, duration: 5 * S, ease: 'none', immediateRender: false, onUpdate: () => paint(run.t) }, T0);
+        // clone: ping to GitHub, pong back
+        const aGo = arrow(1084, 1194, 440), aBack = arrow(1194, 1084, 500);
+        tl.fromTo([aGo, aBack], { opacity: 0 }, { opacity: 0.35, duration: 0.3 }, ST(0));
+        tl.to(aGo, { opacity: 1, duration: 0.2 }, ST(0) + 0.2);
+        packet('ping', 1100, 1170, 440, ST(0) + 0.3, 0.9);
+        tl.to(aGo, { opacity: 0.35, duration: 0.2 }, ST(0) + 1.2);
+        tl.to(aBack, { opacity: 1, duration: 0.2 }, ST(0) + 1.3);
+        packet('pong', 1178, 1108, 500, ST(0) + 1.4, 0.9);
+        tl.to(aBack, { opacity: 0.35, duration: 0.2 }, ST(0) + 2.3);
+        // commit: ping to GitHub, the new commit lands
+        tl.to(aGo, { opacity: 1, duration: 0.2 }, ST(3) + 0.2);
+        packet('commit', 1104, 1166, 440, ST(3) + 0.3, 1.0);
+        tl.to(aGo, { opacity: 0.35, duration: 0.2 }, ST(3) + 1.3);
+        tl.to(oldC, { opacity: 0.35, duration: 0.3 }, ST(3) + 1.3);
+        tl.fromTo(newC, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.4 }, ST(3) + 1.3);
+        // notify: ping to the phone, which wakes up
+        const aDown = arrow(486, PX + PW + 14, 612);
+        tl.fromTo(aDown, { opacity: 0 }, { opacity: 1, duration: 0.3 }, ST(4) + 0.2);
+        packet('varsel', 470, PX + PW + 50, 612, ST(4) + 0.3, 1.0);
+        const WAKE = ST(4) + 1.3;
+        tl.call(() => { P.ph.time.textContent = '18:32'; }, null, WAKE - 0.1);
+        tl.set(P.ph.lock, { opacity: 1 }, WAKE - 0.1);
+        tl.to(off, { opacity: 0, duration: 0.3 }, WAKE - 0.1);
         const nb = notif(P.ph.g, PY + 214, 'Varsel-feil er fikset', 'Committet a3f9c12 til main.');
-        tl.fromTo(nb, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.35, ease: 'back.out(2)' }, AT_NOTIFY + 0.1);
-        tl.to(P.ph.g, { x: 2, duration: 0.04, repeat: 9, yoyo: true }, AT_NOTIFY + 0.15);
-        tl.set(P.ph.g, { x: 0 }, AT_NOTIFY + 0.6);
+        tl.fromTo(nb, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.35, ease: 'back.out(2)' }, WAKE + 0.1);
+        tl.to(P.ph.g, { x: 2, duration: 0.04, repeat: 9, yoyo: true }, WAKE + 0.15);
+        tl.set(P.ph.g, { x: 0 }, WAKE + 0.6);
+        // done: the cloud idles, still alive, waiting for the next task
+        tl.call(() => {
+          paint(5 * S);
+          pills.forEach((p) => { p.pill.setAttribute('style', `fill: #142218; stroke: ${OK}`); p.label.setAttribute('style', `font: 700 14px var(--font-display); fill: ${OK}`); });
+          fill.setAttribute('style', `fill: ${OK}`); fill.setAttribute('width', 392);
+          say.textContent = 'Ferdig · venter på neste oppgave';
+          say.setAttribute('style', `font: 700 20px var(--font-mono); fill: ${OK}`);
+          const idle = { t: 0 };
+          loops.push(gsap.to(idle, { t: 1000, duration: 1000, ease: 'none', onUpdate: () => {
+            star.textContent = GL[Math.floor(idle.t * 1.2) % GL.length];
+            star.setAttribute('transform', `scale(${1 + 0.05 * Math.sin(idle.t * 1.5)})`);
+          } }));
+        }, null, END);
       }
       return tl;
     };
