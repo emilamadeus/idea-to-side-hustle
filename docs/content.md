@@ -122,7 +122,7 @@ Point: a big win. The AI always sends a notification when it is done or needs a 
 - Storyboard [agreed]: the Claude Code app on the laptop, and your phone (lock screen, notification banner, the session opened remotely).
   1. Attempt 1, no notifications: Kamera-API stops on "Kjøre migreringen mot prod?". The phone stays dark; the clock runs 14:05 → 16:45, "Venter på svar … 2t 40m".
   2. Attempt 2, new session, notifications: the same question; a Claude banner lights up the phone. You open the session there and tap "Ja"; the laptop session gets "Ja (fra telefonen)", migrates, runs the tests.
-  3. Title "Cloud sessions når maskinen ikke kjører." From the phone you start a session in the cloud ("Fiks varsel-feilen. Lag en PR."). Phone → cloud (no window: Claude's spinner keeps running, the status line cycles Kloner / Retter / Tester / Lager PR, the active stage travels along the pills, the bar fills, data keeps flowing along the arrows) → GitHub (pull request #142, tests passed); the phone shows "✓ PR #142 klar".
+  3. Title "Cloud sessions når maskinen ikke kjører." From the phone you start a cloud session ("Fiks varsel-feilen og commit."). Phone → cloud (no window: Claude's spinner keeps running, slowly; the status line and the active stage cycle through klon, rett, test, commit, varsle; the bar fills; data flows along the arrows) → GitHub (commit a3f9c12 on main, tests passed) → back to the phone (a Claude notification: "Varsel-feil er fikset").
 - Titles: step 0–1 "Remote sessions med notifikasjoner.", step 2 "Cloud sessions når maskinen ikke kjører."
 
 ## Always working (humor) [given]

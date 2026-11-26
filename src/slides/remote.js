@@ -11,15 +11,17 @@ import { codeApp } from '../engine/console.js';
     1. Attempt 2 (new session), notifications: same question; the phone lights up, you open
        it there and answer "Ja"; the laptop session carries on.
     2. Cloud sessions when the machine isn't running: you start one from the phone; it runs in
-       the cloud (clone, edit, test) and delivers a pull request on GitHub; the phone shows it.
+       the cloud (clone, fix, test, commit, notify), the commit lands on GitHub and a notification
+       comes back to the phone. The cloud keeps running (slow loop).
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     phone      x 126–394, y 248–768 (screen inset 8; status bar y +24–40; home bar y PH-18)
     attempt    x 560–960, y 120–154
     app        x 560–1480, y 170–760
-    step 2     arrow x 404–486; cloud x 470–1140, y 240–650 with Claude's spinner (y 360–480),
-               status line y 528, step pills x 640–1060, y 560–600, progress bar y 612; arrow x 1140–1180; GitHub x 1186–1480, y 360–590
+    step 2     arrow x 404–486 (y 470) and back x 404–470 (y 612); cloud x 470–1140, y 240–650
+               with Claude's spinner (y 360–480), status line y 524, five stage pills x 636–1058,
+               y 556–594, progress bar y 608; arrow x 1140–1180; GitHub x 1186–1480, y 360–590
 */
 
 const AX = 560, AY = 170, AW = 920, AH = 590;
@@ -35,7 +37,7 @@ export default {
   notes: [
     'Uten varsler: sessionen spør om noe og venter. Du er et annet sted. To timer og førti minutter.',
     'Med varsler: telefonen lyser opp, du svarer ja derfra, sessionen går videre.',
-    'Maskinen er av? Start en cloud session fra telefonen. Den kloner, retter, tester og leverer en PR på GitHub.',
+    'Maskinen er av? Start en cloud session fra telefonen. Den kloner, retter, tester, committer og sender deg et varsel.',
   ],
 
   create(ctx) {
@@ -191,7 +193,7 @@ export default {
         D.text(ph, PX + 73, PY + 149, 'i skyen', 'pc', { 'text-anchor': 'middle', ...mono(700, 14, '#9fd3ff') });
         const bub = D.g(ph);
         D.p(bub, rr(PX + 54, PY + 176, PW - 72, 60, [16, 16, 4, 16]), '', { style: 'fill: #3a2d22' });
-        ['Fiks varsel-feilen.', 'Lag en PR.'].forEach((l, k) => D.text(bub, PX + 68, PY + 200 + k * 22, l, 'pu2', { style: 'font: 400 16px var(--font-display); fill: #f3e9da' }));
+        ['Fiks varsel-feilen', 'og commit.'].forEach((l, k) => D.text(bub, PX + 68, PY + 200 + k * 22, l, 'pu2', { style: 'font: 400 16px var(--font-display); fill: #f3e9da' }));
         tl.to(a.children[1], { opacity: 0, duration: 0.2 }, 0.3);
         tl.fromTo([head, ...[...ph.children].slice(1, 3)], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.5);
         tl.fromTo(bub, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3 }, 0.8);
@@ -215,12 +217,15 @@ export default {
         const star = D.text(work, 800, 446, '✻', 'cs', { 'text-anchor': 'middle', style: 'font: 700 100px var(--font-mono); fill: #ff7a2f' });
         const say = D.text(work, 800, 524, '', 'cw', { 'text-anchor': 'middle', style: 'font: 700 24px var(--font-mono); fill: #ff7a2f' });
         tl.fromTo(work, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.6);
-        const STAGES = [['klon', 'Kloner kamera-api'], ['rett', 'Retter varsler.ts'], ['test', 'Kjører testene'], ['PR', 'Lager PR']];
+        const STAGES = [['klon', 'Kloner kamera-api'], ['rett', 'Retter varsler.ts'], ['test', 'Kjører testene'], ['commit', 'Committer'], ['varsle', 'Sender varsel']];
+        const CYC = 7.5; // one stage every 1.5 s
+        // the first round: the commit lands after its commit stage, the notification after the last
+        const T0 = 1.6, AT_COMMIT = T0 + CYC * 4 / 5, AT_NOTIFY = T0 + CYC;
         const pills = STAGES.map(([l], k) => {
-          const x = 640 + k * 108, y = 556;
+          const x = 636 + k * 86, y = 556;
           const sg = D.g(svg, { 'data-unit': '' });
-          const pill = D.p(sg, rr(x, y, 96, 38, [19, 19, 19, 19]), '', { style: 'fill: #121a20; stroke: #4a6a80', 'stroke-width': 2.5 });
-          const label = D.text(sg, x + 48, y + 26, l, 'cl', { 'text-anchor': 'middle', style: 'font: 700 17px var(--font-display); fill: #9fb8c8' });
+          const pill = D.p(sg, rr(x, y, 78, 38, [19, 19, 19, 19]), '', { style: 'fill: #121a20; stroke: #4a6a80', 'stroke-width': 2.5 });
+          const label = D.text(sg, x + 39, y + 25, l, 'cl', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-display); fill: #9fb8c8' });
           tl.fromTo(sg, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7 + k * 0.08);
           return { sg, pill, label };
         });
@@ -230,23 +235,24 @@ export default {
         tl.fromTo(bar, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7);
         const paint = (t) => {
           // t: seconds of running time
-          const cyc = 2.8, ph = (t % cyc) / cyc, k = Math.min(3, Math.floor(ph * 4));
-          star.textContent = GL[Math.floor(t * 10) % GL.length];
-          say.textContent = `${STAGES[k][1]} … ${Math.floor(t * 1.5)}m`;
+          const ph = (t % CYC) / CYC, k = Math.min(4, Math.floor(ph * 5));
+          star.textContent = GL[Math.floor(t * 4) % GL.length];
+          say.textContent = `${STAGES[k][1]} … ${Math.floor(t * 0.8)}m`;
           fill.setAttribute('width', 420 * ph);
           pills.forEach((p, n) => {
             const on = n === k, done = n < k;
             p.pill.setAttribute('style', on ? 'fill: #2a1d12; stroke: #ff7a2f' : done ? `fill: #142218; stroke: ${OK}` : 'fill: #121a20; stroke: #4a6a80');
-            p.label.setAttribute('style', `font: 700 17px var(--font-display); fill: ${on ? '#ffb08a' : done ? OK : '#9fb8c8'}`);
+            p.label.setAttribute('style', `font: 700 15px var(--font-display); fill: ${on ? '#ffb08a' : done ? OK : '#9fb8c8'}`);
           });
-          star.setAttribute('transform', `scale(${1 + 0.06 * Math.sin(t * 6)})`);
+          star.setAttribute('transform', `scale(${1 + 0.06 * Math.sin(t * 2.5)})`);
           star.setAttribute('transform-origin', '800 412');
         };
         paint(0);
         // data flowing along an arrow, on a loop
         const flow = (x1, x2, y) => {
           const dots = [0, 1, 2].map(() => D.el('circle', { cx: x1, cy: y, r: 5, style: 'fill: #e6f2fa', opacity: 0, 'data-bg': '' }, svg));
-          return () => dots.forEach((d, k) => loops.push(gsap.fromTo(d, { attr: { cx: x1 }, opacity: 1 }, { attr: { cx: x2 - 14 }, opacity: 0.2, duration: 0.9, ease: 'none', repeat: -1, delay: k * 0.3 })));
+          const end = x2 > x1 ? x2 - 14 : x2 + 14;
+          return () => dots.forEach((d, k) => loops.push(gsap.fromTo(d, { attr: { cx: x1 }, opacity: 1 }, { attr: { cx: end }, opacity: 0.2, duration: 1.8, ease: 'none', repeat: -1, delay: k * 0.6 })));
         };
         const flow1 = flow(PX + PW + 14, 486, 470), flow2 = flow(1140, 1180, 470);
         tl.call(() => {
@@ -256,26 +262,34 @@ export default {
         }, null, 1.6);
         // cloud → GitHub
         const a2 = arrow(1140, 1180, 470);
-        tl.fromTo(a2, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.9);
-        tl.call(() => flow2(), null, 4.0);
+        tl.fromTo(a2, { opacity: 0 }, { opacity: 1, duration: 0.3 }, AT_COMMIT - 0.1);
+        tl.call(() => flow2(), null, AT_COMMIT);
         const gh = D.g(svg, { 'data-unit': '' });
         D.p(gh, rr(1186, 360, 294, 230, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--fg)', 'stroke-width': 2.5 });
         D.text(gh, 1206, 396, 'GitHub', 'gh', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
-        D.text(gh, 1206, 420, 'kamera-api', 'gr', mono(400, 15, MUTED));
+        D.text(gh, 1206, 420, 'kamera-api · main', 'gr', mono(400, 15, MUTED));
         D.p(gh, `M1200 436 H1466`, '', { style: 'fill: none; stroke: #30363d', 'stroke-width': 2 });
-        D.p(gh, rr(1206, 452, 76, 26, [13, 13, 13, 13]), '', { style: 'fill: #238636' });
-        D.text(gh, 1244, 470, 'Open', 'go', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-display); fill: #fff' });
-        D.text(gh, 1292, 471, '#142', 'gn', mono(700, 16, MUTED));
+        D.p(gh, rr(1206, 452, 96, 26, [13, 13, 13, 13]), '', { style: 'fill: #238636' });
+        D.text(gh, 1254, 470, 'Commit', 'go', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-display); fill: #fff' });
+        D.text(gh, 1314, 471, 'a3f9c12', 'gn', mono(700, 16, MUTED));
         D.text(gh, 1206, 508, 'Fiks varsel-feilen', 'gt', { style: 'font: 700 17px var(--font-display); fill: #f3e9da' });
         D.text(gh, 1206, 540, '✓ 41 tester bestått', 'gc', mono(700, 15, OK));
         D.text(gh, 1206, 566, '+6 −2 · 1 fil', 'gf', mono(400, 14, MUTED));
-        tl.fromTo(gh, { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.4 }, 4.1);
+        tl.fromTo(gh, { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.4 }, AT_COMMIT + 0.2);
         // and back on the phone
         const done = D.g(ph);
-        D.text(done, PX + 26, PY + 274, '✓ PR #142 klar', 'pd2', mono(700, 16, OK));
-        D.text(done, PX + 26, PY + 298, '41 tester bestått.', 'pd3', mono(400, 15, '#cfc3b2'));
-        tl.fromTo(done, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.6);
-        tl.to(P.ph.g, { x: 4, duration: 0.05, repeat: 7, yoyo: true }, 4.6);
+        D.text(done, PX + 26, PY + 274, '✓ Committet: a3f9c12', 'pd2', mono(700, 16, OK));
+        tl.fromTo(done, { opacity: 0 }, { opacity: 1, duration: 0.3 }, AT_COMMIT + 0.4);
+        // the notification stage: the cloud sends it back to your phone
+        const a3 = D.g(svg, { 'data-bg': '' });
+        D.p(a3, 'M470 612 H418', '', { style: 'fill: none; stroke: #6fa8c8', 'stroke-width': 3, 'stroke-dasharray': '8 7' });
+        D.p(a3, 'M418 604 L404 612 L418 620 Z', '', { style: 'fill: #6fa8c8' });
+        tl.fromTo(a3, { opacity: 0 }, { opacity: 1, duration: 0.3 }, AT_NOTIFY - 1.5);
+        const flow3 = flow(470, 404, 612);
+        tl.call(() => flow3(), null, AT_NOTIFY - 1.4);
+        const nb = notif(P.ph.g, PY + 296, 'Varsel-feil er fikset', 'Committet a3f9c12.');
+        tl.fromTo(nb, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.35, ease: 'back.out(2)' }, AT_NOTIFY);
+        tl.to(P.ph.g, { x: 4, duration: 0.05, repeat: 7, yoyo: true }, AT_NOTIFY);
       }
       return tl;
     };
