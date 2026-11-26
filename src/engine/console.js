@@ -27,7 +27,7 @@ export const STATE = {
   done: [C.ok, 'ferdig', '✓'], idle: [C.muted, 'inaktiv', '·'],
 };
 
-export function codeApp(parent, x, y, w, h, { sidebar = 250, size = 18, title = 'Claude Code' } = {}) {
+export function codeApp(parent, x, y, w, h, { sidebar = 250, size = 18, title = 'Claude Code', panel = 0 } = {}) {
   const root = group(parent, { 'data-unit': '' });
   el('rect', { x, y, width: w, height: h, rx: 14, style: 'fill: #1b1511; stroke: var(--fg)', 'stroke-width': 2.5, 'data-body': '' }, root);
   const bar = 36;
@@ -40,12 +40,13 @@ export function codeApp(parent, x, y, w, h, { sidebar = 250, size = 18, title = 
   text(root, SX + 18, y + bar + 30, 'SESSIONS', 'sbh', { style: `font: 700 13px var(--font-mono); letter-spacing: .16em; fill: ${C.muted}` });
   const rowsG = group(root);
   // main area
-  const MX = SX + SW + 2, MW = x + w - MX - 2;
+  const PXL = x + w - panel; // left edge of the helper panel (= right edge of the main area)
+  const MX = SX + SW + 2, MW = PXL - MX - 2;
   const head = group(root);
   const headTitle = text(head, MX + 22, y + bar + 32, '', 'mht', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
-  path(root, `M${MX + 14} ${y + bar + 50} H${x + w - 14}`, '', { style: 'fill: none; stroke: #33271d', 'stroke-width': 2 });
+  path(root, `M${MX + 14} ${y + bar + 50} H${PXL - 14}`, '', { style: 'fill: none; stroke: #33271d', 'stroke-width': 2 });
   // context meter, top right of the main area
-  const CW = 130, cmx = x + w - 22 - CW, cmy = y + bar + 22;
+  const CW = 130, cmx = PXL - 22 - CW, cmy = y + bar + 22;
   el('rect', { x: cmx, y: cmy, width: CW, height: 12, rx: 4, style: 'fill: none; stroke: #4a3c30', 'stroke-width': 2 }, root);
   const ctxFill = el('rect', { x: cmx + 2, y: cmy + 2, width: 0, height: 8, rx: 3, style: 'fill: #7a6a58' }, root);
   const ctxText = text(root, cmx - 10, cmy + 11, '', 'mcx', { 'text-anchor': 'end', style: `font: 700 14px var(--font-mono); fill: ${C.muted}` });
@@ -205,8 +206,42 @@ export function codeApp(parent, x, y, w, h, { sidebar = 250, size = 18, title = 
     return s;
   }
 
+  // right-hand panel: running helpers with their run time
+  const helpers = [];
+  if (panel) {
+    el('rect', { x: PXL, y: y + bar, width: panel - 2, height: h - bar - 2, style: 'fill: #130f0c' }, root);
+    path(root, `M${PXL} ${y + bar} V${y + h - 2}`, '', { style: 'fill: none; stroke: #33271d', 'stroke-width': 2 });
+    text(root, PXL + 18, y + bar + 30, 'HJELPERE', 'hph', { style: `font: 700 13px var(--font-mono); letter-spacing: .16em; fill: ${C.muted}` });
+  }
+  const fmtT = (v) => { v = Math.round(v); const m = Math.floor(v / 60); return m ? `${m}m ${String(v % 60).padStart(2, '0')}s` : `${v}s`; };
+  function helper(name) {
+    const hy = y + bar + 50 + helpers.length * 88;
+    const g = group(root);
+    const card = path(g, rr(PXL + 10, hy, panel - 22, 78, [10, 10, 10, 10]), '', { style: 'fill: #1f2420; stroke: #3f5a48', 'stroke-width': 2 });
+    const badge = text(g, PXL + 28, hy + 30, '✻', 'hpb', { 'text-anchor': 'middle', style: font(700, C.orange, 19) });
+    text(g, PXL + 46, hy + 30, name, 'hpn', { style: font(700, C.fg, 16) });
+    const time = text(g, PXL + 46, hy + 60, '', 'hpt', { style: font(700, C.orange, 15) });
+    const st = { v: 0 };
+    let label = 'jobber';
+    const show = () => { time.textContent = `${label} · ${fmtT(st.v)}`; };
+    show();
+    const hp = {
+      g,
+      run(tl, at, { from = 0, to = 60, dur = 2 } = {}) {
+        tl.call(() => { label = 'jobber'; time.setAttribute('style', font(700, C.orange, 15)); badge.textContent = '✻'; badge.setAttribute('style', font(700, C.orange, 19)); show(); }, null, at);
+        tl.fromTo(st, { v: from }, { v: to, duration: dur, ease: 'none', onUpdate: show, immediateRender: false }, at);
+      },
+      done(tl, at, l = 'ferdig') {
+        tl.call(() => { label = l; time.setAttribute('style', font(700, C.ok, 15)); badge.textContent = '✓'; badge.setAttribute('style', font(700, C.ok, 19)); show(); }, null, at);
+        tl.fromTo(badge, { scale: 1.8, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.35, ease: 'back.out(2)', immediateRender: false }, at);
+      },
+    };
+    helpers.push(hp);
+    return hp;
+  }
+
   const app = {
-    root, session, sessions,
+    root, session, sessions, helper,
     /** Open a session: header title, sidebar highlight, its transcript. */
     show(tl, key, at) {
       const s = sessions[key];

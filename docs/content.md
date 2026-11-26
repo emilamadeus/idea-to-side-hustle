@@ -80,10 +80,10 @@ Point: one session per task, plus one master session that talks to the others an
 - Built: src/slides/helpers.js.
 Point: the lead (the active agent in each session) does the work itself. Helpers (subagents spawned by a session) only occasionally, mostly for planning or research, almost never for implementation. With helpers implementing: poorer results, long waits, and wait locks where a helper never reports back as finished while the lead keeps waiting.
 - Terminology for the slide: "session" = a task you started; "helper" = a subagent a session starts by itself.
-- Storyboard [agreed]: the Claude Code app, one session ("Eksport").
+- Storyboard [agreed]: the Claude Code app, one session ("Eksport"); running helpers sit in a right-hand panel, each with its run time.
   1. The lead works itself: Read, Edit, Bash.
   2. A research helper: a "Hjelper · Finn ut hvordan DVR-API-et logger inn" card returns in 12 s; the lead uses the answer.
-  3. A whole job to a helper in the background ("Bygg hele fakturamodulen"). The lead carries on with its own work; the background list shows the helper done 04:32; nothing reaches the lead.
+  3. A whole job to a helper in the background ("Bygg hele fakturamodulen"). The lead carries on with its own work; the helper panel shows it done after 38 min; nothing reaches the lead.
   4. The lead breaks off its own work ("Avbrutt: eksport"), checks the helper: done 40 minutes ago, 12 files. Back to the export.
 
 ## Cross-model loop through a shared file [given]
