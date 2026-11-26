@@ -22,15 +22,16 @@ import { K, room, station, serve, cookFor, runner, guard, plate, clipToKitchen }
     kitchen    x 560–1480 (corridor x 560–730); bubbles and meter y 296–356 above the cooks
 */
 
-const SX = [860, 1090, 1320];
+// spaced so the guard (149 wide with his torch arm) fits between two cooks without touching either
+const SX = [858, 1114, 1368];
 const LOOKS = [
   { hair: 'curly', hairColor: PALETTE.hair.dark, skin: PALETTE.skin[3] },
   { hair: 'messy', hairColor: PALETTE.hair.brown, skin: PALETTE.skin[0], glasses: true },
   { hair: 'bun', hairColor: PALETTE.hair.blonde, skin: PALETTE.skin[2] },
 ];
 const ROUNDS = [22 * 60, 23 * 60 + 40, 26 * 60 + 20, 27 * 60 + 30, 28 * 60 + 20, 29 * 60 + 10, 30 * 60];
-const G0 = 720; // guard's starting x
-const RUN_X = 680, RUN_NECK = K.floor - 252 * 0.6;
+const G0 = 960, G2 = 760; // guard (facing right) and guard2 (facing left) starting x
+const RUN_X = 620, RUN_NECK = K.floor - 252 * 0.6;
 
 export default {
   id: 'watchdog',
@@ -69,14 +70,16 @@ export default {
     };
     // between rounds the clock jumps ahead, so the guard cuts to his next spot instead of
     // walking across the cooks
-    const walk = (tl, x, at) => {
-      tl.to(P.guard.root, { opacity: 0, duration: 0.25 }, at);
-      tl.set(P.guard.root, { x: x - G0 }, at + 0.25);
-      tl.to(P.guard.root, { opacity: 1, duration: 0.35 }, at + 0.3);
+    // spots: x 960 / 1214 facing right, 1015 / 760 facing left; each clear of every cook and the helper
+    const walk = (tl, x, at, left = false) => {
+      const g = left ? P.guard2 : P.guard;
+      tl.to([P.guard.root, P.guard2.root], { opacity: 0, duration: 0.25 }, at);
+      tl.set(g.root, { x: x - (left ? G2 : G0) }, at + 0.25);
+      tl.to(g.root, { opacity: 1, duration: 0.35 }, at + 0.3);
     };
     // P.guard faces right; P.guard2 is the same guard facing left (swapped in for the corridor)
     const beam = (tl, on, at) => {
-      tl.to(P.guard.beam, { opacity: on ? 1 : 0.35, duration: 0.3 }, at);
+      tl.to([P.guard.beam, P.guard2.beam], { opacity: on ? 1 : 0.35, duration: 0.3 }, at);
       tl.to(P.dark, { opacity: on ? 0.22 : 0.55, duration: 0.4 }, at);
     };
     const pop = (tl, node, at) => tl.fromTo(node, { opacity: 0, scale: 0.7, transformOrigin: '50% 100%' }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2.5)' }, at);
@@ -110,7 +113,7 @@ export default {
         P.dark = D.el('rect', { x: K.x0, y: 150, width: K.x1 - K.x0, height: 630, rx: 10, style: 'fill: #04060d; stroke: none', opacity: 0, 'data-bg': '' }, svg);
         const gl = clipToKitchen(D.g(svg));
         P.guard = guard(gl, G0);
-        P.guard2 = guard(gl, 760, { flip: true });
+        P.guard2 = guard(gl, G2, { flip: true });
         gsap.set(P.guard2.root, { opacity: 0 });
         svg.appendChild(P.R.top);
         tl.to(P.dark, { opacity: 0.55, duration: 1.0 }, 2.4);
@@ -122,7 +125,6 @@ export default {
       if (i === 1) {
         // 23:40 two sessions wait for each other
         night(tl, 1, 0);
-        walk(tl, 940, 0.2);
         const [a, , b] = P.st;
         P.w1 = speech(P.R.top, SX[0] - 110, 296, 'Venter på deg.', [SX[0] - 10, 380], { size: 20 });
         P.w2 = speech(P.R.top, SX[2] - 96, 296, 'Venter på deg.', [SX[2] + 10, 380], { size: 20 });
@@ -147,9 +149,8 @@ export default {
         // 02:20 asleep at the station
         const s = P.st[2];
         s.cook.expr(tl, { eyes: 'closed', mouth: 'neutral', brows: 'neutral' }, 0);
-        tl.to(s.cook.root, { rotation: 8, svgOrigin: `${s.x} 560`, duration: 0.6 }, 0);
         night(tl, 2, 0);
-        walk(tl, 1150, 0.3);
+        walk(tl, 1214, 0.3);
         P.z = D.g(P.R.top, { 'data-bg': '' });
         ['z', 'z', 'Z'].forEach((c, k) => D.text(P.z, s.x + 40 + k * 18, 390 - k * 22, c, 'zz', { style: `font: 800 ${20 + k * 6}px var(--font-display); fill: #9fd3ff` }));
         tl.fromTo(P.z, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 }, 0.6);
@@ -159,7 +160,6 @@ export default {
         // woken up
         tl.to([P.z, P.note], { opacity: 0, duration: 0.3 }, 2.8);
         s.cook.expr(tl, { eyes: 'wide', brows: 'raised' }, 2.8);
-        tl.to(s.cook.root, { rotation: 0, svgOrigin: `${s.x} 560`, duration: 0.25, ease: 'back.out(3)' }, 2.8);
         s.cook.expr(tl, { eyes: 'open', brows: 'neutral' }, 3.4);
         cookFor(tl, s, 3.4, 1.2);
         beam(tl, false, 4.0);
@@ -207,7 +207,7 @@ export default {
         tl.to(P.ram, { opacity: 0, duration: 0.3 }, 0);
         const s = P.st[0];
         night(tl, 4, 0);
-        walk(tl, 724, 0.2);
+        walk(tl, 1015, 0.2, true);
         const m = meter(P.R.top, s.x - 100, 262, 200, 'CONTEXT · COMPACT VED 400k', 'var(--accent)');
         const mx = s.x - 98 + m.w * 0.4;
         D.p(m.grp, `M${mx} 256 V284`, '', { style: 'fill: none; stroke: #ffd23f', 'stroke-width': 3, 'data-bg': '' });
@@ -216,38 +216,33 @@ export default {
         tl.fromTo(m.grp, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.4);
         tl.fromTo(m.fill, { attr: { width: m.w * 0.08 } }, { attr: { width: m.w * 0.4 }, duration: 1.4, ease: 'power1.in' }, 0.5);
         tl.fromTo(v, { k: 80 }, { k: 400, duration: 1.4, ease: 'power1.in', onUpdate: show }, 0.5);
-        tl.to(s.cook.root, { scale: 1.15, svgOrigin: `${s.x} 560`, duration: 1.4, ease: 'power1.in' }, 0.5);
         s.cook.expr(tl, { eyes: 'wide' }, 1.6);
         beam(tl, true, 1.6);
         // compact: the context shrinks, same session keeps going
         tl.to(m.fill, { attr: { width: m.w * 0.06 }, duration: 0.5, ease: 'power2.out' }, 2.3);
         tl.to(v, { k: 60, duration: 0.5, ease: 'power2.out', onUpdate: show }, 2.3);
-        tl.to(s.cook.root, { scale: 1, svgOrigin: `${s.x} 560`, duration: 0.5, ease: 'back.out(2)' }, 2.3);
         s.cook.expr(tl, { eyes: 'open', mouth: 'smile' }, 2.8);
         cookFor(tl, s, 3.0, 1.2);
         tl.to(m.fill, { attr: { width: m.w * 0.16 }, duration: 1.4 }, 3.0);
         tl.to(v, { k: 150, duration: 1.4, onUpdate: show }, 3.0);
         beam(tl, false, 4.4);
         P.ctxm = m.grp;
-        ctx.focus(tl, [s.g, m.grp, P.guard.root, P.time.parentNode], 0.4);
+        ctx.focus(tl, [s.g, m.grp, P.guard2.root, P.time.parentNode], 0.4);
       }
 
       if (i === 5) {
         // 05:10 the corridor: a helper finished long ago and never said so
         night(tl, 5, 0);
+        tl.to(P.ctxm, { opacity: 0, duration: 0.3 }, 0);
         P.wait = speech(P.R.top, SX[1] - 120, 296, 'Venter på hjelperen.', [SX[1] - 10, 380], { size: 20 });
         pop(tl, P.wait, 0.3);
         P.lead.cook.expr(tl, { brows: 'annoyed', mouth: 'frown' }, 0.3);
         // the guard looks into the corridor from the kitchen side
-        walk(tl, 760, 0.6);
-        tl.set(P.guard.root, { opacity: 0 }, 1.6);
-        tl.set(P.guard2.root, { opacity: 1 }, 1.6);
+        walk(tl, G2, 0.6, true);
         tl.to(P.dark, { opacity: 0.22, duration: 0.4 }, 1.6);
         P.run.expr(tl, { eyes: 'wide', brows: 'raised' }, 1.9);
         // takes the plate and carries it to the lead's counter
         tl.to(P.plate, { x: 760 - 96, y: K.floor - 252 * 0.72 - 42, duration: 0.4 }, 2.4);
-        tl.set(P.guard2.root, { opacity: 0 }, 2.9);
-        tl.set(P.guard.root, { opacity: 1 }, 2.9);
         tl.to(P.dark, { opacity: 0.55, duration: 0.4 }, 2.9);
         // the plate cuts to the lead's counter (no flight across the cooks)
         tl.to(P.plate, { opacity: 0, duration: 0.25 }, 3.0);
@@ -263,9 +258,8 @@ export default {
       if (i === 6) {
         // 06:00 morning: lights up, everything goes out
         night(tl, 6, 0, 1.0);
-        tl.to(P.ctxm, { opacity: 0, duration: 0.3 }, 0);
         tl.to(P.dark, { opacity: 0, duration: 1.2 }, 0.8);
-        tl.to(P.guard.root, { opacity: 0, duration: 0.6 }, 0.8);
+        tl.to([P.guard.root, P.guard2.root], { opacity: 0, duration: 0.6 }, 0.8);
         tl.to(P.plate, { opacity: 0, duration: 0.3 }, 1.6);
         P.st.forEach((s, k) => serve(tl, P.R.top, s.x, 1.8 + k * 0.25, { color: ['#ff7a2f', '#c4562a', '#ffd23f'][k] }));
         P.st.forEach(({ cook: c }) => c.expr(tl, { mouth: 'smile', eyes: 'open' }, 2.2));
