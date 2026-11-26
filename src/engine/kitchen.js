@@ -203,14 +203,14 @@ export function cookFor(tl, st, at, dur) {
   tl.to(st.steam, { opacity: 0, duration: 0.3 }, at + dur);
 }
 
-/** Lead session's status board. rows: [{ name, status }]; returns { rows, set(tl, i, status, at) }. */
+/** Master session's status board. rows: [{ name, status }]; returns { rows, set(tl, i, status, at) }. */
 export const STATUS = {
   queue: ['i kø', 'var(--muted)'],
   cook: ['graver', '#ff7a2f'],
   wait: ['venter på deg', '#ffd23f'],
   done: ['ferdig', '#8fe3a2'],
 };
-export function board(parent, x, y, w, rows, { title = 'LEAD SESSION' } = {}) {
+export function board(parent, x, y, w, rows, { title = 'MASTER SESSION' } = {}) {
   const g = group(parent, { 'data-unit': '' });
   const h = 74 + rows.length * 46;
   el('rect', { x, y, width: w, height: h, rx: 10, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 2.5 }, g);

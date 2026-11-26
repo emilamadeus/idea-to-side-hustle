@@ -32,8 +32,8 @@ export default {
   notes: [
     'Sessionen graver selv. Jevn flyt.',
     'Hjelper til research: henter og sjekker, tilbake med en gang.',
-    'Hjelper som tar en hel ordre: ferdig, men sier aldri fra. Lead-sessionen venter.',
-    'Lead-sessionen har ventet, og må likevel selv gå og lete. Det løser vakta på neste.',
+    'Hjelper som tar en hel ordre: ferdig, men sier aldri fra. Leaden venter.',
+    'Leaden har ventet, og må likevel selv gå og lete. Det løser vakta på neste.',
   ],
 
   create(ctx) {
@@ -71,8 +71,8 @@ export default {
 
     function legend(g) {
       const rows = [
-        { y: 360, label: 'SESSION', sub: 'du startet den', make: (x, y) => robot(g, { x, y, s: 0.5, metal: CHEF.metal }) },
-        { y: 490, label: 'HJELPER', sub: 'sessionen startet den', make: (x, y) => robot(g, { x, y, s: 0.5, arms: 'down', metal: METAL[2], helmet: '#2f8a4a' }) },
+        { y: 360, label: 'LEAD', sub: 'agenten i sessionen', make: (x, y) => robot(g, { x, y, s: 0.5, metal: CHEF.metal }) },
+        { y: 490, label: 'HJELPER', sub: 'leaden startet den', make: (x, y) => robot(g, { x, y, s: 0.5, arms: 'down', metal: METAL[2], helmet: '#2f8a4a' }) },
       ];
       rows.forEach((r) => {
         const fg = D.g(g, { 'data-bg': '' });

@@ -5,6 +5,12 @@ Status: [given] = speaker's own point, [proposed] = Claude's suggestion awaiting
 
 ---
 
+## Terms [agreed]
+- Session: one Claude Code conversation, one per task.
+- Lead: the active agent in a session; it does the work.
+- Helper: a subagent the lead starts, for research.
+- Master session: a session that talks to the other sessions and stays updated on them; it keeps the overview.
+
 ## Meta: this presentation is a web page [given]
 - Built: src/slides/html-deck.js.
 Point: an HTML page instead of PowerPoint, built with Claude Code.
@@ -61,24 +67,24 @@ Point: for bigger work, the AI keeps an HTML spec up to date as it works: titles
   2. X-ray mode: the page slides apart to show the hidden layer only agents read (the instruction comment and agent notes).
   3. A colleague's chat message asks for status. "Copy status" is pressed; the text flies into the reply.
 
-## Parallel sessions with a lead session [given]
+## Parallel sessions with a master session [given]
 - Built: src/slides/kitchen.js.
-Point: one session per task, plus one lead session.
+Point: one session per task, plus one master session that talks to the others and keeps the overview.
 - Storyboard [agreed]: a mine. You are the boss with a whip; the AI sessions and helpers are robot miners (engine/kitchen.js keeps its old name).
   1. One robot digs every work order in turn; orders pile up on the beam and fall to the floor.
-  2. One rock face per task (one session per task). You arrive with the whip; the lead session's board shows digging, waiting for you, done. One row blinks "venter på deg".
+  2. One rock face per task (one session per task). You arrive with the whip; the master session's board shows digging, waiting for you, done. One row blinks "venter på deg".
   3. You answer and crack the whip; carts of ore roll out in parallel; the beam empties.
-- The lead session tracks the others: which are working, which are waiting for a response, which are done.
+- The master session tracks the others: which are working, which are waiting for a response, which are done.
 
-## Lead session first, helpers rarely [given]
+## The lead does the work, helpers rarely [given]
 - Built: src/slides/helpers.js.
-Point: do the work in the lead session itself. Helpers (subagents spawned by a session) only occasionally, mostly for planning or research, almost never for implementation. With helpers implementing: poorer results, long waits, and wait locks where a helper never reports back as finished while the lead keeps waiting.
+Point: the lead (the active agent in each session) does the work itself. Helpers (subagents spawned by a session) only occasionally, mostly for planning or research, almost never for implementation. With helpers implementing: poorer results, long waits, and wait locks where a helper never reports back as finished while the lead keeps waiting.
 - Terminology for the slide: "session" = a task you started; "helper" = a subagent a session starts by itself.
 - Storyboard [agreed]: same mine, with a side tunnel.
   1. The robot miner (session) digs itself. Carts go out steadily.
   2. Research errand: the small helper robot checks the store room (dynamite, lamps, rails) and is back at once. Good use.
   3. A whole work order handed to the helper: it finishes, then stands in the side tunnel holding the ore and never says so. The session waits; orders pile up; the clock spins. Pencil: ferdig for 40 min siden.
-  4. The lead session, which has already waited, has to go and look itself: it leaves its rock face, takes the ore from the helper in the tunnel, and only then gets back to its own queue.
+  4. The lead, which has already waited, has to go and look itself: it leaves its rock face, takes the ore from the helper in the tunnel, and only then gets back to its own queue.
 
 ## Cross-model loop through a shared file [given]
 - Built: src/slides/asset-loop.js.
@@ -211,7 +217,7 @@ Point: screenshots and visual examples beat explaining. When an issue is hard to
   3. The screenshot goes into a fresh agent: pencil circles appear on each problem, and a numbered list of prompts comes out, ready to paste.
 
 ## One session per task [given]
-Point: one session per bigger task or task group. Merge candidate with "Parallel sessions with a lead session".
+Point: one session per bigger task or task group. Merge candidate with "Parallel sessions with a master session".
 
 ## Learn unfamiliar territory by asking it [given]
 - Built: src/slides/gateway.js.

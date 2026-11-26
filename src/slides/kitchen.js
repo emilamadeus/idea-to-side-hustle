@@ -4,10 +4,10 @@ import { speech } from '../engine/props.js';
 import { K, RAIL_X, room, station, ticket, serve, cookFor, board, boss, METAL } from '../engine/kitchen.js';
 
 /*
-  Tip: one session per task, plus one lead session that keeps track.
+  Tip: one session per task, plus one master session that talks to the others and keeps the overview.
     The mine: robot miners are sessions, work orders hang from the beam, you hold the whip.
     1. One robot digs every order in turn; orders pile up and overflow the beam.
-    2. One rock face per task; you (whip) arrive; the lead session's board shows
+    2. One rock face per task; you (whip) arrive; the master session's board shows
        digging, waiting for you, done. One row blinks "venter på deg".
     3. You answer (whip crack); carts go out in parallel; the beam empties.
 
@@ -28,7 +28,7 @@ export default {
   steps: 3,
   notes: [
     'Én session graver alt i rekkefølge. Ordrene hoper seg opp.',
-    'Én session per oppgave. Lead-sessionen har tavla: lager, venter på deg, ferdig.',
+    'Én session per oppgave. Master-sessionen har tavla: graver, venter på deg, ferdig.',
     'Du svarer på den ene, og svinger pisken. Alt går ut samtidig.',
   ],
 
@@ -36,7 +36,7 @@ export default {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Sessions</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*2.7)">Én session per oppgave.<br>Én <em>lead session</em><br>som følger med.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*2.7)">Én session per oppgave.<br>Én <em>master session</em><br>som gir oversikt.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
