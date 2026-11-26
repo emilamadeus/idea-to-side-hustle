@@ -221,3 +221,21 @@ export function combine(stage, ...parts) {
   }
   return dust(o, at);
 }
+
+/**
+ * Deep space for the zoom-out view: a wide, deep field behind and around the slide panels
+ * (panels sit at z ≈ -8, the camera between z ≈ -4 and 21), so it fills the screen at every
+ * zoom. Denser and brighter near the middle; nothing in front of the panels.
+ */
+export function space(stage) {
+  const o = out(stage);
+  for (let i = 0; i < o.n; i++) {
+    const z = -9.5 - Math.pow(Math.random(), 1.2) * 40;   // from just behind the panels, deep
+    const spread = 0.8 + (-z) / 20;                         // wider further back (the view widens)
+    o.positions[i * 3] = rand(-1, 1) * 22 * spread;
+    o.positions[i * 3 + 1] = rand(-1, 1) * 13 * spread;
+    o.positions[i * 3 + 2] = z;
+    o.alphas[i] = rand(0.25, 0.75);
+  }
+  return o;
+}

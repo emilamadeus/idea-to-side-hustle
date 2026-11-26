@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
+import * as shapes from './shapes.js';
 
 /*
   Zoom-out: the slides as panels floating in the particle space, joined as a linked list by
@@ -213,6 +214,7 @@ export function createZoom(deck, stage) {
 
   // ── state ──
   let level = 0, layout = null, sel = deck.index, hover = -1, busy = false;
+  let baseSize = null; // the particles' normal size, restored on the way back to a slide
   let view = null; // wheel zoom within a level: centre, depth of the panels, base distance, factor
   const tip = document.createElement('div');
   tip.className = 'zoom-tip';
@@ -274,6 +276,10 @@ export function createZoom(deck, stage) {
       world.visible = true;
       document.body.classList.add('zoom-open');
       stage.setFrameMask(false);
+      stage.particles.morphTo(shapes.space(stage), { duration: 1.6, turbulence: 0.2 });
+      // the field sits far back, where points come out tiny: grow them while zoomed out
+      if (baseSize == null) baseSize = particles.uniforms.uSize.value;
+      gsap.to(particles.uniforms.uSize, { value: baseSize * 3.2, duration: 1.4 });
       stage.setBloom({ strength: 0.08, duration: 0.8 });
       gsap.to(rig, { parallax: 3, duration: 1 });
       sel = deck.index;
@@ -299,6 +305,7 @@ export function createZoom(deck, stage) {
     stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 1.1, ease: 'power3.inOut' });
     gsap.to(rig, { parallax: 1, duration: 1.1 });
     stage.setBloom({ strength: stage.theme.bloom.strength, duration: 1.1 });
+    if (baseSize != null) gsap.to(particles.uniforms.uSize, { value: baseSize, duration: 1.1 });
     level = 0; hover = -1; tip.classList.remove('on');
     deck.sync?.send({ type: 'zoom', level });
     gsap.delayedCall(1.1, () => {
