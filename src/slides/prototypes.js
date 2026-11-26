@@ -4,11 +4,11 @@ import { chatPhone } from '../engine/props.js';
 
 /*
   Tip: build several throwaway versions and pick one, instead of debating one.
-  The example is this deck's own visual identity.
-    0. Asked for four real directions.
-    1. They flip past one at a time: Observatoriet, Arkade, Blåkopi, Arbeidstegning.
-    2. Side by side for the pick. Three go in the bin; the chosen one comes back, stamped:
-       the style of the deck you are watching.
+  The example is the firewood subscription's landing page.
+    0. Asked for four real proposals for the site.
+    1. They flip past one at a time: Skog, Nordisk enkel, Rask levering, Varm peis.
+    2. Side by side for the pick. Three go in the bin; the chosen one (Varm peis) comes back,
+       stamped.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
@@ -17,11 +17,12 @@ import { chatPhone } from '../engine/props.js';
     pick row   y 300–520 (step 2); bin x 1360–1460, y 600–760
 */
 
+// four landing pages for the firewood subscription; the last one is picked
 const DIRS = [
-  { name: 'Observatoriet', bg: '#0b1020', fg: '#e8eefc', acc: '#7fb2ff', font: "800 64px 'Inter Tight', var(--font-display)", deco: 'stars' },
-  { name: 'Arkade', bg: '#1a0f08', fg: '#ffd23f', acc: '#ff5a1f', font: '800 58px var(--font-display)', deco: 'blocks' },
-  { name: 'Blåkopi', bg: '#1d3a6b', fg: '#eaf2ff', acc: '#ff6f6f', font: '700 40px var(--font-mono)', deco: 'grid' },
-  { name: 'Arbeidstegning', bg: '#16100b', fg: '#fff3e3', acc: '#ff5a1f', font: '800 64px var(--font-display)', deco: 'sheet' },
+  { name: 'Skog', bg: '#17241a', fg: '#eef3e6', acc: '#8fbf6a', font: "800 64px 'Inter Tight', var(--font-display)", deco: 'trees' },
+  { name: 'Nordisk enkel', bg: '#f1ebe0', fg: '#1a120c', acc: '#c4562a', font: '700 56px var(--font-display)', deco: 'logs' },
+  { name: 'Rask levering', bg: '#ffd23f', fg: '#1a120c', acc: '#1a120c', font: '800 64px var(--font-display)', deco: 'truck' },
+  { name: 'Varm peis', bg: '#22120a', fg: '#fff3e3', acc: '#ff7a2f', font: '800 64px var(--font-display)', deco: 'fire' },
 ];
 const CW = 840, CH = 472;
 
@@ -30,9 +31,9 @@ export default {
   title: 'Prototyper',
   steps: 3,
   notes: [
-    'Fire ekte retninger i stedet for et møte om én.',
-    'Observatoriet, Arkade, Blåkopi, Arbeidstegning.',
-    'Velg én. Resten kastes. Det er den dere ser på nå.',
+    'Fire ekte forslag til nettsiden for ved-abonnementet, i stedet for et møte om ett.',
+    'Skog, Nordisk enkel, Rask levering, Varm peis.',
+    'Velg ett. Resten kastes.',
   ],
 
   create(ctx) {
@@ -57,37 +58,43 @@ export default {
         for (let y = step; y < CH; y += step) p += `M0 ${y} H${CW} `;
         D.p(deco, p, '', { style: `fill: none; stroke: ${color}`, 'stroke-width': 1.5 });
       };
-      if (d.deco === 'stars') {
-        // night sky: a big moon, stars, a thin horizon of hills
-        D.el('circle', { cx: 690, cy: 120, r: 70, style: 'fill: #e8eefc', opacity: 0.9 }, deco);
-        D.el('circle', { cx: 668, cy: 104, r: 64, style: `fill: ${d.bg}` }, deco);
-        for (let k = 0; k < 46; k++) D.el('circle', { cx: (k * 197) % CW, cy: (k * 89) % (CH - 120), r: (k % 3) * 0.8 + 1.4, style: `fill: ${d.fg}`, opacity: 0.35 + (k % 4) * 0.15 }, deco);
-        D.p(deco, `M0 ${CH - 70} Q200 ${CH - 120} 420 ${CH - 80} T${CW} ${CH - 96} V${CH} H0 Z`, '', { style: 'fill: #141c33' });
+      if (d.deco === 'trees') {
+        // a dark forest along the bottom right, a pale moon
+        D.el('circle', { cx: 700, cy: 110, r: 44, style: 'fill: #eef3e6', opacity: 0.85 }, deco);
+        [[560, 470, 150], [640, 470, 200], [720, 470, 170], [800, 470, 220]].forEach(([x, y, h]) => {
+          D.p(deco, `M${x} ${y - h} L${x + 52} ${y - 10} H${x - 52} Z`, '', { style: 'fill: #2f4a2c' });
+          D.el('rect', { x: x - 7, y: y - 12, width: 14, height: 12, style: 'fill: #3a2a1c' }, deco);
+        });
       }
-      if (d.deco === 'blocks') {
-        // loud flat colour: huge number, stacked blocks
-        D.el('rect', { x: 620, y: 0, width: CW - 620, height: CH, style: `fill: ${d.acc}` }, deco);
-        D.text(deco, 730, 320, '80', 'big', { 'text-anchor': 'middle', style: `font: 800 200px var(--font-display); fill: ${d.bg}` });
-        D.el('rect', { x: 60, y: 330, width: 120, height: 60, style: `fill: ${d.fg}` }, deco);
-        D.el('rect', { x: 190, y: 330, width: 60, height: 60, style: `fill: ${d.acc}` }, deco);
+      if (d.deco === 'logs') {
+        // light and plain: a neat stack of log ends in line art
+        for (let r = 0; r < 3; r++) for (let k = 0; k < 4 - r; k++) {
+          D.el('circle', { cx: 600 + k * 62 + r * 31, cy: 380 - r * 54, r: 28, style: `fill: none; stroke: ${d.fg}`, 'stroke-width': 3 }, deco);
+          D.el('circle', { cx: 600 + k * 62 + r * 31, cy: 380 - r * 54, r: 10, style: `fill: none; stroke: ${d.acc}`, 'stroke-width': 3 }, deco);
+        }
+        D.p(deco, 'M560 412 H800', '', { style: `fill: none; stroke: ${d.fg}`, 'stroke-width': 3 });
       }
-      if (d.deco === 'grid') {
-        // blueprint: grid, a white technical drawing of a house, a red pencil correction
-        grid('#2f5590');
-        D.p(deco, 'M560 380 V250 L660 190 L760 250 V380 Z M600 380 V320 H640 V380 M680 280 h50 v40 h-50 Z', '', { style: 'fill: none; stroke: #eaf2ff', 'stroke-width': 3 });
-        D.p(deco, 'M540 400 H780 M540 395 v10 M780 395 v10', '', { style: 'fill: none; stroke: #eaf2ff', 'stroke-width': 2 });
-        D.p(deco, D.roughEllipse(705, 300, 50, 34), '', { style: 'fill: none; stroke: #ff6f6f', 'stroke-width': 3 });
+      if (d.deco === 'truck') {
+        // loud and fast: a black truck with speed lines
+        D.el('rect', { x: 540, y: 250, width: 170, height: 90, rx: 6, style: 'fill: #1a120c' }, deco);
+        D.p(deco, 'M712 270 H770 L800 300 V340 H712 Z', '', { style: 'fill: #1a120c' });
+        [580, 760].forEach((cx) => { D.el('circle', { cx, cy: 345, r: 22, style: 'fill: #1a120c; stroke: #ffd23f', 'stroke-width': 5 }, deco); });
+        [270, 300, 330].forEach((y, k) => D.p(deco, `M${440 + k * 20} ${y} H${520}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 6, 'stroke-linecap': 'round' }));
       }
-      if (d.deco === 'sheet') {
-        // working drawing: warm grid, crop marks, title block, a dimension line
-        grid('#2a1f17');
-        D.p(deco, 'M24 44 V24 H44 M796 24 H816 V44 M24 428 V448 H44 M796 448 H816 V428', '', { style: 'fill: none; stroke: #fff3e3', 'stroke-width': 2.5 });
-        D.el('rect', { x: CW - 280, y: CH - 80, width: 250, height: 54, style: 'fill: none; stroke: #6b5a48', 'stroke-width': 2 }, deco);
-        D.p(deco, `M${CW - 200} ${CH - 80} V${CH - 26} M${CW - 110} ${CH - 80} V${CH - 26}`, '', { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 2 });
-        D.p(deco, `M60 ${CH / 2 + 40} H500 M60 ${CH / 2 + 32} v16 M500 ${CH / 2 + 32} v16`, '', { style: 'fill: none; stroke: #ffd23f', 'stroke-width': 3 });
+      if (d.deco === 'fire') {
+        // warm: a fireplace with a fire, its glow on the wall
+        D.el('circle', { cx: 680, cy: 300, r: 170, style: 'fill: #ff7a2f', opacity: 0.12 }, deco);
+        D.p(deco, 'M570 420 V240 Q680 170 790 240 V420 Z', '', { style: 'fill: #120905; stroke: #5a3a22', 'stroke-width': 6 });
+        D.p(deco, 'M640 410 Q632 352 668 322 Q664 360 684 372 Q690 330 716 300 Q724 360 722 410 Z', '', { style: 'fill: #ff7a2f' });
+        D.p(deco, 'M664 410 Q662 372 684 352 Q688 382 702 392 Q706 374 712 364 Q716 392 712 410 Z', '', { style: 'fill: #ffd23f' });
+        D.p(deco, 'M612 412 H748', '', { style: 'fill: none; stroke: #8a5a34', 'stroke-width': 10, 'stroke-linecap': 'round' });
       }
-      D.text(c, 60, CH / 2, 'Fra idé til startup', 'ct', { style: `font: ${d.font}; fill: ${d.fg}` });
-      D.text(c, 60, CH / 2 + 90, d.name.toUpperCase(), 'cn', { style: `font: 700 22px var(--font-mono); letter-spacing: .14em; fill: ${d.acc}` });
+      // the page: the same offer in every direction
+      D.text(c, 60, CH / 2 - 30, 'Ved på døra.', 'ct', { style: `font: ${d.font}; fill: ${d.fg}` });
+      D.text(c, 60, CH / 2 + 24, 'Hver 14. dag, hele vinteren.', 'cs', { style: `font: 600 26px var(--font-display); fill: ${d.fg}`, opacity: 0.85 });
+      D.el('rect', { x: 60, y: CH / 2 + 60, width: 170, height: 52, rx: 26, style: `fill: ${d.acc}` }, c);
+      D.text(c, 145, CH / 2 + 94, 'Bestill', 'cb', { 'text-anchor': 'middle', style: `font: 800 22px var(--font-display); fill: ${d.bg}` });
+      D.text(c, 60, CH - 46, d.name.toUpperCase(), 'cn', { style: `font: 700 22px var(--font-mono); letter-spacing: .14em; fill: ${d.acc}` });
       return c;
     }
 
@@ -99,9 +106,9 @@ export default {
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.chat = chatPhone(svg, 80, 262, 440, 300, { app: 'Claude', size: 18 });
         tl.fromTo(P.chat.root, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
-        P.chat.user(tl, 'Lag fire visuelle retninger for presentasjonen. Ekte, som jeg kan klikke i.', 0.8);
+        P.chat.user(tl, 'Lag fire forslag til nettsiden for ved-abonnementet. Ekte, som jeg kan klikke i.', 0.8);
         const t = P.chat.think(tl, 1.6, 1.4);
-        P.chat.reply(tl, 'Fire retninger klare.', t);
+        P.chat.reply(tl, 'Fire forslag klare.', t);
         P.cards = DIRS.map((d) => { const c = card(svg, d); gsap.set(c, { x: 620, y: 160, opacity: 0 }); return c; });
       }
 
@@ -141,9 +148,9 @@ export default {
           tl.to(ball, { opacity: 0, duration: 0.1 }, 2.3 + k * 0.3);
         });
                 tl.to(bin, { opacity: 0, duration: 0.3 }, 2.6);
-        // the chosen one grows to the full frame: this deck
+        // the chosen one grows back to full size
         tl.to(P.cards[pick], { x: 620, y: 160, scale: 1, duration: 1.0, ease: 'power2.inOut' }, 3.0); // after the others are in the bin
-        const st = D.stamp(D.g(svg, { 'data-unit': '' }), 1290, 560, 'VALGT', { size: 40, rotate: -6 });
+        const st = D.stamp(D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' }), 1290, 560, 'VALGT', { size: 40, rotate: -6 }); // lands on the card by design
         tl.add(D.slam(st), 4.1);
       }
       return tl;

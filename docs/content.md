@@ -232,8 +232,8 @@ Point: example from work. The speaker used AI to track the upstream gateway team
 ## Throwaway prototypes to decide [given]
 - Built: src/slides/prototypes.js.
 Point: build several versions and pick, instead of debating one.
-- Example: this deck's visual identity: four live directions, the speaker picked one, the rest deleted.
-- Storyboard [proposed]: four live mini-decks side by side (the real directions from this deck). Three slide away, one grows to fill the screen: the deck you are watching.
+- Example: the firewood subscription's landing page: four real proposals (Skog, Nordisk enkel, Rask levering, Varm peis), same offer "Ved på døra. Hver 14. dag, hele vinteren. Bestill"; one picked (Varm peis), the rest binned.
+- Storyboard [built]: asked in the chat for four proposals; they flip past one at a time; side by side for the pick, three go in the bin, the chosen one grows back and is stamped VALGT.
 
 ## Where it fails [given]
 - Built: src/slides/fails.js.
