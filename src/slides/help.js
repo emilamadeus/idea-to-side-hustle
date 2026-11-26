@@ -18,8 +18,8 @@ export const HELP = {
     'Hver oppgave sier hvorfor den er blokkert, og hva den venter på.',
     'Et skjult lag med regler som bare agentene leser.',
     'Status til andre er ett klikk unna.',
-    'Hver oppgave har sin egen knapp: hele historien, klar til å sende.',
-    'Eller en ferdig prompt for akkurat den oppgaven.',
+    'Hver oppgave har sin egen kopi-knapp.',
+    'Og en ferdig prompt for akkurat den oppgaven.',
     'Denne presentasjonen har sin egen.',
   ],
   'full-scope': [
