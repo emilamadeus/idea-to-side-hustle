@@ -6,9 +6,9 @@ import { chatPhone, attempt } from '../engine/props.js';
   Tip: give it a picture, not a list. The firewood subscription's front page, right after
   "Varm peis" was picked on the prototypes slide.
     0. The prompt, and what you actually have in mind (a thought cloud: the Varm peis page).
-    1. Attempt 1: the list becomes a checklist and every box is ticked, but the page is the
-       cheap version: bright orange everywhere for "varm", clip-art candle and heart for
-       "koselig", a cartoon flame for "peis", a shouting red button for "tydelig knapp".
+    1. Attempt 1: a good, full description becomes a checklist and every box is ticked, but
+       the page is not what you had in mind: a flat muddy brown, a clip-art brick fireplace
+       with a smiling flame, the headline in the default serif, a glossy orange BESTILL pill.
     2. Attempt 2, a new session: the thought becomes a real reference image (made in ChatGPT).
        The page is built against it: close to the picture, a little plainer.
   The game example (real ChatGPT references, the result in Unreal) is its own slide in
@@ -22,8 +22,9 @@ import { chatPhone, attempt } from '../engine/props.js';
     thought cloud / polaroid x 1190–1494, y 150–440; thought dots y 250–300 back to the phone
 */
 
-const REQ = ['Varm', 'Koselig', 'Peis', 'Tydelig knapp'];
-const PROMPT = 'Lag forsiden. Varm, koselig, med peis og en tydelig knapp.';
+// a good, full description: still not the picture you have in mind
+const REQ = ['Mørk, varm bakgrunn', 'Peis med flammer til høyre', 'Stor overskrift til venstre', 'Oransje knapp: Bestill'];
+const PROMPT = 'Lag forsiden. Mørk, varm bakgrunn, som en stue om kvelden. En peis med flammer til høyre som lyser opp rommet. Stor overskrift «Ved på døra.» til venstre, en linje om levering hver 14. dag, og en avrundet oransje knapp: Bestill.';
 const PX = 600, PY = 380, PW = 570, PH = 360;
 const INK = (fill, w = 2.6) => ({ style: `fill: ${fill}; stroke: #1a120c`, 'stroke-width': w, 'stroke-linejoin': 'round' });
 
@@ -61,7 +62,7 @@ export default {
   title: 'Visuelle referanser',
   steps: 3,
   notes: [
-    'En helt vanlig prompt for forsiden. Og bildet du har i hodet: Varm peis.',
+    'En god, utfyllende beskrivelse av forsiden. Og bildet du har i hodet: Varm peis.',
     'Alle fire krav er oppfylt. Det ligner bare ikke på det du så for deg.',
     'Forsøk 2, ny session. Bildet fra hodet ditt, laget i ChatGPT, sendt med. Nå treffer den.',
   ],
@@ -89,9 +90,9 @@ export default {
       const g = D.g(svg, { 'data-unit': '' });
       frame(g);
       const bg = D.el('rect', { x: PX + 2, y: PY + 34, width: PW - 4, height: PH - 36, style: 'fill: #f2f2f2', 'data-bg': '' }, g);
-      D.text(g, PX + 30, PY + 84, 'Velkommen til vår vedtjeneste', 'cw', { style: 'font: 700 26px Georgia, serif; fill: #333' });
-      D.p(g, `M${PX + 30} ${PY + 106} h300 M${PX + 30} ${PY + 124} h240`, '', { style: 'fill: none; stroke: #9a9a9a', 'stroke-width': 6, 'stroke-linecap': 'round', 'data-bg': '' });
-      return { g, bg };
+      // an empty template to start from
+      const ph = D.p(g, `M${PX + 30} ${PY + 80} h220 M${PX + 30} ${PY + 104} h160 M${PX + 30} ${PY + 128} h190`, '', { style: 'fill: none; stroke: #c9c9c9', 'stroke-width': 10, 'stroke-linecap': 'round', 'data-bg': '' });
+      return { g, bg, ph };
     }
 
     const reset = () => { svg.innerHTML = ''; P = {}; };
@@ -129,27 +130,37 @@ export default {
         const at = (k) => t0 + 0.4 + k * 1.3;
         const H = cheapPage();
         tl.fromTo(H.g, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, t0);
-        // Varm: bright orange, everywhere
-        tl.to(H.bg, { attr: { style: 'fill: #ff9a3d' }, duration: 0.5 }, at(0));
+        // Mørk, varm bakgrunn: a flat muddy brown
+        tl.to(H.bg, { attr: { style: 'fill: #5a2c14' }, duration: 0.5 }, at(0));
+        tl.to(H.ph, { opacity: 0, duration: 0.3 }, at(0));
         tick(0, at(0) + 0.4);
-        // Koselig: clip art, a candle and a heart
-        const clip = D.g(H.g);
-        D.el('rect', { x: PX + 466, y: PY + 110, width: 26, height: 60, rx: 3, ...INK('#fff3e3', 2) }, clip);
-        D.p(clip, `M${PX + 479} ${PY + 106} q-10 -14 0 -26 q10 12 0 26 Z`, '', INK('#ffd23f', 2));
-        D.p(clip, `M${PX + 530} ${PY + 132} c-10 -14 -30 -4 -18 12 l18 18 l18 -18 c12 -16 -8 -26 -18 -12 Z`, '', INK('#ff5a8a', 2));
-        tl.fromTo(clip, { opacity: 0, scale: 0.6, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(2)' }, at(1));
+        // Peis med flammer til høyre: a clip-art brick fireplace, a flame with a face
+        const fire = D.g(H.g);
+        const fx0 = PX + 350, fy0 = PY + 120;
+        D.el('rect', { x: fx0, y: fy0, width: 190, height: 200, style: 'fill: #b5452e; stroke: #1a120c', 'stroke-width': 2.5 }, fire);
+        let bricks = '';
+        for (let r = 0; r < 8; r++) {
+          bricks += `M${fx0} ${fy0 + r * 25} H${fx0 + 190} `;
+          for (let c = 0; c < 5; c++) bricks += `M${fx0 + c * 40 + (r % 2) * 20} ${fy0 + r * 25} v25 `;
+        }
+        D.p(fire, bricks, '', { style: 'fill: none; stroke: #7a2a1a', 'stroke-width': 2 });
+        D.el('rect', { x: fx0 + 40, y: fy0 + 80, width: 110, height: 120, style: 'fill: #1a120c' }, fire);
+        D.p(fire, `M${fx0 + 70} ${fy0 + 196} q-30 -6 -18 -46 q8 18 18 18 q-6 -36 24 -60 q0 30 18 42 q6 -12 0 -24 q30 24 12 66 q-12 10 -54 4 Z`, '', INK('#ff9a1f', 2));
+        [[fx0 + 86, fy0 + 160], [fx0 + 102, fy0 + 160]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 3.5, style: 'fill: #1a120c' }, fire));
+        D.p(fire, `M${fx0 + 84} ${fy0 + 172} q10 8 20 0`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2.5, 'stroke-linecap': 'round' });
+        tl.fromTo(fire, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, at(1));
         tick(1, at(1) + 0.4);
-        // Peis: a cartoon flame with a face
-        const flame = D.g(H.g);
-        D.p(flame, `M${PX + 160} ${PY + 290} q-60 -10 -40 -80 q10 30 30 30 q-10 -60 40 -100 q0 50 30 70 q10 -20 0 -40 q50 40 20 110 q-20 20 -80 10 Z`, '', INK('#ff5a1f', 2.5));
-        [[PX + 158, PY + 236], [PX + 182, PY + 236]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 5, style: 'fill: #1a120c' }, flame));
-        D.p(flame, `M${PX + 156} ${PY + 254} q14 12 28 0`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 3, 'stroke-linecap': 'round' });
-        tl.fromTo(flame, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, at(2));
+        // Stor overskrift til venstre: big, in the default serif
+        const head = D.g(H.g);
+        D.text(head, PX + 30, PY + 110, 'Ved på døra.', 'ch', { style: 'font: 700 40px Georgia, serif; fill: #ffe9c8' });
+        D.text(head, PX + 30, PY + 140, 'Levering hver 14. dag!', 'cs', { style: 'font: italic 400 18px Georgia, serif; fill: #ffe9c8' });
+        tl.fromTo(head, { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(2));
         tick(2, at(2) + 0.4);
-        // Tydelig knapp: it shouts
+        // Oransje knapp: Bestill, glossy and loud
         const btn = D.g(H.g);
-        D.el('rect', { x: PX + 270, y: PY + 250, width: 260, height: 70, rx: 8, style: 'fill: #e0242a; stroke: #ffd23f', 'stroke-width': 6 }, btn);
-        D.text(btn, PX + 400, PY + 296, 'BESTILL NÅ!!!', 'bt', { 'text-anchor': 'middle', style: 'font: 900 30px Impact, var(--font-display); fill: #ffd23f' });
+        D.el('rect', { x: PX + 30, y: PY + 236, width: 240, height: 64, rx: 32, style: 'fill: #ff7a00; stroke: #ffe14a', 'stroke-width': 5 }, btn);
+        D.el('rect', { x: PX + 44, y: PY + 242, width: 212, height: 22, rx: 11, style: 'fill: #ffffff', opacity: 0.35 }, btn);
+        D.text(btn, PX + 150, PY + 278, 'BESTILL', 'bt', { 'text-anchor': 'middle', style: 'font: 900 28px Impact, var(--font-display); fill: #ffffff' });
         tl.fromTo(btn, { opacity: 0, scale: 0.7, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(2.5)' }, at(3));
         tick(3, at(3) + 0.4);
         P.chat.reply(tl, 'Alle krav oppfylt.', at(3) + 1.2);

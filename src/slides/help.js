@@ -42,8 +42,8 @@ export const HELP = {
     'Beskriv kravet: AI finner løsninger du ikke kjente til, eller tenkte på.',
   ],
   'visual-ref': [
-    'Fire ord i prompten. Bildet i hodet ditt følger ikke med.',
-    'Alle krav er krysset av. Det ligner bare ikke.',
+    'Selv en god beskrivelse tar ikke med bildet i hodet ditt.',
+    'Alle krav er krysset av, men det er ikke det du så for deg.',
     'Med et bilde treffer den nesten det du så for deg.',
   ],
   'game-ref': [
