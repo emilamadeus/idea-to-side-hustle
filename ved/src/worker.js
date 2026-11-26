@@ -3,7 +3,7 @@
     GET  /            the order page (static, ./public)
     GET  /api/state   { open }
     GET  /api/sok?q=  address suggestions from Kartverket (all of Norway)
-    POST /api/order   { adresse, sted, lat, lon, sekker } → { id }     only while the shop is open
+    POST /api/order   { navn, adresse, sted, lat, lon, sekker } → { id }     only while the shop is open
     POST /api/route   { points: [[lon, lat], …] } → { legs: [[[lon, lat], …], …] }  real roads (OSRM),
                       a straight line for any leg the router can't answer
     GET  /api/ws      websocket
@@ -97,13 +97,13 @@ export class Room {
     let body;
     try { body = await req.json(); } catch { return json({ error: 'bad request' }, 400); }
     const clean = (v, n) => String(v ?? '').replace(/[<>]/g, '').trim().slice(0, n);
-    const adresse = clean(body?.adresse, 70), sted = clean(body?.sted, 40);
+    const navn = clean(body?.navn, 24), adresse = clean(body?.adresse, 70), sted = clean(body?.sted, 40);
     const lat = Number(body?.lat), lon = Number(body?.lon);
     const sekker = Math.max(1, Math.min(4, Math.round(Number(body?.sekker) || 1)));
     // anywhere in Norway, roughly (Svalbard included)
     if (!adresse || !(lat > 57 && lat < 81 && lon > 3 && lon < 34)) return json({ error: 'adresse' }, 400);
     this.recent.set(ip, now);
-    const o = { id: crypto.randomUUID().slice(0, 8), adresse, sted, lat: +lat.toFixed(5), lon: +lon.toFixed(5), sekker, t: now };
+    const o = { id: crypto.randomUUID().slice(0, 8), navn, adresse, sted, lat: +lat.toFixed(5), lon: +lon.toFixed(5), sekker, t: now };
     this.orders.push(o);
     await this.ctx.storage.put('orders', this.orders);
     this.send('deck', { type: 'order', order: o });

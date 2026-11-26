@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#140a05">
 <title>Ved. · Ved på døra, hele vinteren</title>
-<meta name="description" content="Tørr bjørkeved levert på døra, hver 14. dag. En demo fra foredraget «Fra idé til startup, med AI».">
+<meta name="description" content="Tørr bjørkeved levert på døra, hver 14. dag. Pause når du vil.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23140a05'/%3E%3Cpath d='M32 12c4 10 14 14 14 28a14 14 0 0 1-28 0c0-8 5-11 7-17 2 5 4 7 7 8-1-7-2-12 0-19z' fill='%23ff7a2f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -138,6 +138,8 @@
   .sugg b { font-weight: 700; font-size: 16px; color: var(--cream); }
   .sugg small { font-size: 13.5px; color: var(--muted); }
   .chosen { margin-top: 10px; font-size: 13.5px; color: var(--ok); display: flex; gap: 6px; align-items: center; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .addr.name { margin-bottom: 4px; }
   .seg label > span {
     display: grid; place-items: center; gap: 6px; padding: 14px 6px 12px; border-radius: 18px; cursor: pointer;
     border: 1px solid var(--line-2); background: rgba(255,255,255,.02); transition: all .25s var(--ease);
@@ -265,23 +267,29 @@
         <h2>Bestill ved</h2>
         <p>Første levering i morgen. Så hver 14. dag.</p>
 
-        <div class="q"><span>1</span>Hvor skal veden?</div>
+        <div class="q"><span>1</span>Hvem bestiller?</div>
+        <div class="addr name">
+          <svg class="pin" viewBox="0 0 18 22"><circle cx="9" cy="7" r="4.2" fill="none" stroke="#ff7a2f" stroke-width="2"/><path d="M2 20c.8-4 3.6-6 7-6s6.2 2 7 6" fill="none" stroke="#ff7a2f" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="nameInput" type="text" autocomplete="given-name" maxlength="24" placeholder="Fornavn" aria-label="Navn">
+        </div>
+
+        <div class="q"><span>2</span>Hvor skal veden?</div>
         <div class="addr" id="addr">
           <svg class="pin" viewBox="0 0 18 22"><path d="M9 21s7-6.6 7-12A7 7 0 0 0 2 9c0 5.4 7 12 7 12z" fill="none" stroke="#ff7a2f" stroke-width="2"/><circle cx="9" cy="9" r="2.6" fill="#ff7a2f"/></svg>
-          <input id="addrInput" type="text" inputmode="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Gateadresse, f.eks. Storgata 1" aria-label="Adresse">
+          <input id="addrInput" type="text" inputmode="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Gateadresse" aria-label="Adresse">
           <div class="sugg hide" id="sugg" role="listbox"></div>
           <p class="chosen hide" id="chosen"></p>
         </div>
 
-        <div class="q"><span>2</span>Hvor mye per levering?</div>
+        <div class="q"><span>3</span>Hvor mye per levering?</div>
         <div class="seg" id="sekker"></div>
 
         <div class="sum">
           <small id="sumLabel">1 sekk · 40 liter</small>
-          <b id="sumPrice">590 kr <small>/ levering</small></b>
+          <b id="sumPrice">129 kr <small>/ levering</small></b>
         </div>
         <button class="cta" id="cta" type="submit" disabled>Skriv inn adressen</button>
-        <p class="fine">En demo fra foredraget. Ingen betaling. Adressen vises på skjermen.</p>
+        <p class="fine">Ingen betaling i dag. Navn og adresse vises på skjermen.</p>
       </form>
       <div class="art">
 
@@ -354,12 +362,11 @@
 
   <footer>
     <span>Ved. · Hele Norge</span>
-    <span>Laget med AI for foredraget «Fra idé til startup, med AI».</span>
   </footer>
 </div>
 
 <script>
-  const PRICE = 590;
+  const PRICE = 129; // a 40 L sack of dry birch, delivered
   const $ = (s) => document.querySelector(s);
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
@@ -411,7 +418,7 @@
   const form = $('#form');
   const update = () => {
     const n = Number(form.sekker.value || 1);
-    $('#sumLabel').textContent = `${n} ${n === 1 ? 'sekk' : 'sekker'} · ${n * 40} liter`;
+    $('#sumLabel').textContent = `${n} ${n === 1 ? 'sekk' : 'sekker'} · ${n * 40} liter · fri frakt`;
     $('#sumPrice').innerHTML = `${(n * PRICE).toLocaleString('nb-NO')} kr <small>/ levering</small>`;
     $('#cta').disabled = !pick;
     $('#cta').textContent = pick ? `Bestill til ${pick.adresse}` : 'Skriv inn adressen';
@@ -432,7 +439,7 @@
     orders.forEach((o) => {
       const p = document.createElement('div');
       p.className = 'order-pill';
-      p.textContent = `${o.adresse || o.bydel} · ${sacks(o.sekker)}`;
+      p.textContent = `${o.navn ? `${o.navn} · ` : ''}${o.adresse || o.bydel} · ${sacks(o.sekker)}`;
       $('#pills').append(p);
     });
   };
@@ -443,7 +450,7 @@
     const cta = $('#cta');
     cta.disabled = true; cta.textContent = 'Bestiller …';
     if (!pick) return;
-    const body = { adresse: pick.adresse, sted: pick.sted, lat: pick.lat, lon: pick.lon, sekker: Number(form.sekker.value || 1) };
+    const body = { navn: $('#nameInput').value.trim().slice(0, 24), adresse: pick.adresse, sted: pick.sted, lat: pick.lat, lon: pick.lon, sekker: Number(form.sekker.value || 1) };
     try {
       const r = await fetch('/api/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();

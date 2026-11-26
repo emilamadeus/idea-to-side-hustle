@@ -149,8 +149,8 @@ export function liveMap(container, { depot }) {
       const tag = document.createElement('div');
       tag.className = 'lm-tag';
       tag.innerHTML = `<span></span><small></small>`;
-      tag.querySelector('span').textContent = o.adresse || '';
-      tag.querySelector('small').textContent = o.sted || '';
+      tag.querySelector('span').textContent = o.navn || o.adresse || '';
+      tag.querySelector('small').textContent = o.navn ? `${o.adresse || ''}, ${o.sted || ''}` : (o.sted || '');
       el.append(tag);
       setTimeout(() => { tag.style.opacity = 0; setTimeout(() => tag.remove(), 900); }, 4200);
     }

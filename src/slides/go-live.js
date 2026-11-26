@@ -38,11 +38,11 @@ const DEPOT = (import.meta.env.VITE_VED_DEPOT || '10.7522,59.9139').split(',').m
 const FEED_X = 80, FEED_Y = 270, FEED_H = 64, FEED_GAP = 10, FEED_MAX = 5;
 // the fallback evening: addresses around the country
 const DEMO = [
-  ['Thorvald Meyers gate 5', 'Oslo', 59.9227, 10.7590], ['Bryggen 1', 'Bergen', 60.3975, 5.3245], ['Munkegata 1', 'Trondheim', 63.4305, 10.3951],
-  ['Torget 1', 'Stavanger', 58.9700, 5.7331], ['Bragernes torg 1', 'Drammen', 59.7439, 10.2045], ['Storgata 1', 'Lillehammer', 61.1153, 10.4662],
-  ['Markens gate 1', 'Kristiansand', 58.1450, 7.9956], ['Storgata 1', 'Hamar', 60.7945, 11.0680], ['Kongens gate 1', 'Ålesund', 62.4723, 6.1549],
-  ['Nygata 1', 'Fredrikstad', 59.2181, 10.9298], ['Storgata 1', 'Tromsø', 69.6492, 18.9553], ['Storgata 1', 'Kongsberg', 59.6682, 9.6497],
-  ['Storgata 1', 'Bodø', 67.2804, 14.4049], ['Storgata 1', 'Gjøvik', 60.7957, 10.6916],
+  ['Thorvald Meyers gate 5', 'Oslo', 59.9227, 10.7590, 'Ingrid'], ['Bryggen 1', 'Bergen', 60.3975, 5.3245, 'Lars'], ['Munkegata 1', 'Trondheim', 63.4305, 10.3951, 'Sofie'],
+  ['Torget 1', 'Stavanger', 58.9700, 5.7331, 'Henrik'], ['Bragernes torg 1', 'Drammen', 59.7439, 10.2045, 'Nora'], ['Storgata 1', 'Lillehammer', 61.1153, 10.4662, 'Jonas'],
+  ['Markens gate 1', 'Kristiansand', 58.1450, 7.9956, 'Emma'], ['Storgata 1', 'Hamar', 60.7945, 11.0680, 'Ola'], ['Kongens gate 1', 'Ålesund', 62.4723, 6.1549, 'Maja'],
+  ['Nygata 1', 'Fredrikstad', 59.2181, 10.9298, 'Sander'], ['Storgata 1', 'Tromsø', 69.6492, 18.9553, 'Tiril'], ['Storgata 1', 'Kongsberg', 59.6682, 9.6497, 'Even'],
+  ['Storgata 1', 'Bodø', 67.2804, 14.4049, 'Ida'], ['Storgata 1', 'Gjøvik', 60.7957, 10.6916, 'Mats'],
 ];
 const sacks = (n) => `${n} ${n === 1 ? 'sekk' : 'sekker'}`;
 const short = (t, n) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
@@ -85,7 +85,7 @@ export default {
 
     // the fallback: a recorded evening of orders
     function replay() {
-      DEMO.forEach(([adresse, sted, lat, lon], k) => setTimeout(() => add({ id: `demo-${Date.now()}-${k}`, adresse, sted, lat, lon, sekker: 1 + (k * 7) % 3, t: Date.now(), demo: true }), 300 + k * 520 + (k % 3) * 140));
+      DEMO.forEach(([adresse, sted, lat, lon, navn], k) => setTimeout(() => add({ id: `demo-${Date.now()}-${k}`, navn, adresse, sted, lat, lon, sekker: 1 + (k * 7) % 3, t: Date.now(), demo: true }), 300 + k * 520 + (k % 3) * 140));
     }
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || !control) return;
@@ -157,8 +157,8 @@ export default {
       const g = D.g(P.feed, { 'data-unit': '' });
       D.el('rect', { x: FEED_X, y: FEED_Y, width: 440, height: FEED_H, rx: 14, style: `fill: #1d1510; stroke: ${o.demo ? 'var(--deco)' : '#ff7a2f'}`, 'stroke-width': 2 }, g);
       [[FEED_X + 26, FEED_Y + 40], [FEED_X + 42, FEED_Y + 40], [FEED_X + 34, FEED_Y + 26]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 7, ...FILL('#c9935a', 1.8) }, g));
-      D.text(g, FEED_X + 66, FEED_Y + 28, short(o.adresse || 'Ny bestilling', 26), 'fb', { style: 'font: 700 17px var(--font-display); fill: var(--fg)' });
-      D.text(g, FEED_X + 66, FEED_Y + 50, `${short(o.sted || '', 22)} · ${sacks(o.sekker)}`, 'fd', { style: 'font: 600 15px var(--font-display); fill: #b8a48e' });
+      D.text(g, FEED_X + 66, FEED_Y + 28, short(o.navn || 'Ny bestilling', 26), 'fb', { style: 'font: 700 17px var(--font-display); fill: var(--fg)' });
+      D.text(g, FEED_X + 66, FEED_Y + 50, short(`${o.adresse || ''}, ${o.sted || ''} · ${sacks(o.sekker)}`, 44), 'fd', { style: 'font: 600 15px var(--font-display); fill: #b8a48e' });
       const t = new Date(o.t || Date.now());
       D.text(g, FEED_X + 420, FEED_Y + 28, `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`, 'ft', { 'text-anchor': 'end', style: 'font: 700 13px var(--font-mono); fill: var(--muted)' });
       P.cards.unshift(g);
@@ -190,7 +190,7 @@ export default {
       const by = new Map();
       orders.forEach((o) => {
         const k = `${o.lat.toFixed(4)},${o.lon.toFixed(4)}`;
-        if (!by.has(k)) by.set(k, { lon: o.lon, lat: o.lat, ids: [], real: [], adresse: o.adresse });
+        if (!by.has(k)) by.set(k, { lon: o.lon, lat: o.lat, ids: [], real: [], adresse: o.adresse, navn: o.navn });
         by.get(k).ids.push(o.id);
         if (!o.demo) by.get(k).real.push(o.id);
       });
@@ -288,7 +288,7 @@ export default {
               duration: Math.min(24, 8 + st.length * 0.9),
               onArrive: (k) => {
                 P.lm.done(st[k].ids);
-                send({ type: 'notify', ids: st[k].real, title: 'Ved.', text: `Levert til ${st[k].adresse}.` });
+                send({ type: 'notify', ids: st[k].real, title: 'Ved.', text: `${st[k].navn ? `Hei ${st[k].navn}! ` : ''}Veden står ved døra i ${st[k].adresse}.` });
               },
             }));
           });
