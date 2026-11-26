@@ -65,7 +65,9 @@ Point: for bigger work, the AI keeps an HTML spec up to date as it works: titles
 - Storyboard [proposed]:
   1. The real spec of this presentation, live on screen. A task expands, a dependency line lights up the task it blocks.
   2. X-ray mode: the page slides apart to show the hidden layer only agents read (the instruction comment and agent notes).
-  3. A colleague's chat message asks for status. "Copy status" is pressed; the text flies into the reply.
+  3. A colleague asks for status. "Kopier status" drops a short, readable summary into the reply (Opptaksregler: ferdig. Privacy mode: i arbeid. Offline-varsel: venter på gateway build 412.); they react with a thumbs up.
+  4. They ask about one task. That row's own copy button drops everything about it: status, why it is blocked, what it waits for, the plan.
+  5. The page becomes this talk's own spec, live.
 
 ## Parallel sessions with a master session [given]
 - Built: src/slides/kitchen.js.

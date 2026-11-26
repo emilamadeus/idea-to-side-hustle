@@ -7,8 +7,10 @@ import { chatPhone, FILL } from '../engine/props.js';
     0. A spec page; statuses change by themselves while the AI works.
     1. A blocked task opens: why it is blocked, and the line to what it waits for lights up.
     2. X-ray: a scan bar sweeps down and shows the layer only agents read.
-    3. A colleague asks for status; "Kopier status" drops the text into the reply.
-    4. The page becomes the real spec of this talk, live.
+    3. A colleague asks for status; "Kopier status" drops a short summary into the reply. 👍
+    4. They ask about one task; that row's own copy button drops all of it: status, why, what
+       it waits for, the plan.
+    5. The page becomes the real spec of this talk, live.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
@@ -37,12 +39,13 @@ const HIDDEN = [
 export default {
   id: 'spec',
   title: 'Levende spec',
-  steps: 5,
+  steps: 6,
   notes: [
     'En spec i HTML. AI-en oppdaterer den mens den jobber.',
     'Åpne en oppgave: hvorfor den er blokkert, og hva den venter på.',
     'Røntgen: det skjulte laget som bare agentene leser.',
     'Kollega spør om status. Kopier, lim inn.',
+    'Spør de om én oppgave, kopierer du den: status, hvorfor, hva den venter på, planen.',
     'Og dette er specen for denne presentasjonen.',
   ],
 
@@ -98,7 +101,12 @@ export default {
         D.text(rg, PX + 50, y + 2, r.id, 'rid', { style: 'font: 700 17px var(--font-mono); fill: var(--muted)' });
         D.text(rg, PX + 110, y + 2, r.name, 'rn', { style: 'font: 600 22px var(--font-display); fill: var(--fg)' });
         const c = chip(rg, PX + PW - 50, y + 2, r.st);
-        return { g: rg, chip: c, y };
+        // per task: copy everything about this one task
+        const cpy = D.g(rg);
+        D.el('rect', { x: PX + PW - 214, y: y - 22, width: 34, height: 32, rx: 7, style: 'fill: #2c2119; stroke: #6b5a48', 'stroke-width': 2 }, cpy);
+        D.el('rect', { x: PX + PW - 205, y: y - 16, width: 13, height: 15, rx: 2, style: 'fill: none; stroke: #cfc3b2', 'stroke-width': 2 }, cpy);
+        D.el('rect', { x: PX + PW - 200, y: y - 11, width: 13, height: 15, rx: 2, style: 'fill: #2c2119; stroke: #cfc3b2', 'stroke-width': 2 }, cpy);
+        return { g: rg, chip: c, y, cpy };
       });
       return { g, body };
     }
@@ -190,6 +198,24 @@ export default {
       }
 
       if (i === 4) {
+        // one task in depth: that row's own copy button
+        const chat = P.chat;
+        chat.reply(tl, 'Hva venter offline-varselet på?', 0.3);
+        const r = P.rows[2];
+        const cur = cursor(svg);
+        tl.fromTo(cur, { x: PX + 500, y: PY + 500, opacity: 0 }, { x: PX + PW - 200, y: r.y - 8, opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 1.0);
+        tl.to(r.cpy, { scale: 0.85, transformOrigin: '50% 50%', duration: 0.08, yoyo: true, repeat: 1 }, 1.85);
+        tl.to(r.g.querySelector('rect'), { attr: { style: 'fill: #2c2119; stroke: #ff7a2f; stroke-width: 2' }, duration: 0.2 }, 1.85);
+        const fly = D.g(svg, { 'data-bg': '' });
+        D.el('rect', { x: PX + PW - 214, y: r.y - 22, width: 34, height: 32, rx: 7, style: 'fill: #e7dccb' }, fly);
+        tl.fromTo(fly, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 2.0);
+        tl.to(fly, { x: -720, y: 180, scale: 2, opacity: 0, duration: 0.6, ease: 'power2.in' }, 2.1);
+        tl.to(cur, { opacity: 0, duration: 0.3 }, 2.3);
+        chat.user(tl, ['Varsel når kamera går offline:', 'blokkert. Gatewayen sender ingen', 'hendelse når et kamera faller ut.', 'Venter på gateway build 412.', 'Plan: varsle innen ett minutt.'], 2.6);
+        ctx.focus(tl, [chat.root, r.g, cur, fly], 0.3);
+      }
+
+      if (i === 5) {
         // this talk's own spec, live
         tl.to(P.chat.root, { opacity: 0, duration: 0.3 }, 0);
         tl.to(P.page.body, { opacity: 0, duration: 0.4 }, 0.1);
