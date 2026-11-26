@@ -31,13 +31,15 @@ import effort from './effort.js';
 import remote from './remote.js';
 import htmlDeck from './html-deck.js';
 import projects from './projects.js';
+import goLive from './go-live.js';
 
-// Story order: two parts and a closing.
+// Story order: the journey, three parts and a closing.
 //   1. The journey from idea to launch, five stages; each opens with chapter(k) and its slides get
 //      `stage` so the corner marker shows where we are. Only slides that move the product forward.
 //   2. Arbeidsflyt: how you run the AI day to day (sessions, helpers, watchdog, remote, effort, work).
 //   3. Bak kulissene: side effects and the meta finale.
-// Slides in parts 2 and 3 get `part`, which the corner marker shows instead of the journey.
+//   4. Ekte prosjekter: the speaker's live sites, and the Fab pack that sold.
+// Slides in parts 2–4 get `part`, which the corner marker shows instead of the journey.
 // Callbacks that depend on order: full-scope "Alt fungerer." → fails "Fikset!"; helpers → watchdog;
 //   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop (right after it).
 const STAGED = [
@@ -45,11 +47,12 @@ const STAGED = [
   [spec, fullScope, planning, mdFiles],         // Plan
   [readyToBuild, prototypes, visualRef, goal, commits],  // Bygg
   [selfCheck, show, fails],                     // Kvalitet
-  [projects, launch],                           // Lansering
+  [goLive],                                     // Lansering (placeholder)
 ];
 const PARTS = [
   { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, gateway] },
   { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, knowAGuy, alwaysWorking, htmlDeck] },
+  { name: 'Ekte prosjekter', slides: [projects, launch] },
 ];
 export const slides = [
   title,

@@ -264,9 +264,10 @@ Title: "Fra idé til startup, med AI".
 2. Plan: living spec → full scope → batched planning → instruction files
 3. Bygg: ready to build (src/slides/ready-to-build.js: a checklist, all ticked: Hva vi skal lage, Hvem er kundene?, Kjernefunksjon, Levende kravspec, Instruksjonsarkitektur; stamped GODKJENT FOR BYGGING, then "Start.") → prototypes → visual references → describe the goal → commit after every step
 4. Kvalitet: self-check → show, don't describe → where it fails
-5. Lansering: live projects → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells)
+5. Lansering: placeholder (src/slides/go-live.js) for the firewood subscription going live; proposed: go live (domain, hosting, Vipps, terms, privacy) and first customers (Finn ad, local Facebook group, flyer; the first order)
 Part 2, Arbeidsflyt (divider "Del 2"): parallel sessions → helpers → watchdog → remote and cloud sessions → model and effort → follow the gateway team
 Part 3, Bak kulissene (divider "Del 3"): side quest → Claude ↔ ChatGPT loop (Fab) → the same trick in the game (references → Unreal) → I know a guy → always working → this deck is a web page (finale)
+Part 4, Ekte prosjekter (divider "Del 4"): live projects (src/slides/projects.js) → launch and sell (src/slides/launch.js: AI wrote the Fab listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells)
 The journey (part 1) only holds slides that move the product forward; how you run the AI and the side effects live in parts 2 and 3. The corner marker shows the five stages in part 1 and the part's name in parts 2 and 3.
 Closing: takeaways (src/slides/takeaways.js), every standalone tip on one page.
 Callbacks that depend on order: full scope's "Alt fungerer." sets up "Fikset!"; helpers ends with the lead breaking off to check on its helper (the watchdog, next, does that check); always working reuses the watchdog's 03:12 message; the side quest's 80 % returns in the asset loop.
