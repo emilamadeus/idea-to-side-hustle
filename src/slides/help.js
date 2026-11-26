@@ -69,7 +69,7 @@ export const HELP = {
     'RAM-lås: testene venter, ferdige sessions holder minnet.',
     'Auto-compact ved 400k i stedet for en ny session.',
     'Hjelperen er ferdig, men har ikke meldt fra.',
-    'Om morgenen er jobben gjort.',
+    'Resultatet blir at jobb aldri står stille i mer enn 10 minutter.',
   ],
   remote: [
     'Uten varsel står jobben stille til du tilfeldigvis sjekker.',
