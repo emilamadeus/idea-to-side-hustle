@@ -16,7 +16,8 @@ import * as D from './draw.js';
     dev.typing(speed) → loop      arms tap, head nods, code scrolls; kill() to stop
     dev.breathe() → loop          always-on idle breathing
     dev.sigh(tl, at)              shoulders up, then a long drop
-    dev.think(tl, str, at, hold)  a thought cloud by his head (inside his group, so it follows him)
+    dev.think(tl, str, at, hold)  an idea: a lightbulb over his head and the words beside it
+                                  (inside his group, so it follows him)
     dev.desk(tl, on, at)          show or hide the desk and laptop
     dev.screen                    the laptop's 16:9 bezel (for the endless zoom)
 
@@ -202,38 +203,26 @@ export function miniDev(parent, { idPrefix = 'md' } = {}) {
     tw(tl, head, { r: lean * 0.6 + 14 }, 0.9, at + 0.6, 'power2.in');
     return at + 1.5;
   }
-  // thought cloud: a comic-style scalloped cloud (one outline around overlapping lobes), a soft
-  // shadow, and three dots that shrink toward his head. It sits up and to the right of him.
+  // a thought, as an idea: a small lightbulb that lights up over his head, and the words in cream
+  // beside it, no frame.
   function think(tl, str, at, hold = 0) {
     const t = D.g(g, { 'data-overlap-ok': '' });
-    const h = 46, w = Math.max(110, str.length * 12.6 + h), x0 = 30, y0 = -102;
-    const dots = [[13, -64, 2.2], [19, -71, 3.2], [26, -78, 4.2]].map(([cx, cy, r]) => D.el('circle', { cx, cy, r, ...S('#fff3e3', 2) }, t));
-    const cloud = D.g(t);
-    // the lobes: a big one at each end, scallops along the top and bottom, a body in between
-    const lobes = [];
-    const n = Math.max(2, Math.round((w - h) / (h * 0.62)));
-    for (let k = 0; k <= n; k++) {
-      const cx = x0 + h * 0.5 + ((w - h) * k) / n;
-      lobes.push([cx, y0 + h * 0.3, h * 0.34]);
-      if (k < n) lobes.push([cx + (w - h) / n / 2, y0 + h * 0.74, h * 0.3]);
-    }
-    lobes.push([x0 + h * 0.44, y0 + h * 0.52, h * 0.44], [x0 + w - h * 0.44, y0 + h * 0.52, h * 0.44]);
-    const layer = (fill, stroke, sw, dx = 0, dy = 0, op = 1) => {
-      const l = D.g(cloud, { opacity: op });
-      lobes.forEach(([cx, cy, r]) => D.el('circle', { cx: cx + dx, cy: cy + dy, r, style: `fill: ${fill}; stroke: ${stroke}; stroke-width: ${sw}` }, l));
-      D.el('rect', { x: x0 + h * 0.4 + dx, y: y0 + h * 0.24 + dy, width: w - h * 0.8, height: h * 0.54, style: `fill: ${fill}; stroke: none` }, l);
-    };
-    layer('#000', '#000', 5, 2, 4, 0.28);      // shadow
-    layer('#c9ad92', '#c9ad92', 5);             // outline: drawn wide …
-    layer('#fff3e3', 'none', 0);                // … and covered, so only the outer edge shows
-    D.text(cloud, x0 + w / 2, y0 + h / 2 + 8, str, 'th', { 'text-anchor': 'middle', style: `font: 700 24px var(--font-display); fill: ${INK}` });
-    tl.fromTo(dots, { opacity: 0, scale: 0.2, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.18, stagger: 0.09, ease: 'back.out(3)' }, at);
-    tl.fromTo(cloud, { opacity: 0, scale: 0.5, transformOrigin: '8% 80%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.65)' }, at + 0.25);
-    tl.to(cloud, { y: -1.6, duration: 1.2, yoyo: true, repeat: 3, ease: 'sine.inOut' }, at + 0.85);
-    if (hold) tl.to(t, { opacity: 0, duration: 0.35 }, at + hold);
+    const bulb = D.g(t);
+    const bx = 8, by = -84;
+    const glowC = D.el('circle', { cx: bx, cy: by, r: 16, style: 'fill: #ffd23f', opacity: 0 }, bulb);
+    D.p(bulb, `M${bx - 6} ${by + 1} a6.5 6.5 0 1 1 12 0 c-1.4 2 -2.4 3 -2.4 5.4 h-7.2 c0 -2.4 -1 -3.4 -2.4 -5.4 Z`, '', S('#ffe08a', 2));
+    D.el('rect', { x: bx - 3.4, y: by + 7, width: 6.8, height: 4, rx: 1.2, ...S('#b9b9c0', 2) }, bulb);
+    const rays = D.p(bulb, `M${bx} ${by - 12} v-4 M${bx - 10} ${by - 7} l-3 -3 M${bx + 10} ${by - 7} l3 -3 M${bx - 13} ${by + 1} h-4 M${bx + 13} ${by + 1} h4`, '', { style: 'fill: none; stroke: #ffd23f; stroke-width: 2.4; stroke-linecap: round', opacity: 0 });
+    const words = D.text(t, bx + 22, by + 8, str, 'th', { style: 'font: 700 24px var(--font-display); fill: var(--fg); paint-order: stroke; stroke: #120905; stroke-width: 6' });
+    tl.fromTo(bulb, { opacity: 0, y: 6, scale: 0.6, transformOrigin: '50% 100%' }, { opacity: 1, y: 0, scale: 1, duration: 0.35, ease: 'back.out(2.5)' }, at);
+    tl.to([glowC], { opacity: 0.35, duration: 0.15, yoyo: true, repeat: 3 }, at + 0.3);
+    tl.to(rays, { opacity: 1, duration: 0.2 }, at + 0.35);
+    tl.to(glowC, { opacity: 0.22, duration: 0.3 }, at + 0.95);
+    tl.fromTo(words, { opacity: 0, x: -6 }, { opacity: 1, x: 0, duration: 0.35, ease: 'power2.out' }, at + 0.45);
+    if (hold) tl.to(t, { opacity: 0, duration: 0.3 }, at + hold);
     return t;
   }
-  const pop = (tl, t, at) => t && tl.to(t, { opacity: 0, scale: 1.12, transformOrigin: '20% 80%', duration: 0.28, ease: 'power2.in' }, at);
+  const pop = (tl, t, at) => t && tl.to(t, { opacity: 0, y: -4, duration: 0.25, ease: 'power2.in' }, at);
   const desk = (tl, on, at) => tl.to(deskG, { opacity: on ? 1 : 0, duration: 0.35 }, at);
   function cup(k) {
     const c = D.g(cupsG);

@@ -1,6 +1,5 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
-import { figure, LOOK } from '../engine/characters.js';
 import { miniDev } from '../engine/minidev.js';
 
 /*
@@ -152,42 +151,64 @@ export default {
       tl.fromTo(P.dl.mult, { opacity: 0 }, { opacity: 1, duration: 0.4 }, at + 1.15);
     };
 
-    // ---------- motivation: the portrait bottom left ----------
-    const DEV = { hx: 190, hy: 790 };
+    // ---------- motivation: a close-up of the same developer, and his coffee ----------
+    // The inset is the chart's developer again (src/engine/minidev.js), 4.2 times bigger and
+    // cropped to head and shoulders, so the audience sees it is him. Motivation is coffee: four
+    // filled cups that he drains, step by step.
+    const INSET = { x: 110, y: 700, w: 220, h: 160 };
     function portrait() {
       const grp = D.g(svg);
-      D.text(grp, 120, 700, 'UTVIKLER', 'mono', { style: 'font: 400 16px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
-      const fig = figure(grp, { x: DEV.hx, y: DEV.hy + 40, s: 0.56, pose: 'sit', arms: 'down', ...LOOK.me, mouth: 'smile' });
-      const sweat = D.p(grp, `M${DEV.hx + 30} ${DEV.hy - 26} q-6 10 0 14 q6 -4 0 -14 Z`, '', { style: 'fill: #9fd3ff; stroke: none', opacity: 0 });
-      D.text(grp, 330, 742, 'MOTIVASJON', 'mono', { style: 'font: 400 16px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+      const frame = D.g(grp, { 'data-unit': '' });
+      D.text(frame, INSET.x, INSET.y - 12, 'NÆRBILDE', 'mono', { style: 'font: 700 13px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
+      D.el('rect', { x: INSET.x, y: INSET.y, width: INSET.w, height: INSET.h, rx: 12, style: 'fill: #1d1510; stroke: var(--deco); stroke-width: 2.5' }, frame);
+      const cp = D.el('clipPath', { id: 'sq-inset' }, frame);
+      D.el('rect', { x: INSET.x + 2, y: INSET.y + 2, width: INSET.w - 4, height: INSET.h - 4, rx: 10 }, cp);
+      const view = D.g(frame, { 'clip-path': 'url(#sq-inset)' });
+      // head and shoulders: scale 4.2, head about a third down the frame
+      const K = 4.2;
+      const holder = D.g(view, { transform: `translate(${INSET.x + 104} ${INSET.y + 58 + 56 * K}) scale(${K})` });
+      const close = miniDev(holder, { idPrefix: 'sq-dev' });
+      close.deskG.remove(); // no desk in the close-up
+      // keep the outlines as fine as the rest of the slide at this size
+      close.g.querySelectorAll('rect, circle, ellipse, path').forEach((n) => n.setAttribute('vector-effect', 'non-scaling-stroke'));
+      close.g.removeAttribute('data-unit'); // part of the inset, not a unit of its own
+      // coffee: four cups, each with its own level and a wisp of steam when full
       const meter = D.g(grp, { 'data-unit': '' });
-      D.el('rect', { x: 330, y: 754, width: 220, height: 14, rx: 3, fill: 'none', style: 'stroke: var(--deco)', 'stroke-width': 2 }, meter);
-      const energy = D.el('rect', { x: 332, y: 756, width: 216, height: 10, rx: 2, style: 'fill: var(--accent-2)' }, meter);
-      const cups = D.g(grp);
-      for (let k = 0; k < 7; k++) {
-        const c = D.g(cups, { opacity: 0 });
-        const cx = 332 + k * 32;
-        D.p(c, `M${cx} 800 h20 v26 q0 6 -6 6 h-8 q-6 0 -6 -6 Z M${cx + 20} 806 q10 0 10 8 q0 8 -10 8`, 'thin');
-        D.p(c, `M${cx + 6} 794 q-3 -6 0 -12 M${cx + 14} 794 q-3 -6 0 -12`, 'thin', { opacity: 0.6 });
-      }
-      return { grp, head: fig.root, fig, sweat, energy, cups: [...cups.children] };
+      D.text(meter, 360, 760, 'KAFFE', 'mono', { style: 'font: 700 13px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
+      const cups = [0, 1, 2, 3].map((k) => {
+        const x = 360 + k * 40, y = 778;
+        const c = D.g(meter);
+        const id = `sq-cup-${k}`;
+        const cpc = D.el('clipPath', { id }, c);
+        D.el('rect', { x: x + 2, y: y + 2, width: 22, height: 28, rx: 3 }, cpc);
+        D.el('rect', { x, y, width: 26, height: 32, rx: 4, style: 'fill: #2a1d14; stroke: #fff3e3; stroke-width: 2.5' }, c);
+        const level = D.el('rect', { x: x + 2, y: y + 2, width: 22, height: 28, style: 'fill: #6b3f22', 'clip-path': `url(#${id})` }, c);
+        D.p(c, `M${x + 26} ${y + 8} q9 0 9 8 q0 8 -9 8`, '', { style: 'fill: none; stroke: #fff3e3; stroke-width: 2.5' });
+        const steam = D.p(c, `M${x + 9} ${y - 5} q-3 -5 0 -10 M${x + 17} ${y - 5} q-3 -5 0 -10`, '', { style: 'fill: none; stroke: #b8a48e; stroke-width: 2; stroke-linecap: round' });
+        return { c, level, steam, x, y };
+      });
+      return { grp, close, cups };
     }
-    // 0 fresh · 1 first detour · 2 second detour · 3 stuck at 80 % · 4 a lift: it got published
+    // levels per mood: 0 fresh · 1 first detour · 2 second detour · 3 stuck at 80 % · 4 published
     const MOOD = [
-      { energy: 1.0, cups: 1, color: 'var(--accent-2)', tilt: 0, face: { eyes: 'open', brows: 'neutral', mouth: 'smile' } },
-      { energy: 0.65, cups: 2, color: 'var(--accent-2)', tilt: 0, face: { eyes: 'open', brows: 'tired', mouth: 'neutral' } },
-      { energy: 0.3, cups: 4, color: 'var(--accent)', tilt: -6, face: { eyes: 'down', brows: 'tired', mouth: 'frown' } },
-      { energy: 0.06, cups: 7, color: 'var(--note)', tilt: -14, face: { eyes: 'closed', brows: 'tired', mouth: 'frown' } },
-      { energy: 0.5, cups: 5, color: 'var(--accent-2)', tilt: -2, face: { eyes: 'open', brows: 'raised', mouth: 'smile' } },
+      { lv: [1, 1, 1, 1], face: 'smile', slump: 0 },
+      { lv: [1, 1, 1, 0.35], face: 'flat', slump: 4 },
+      { lv: [1, 0.5, 0, 0], face: 'frown', slump: 10 },
+      { lv: [0.1, 0, 0, 0], face: 'tired', slump: 18, tip: true },
+      { lv: [1, 0.3, 0, 0], face: 'smile', slump: 4 },
     ];
     function mood(tl, k, at = 0) {
       const m = MOOD[k];
-      P.port.fig.expr(tl, m.face, at);
-      tl.to(P.port.sweat, { opacity: k === 2 || k === 3 ? 1 : 0, duration: 0.3 }, at + 0.2);
-      tl.to(P.port.energy, { attr: { width: 216 * m.energy }, duration: 0.9, ease: 'power2.inOut' }, at);
-      tl.call(() => { P.port.energy.style.fill = m.color; }, null, at);
-      P.port.cups.forEach((c, i) => tl.to(c, { opacity: i < m.cups ? 1 : 0, duration: 0.2 }, at + 0.1 + i * 0.06));
-      tl.to(P.port.head, { rotation: m.tilt, svgOrigin: `${DEV.hx} ${DEV.hy + 90}`, duration: 0.8, ease: 'power2.inOut' }, at);
+      P.port.cups.forEach((cup, i) => {
+        const h = 28 * m.lv[i];
+        tl.to(cup.level, { attr: { y: cup.y + 2 + (28 - h), height: h }, duration: 0.9, ease: 'power2.inOut' }, at + i * 0.08);
+        tl.to(cup.steam, { opacity: m.lv[i] > 0.9 ? 1 : 0, duration: 0.4 }, at + i * 0.08);
+      });
+      // the last empty cup tips over when he is done in
+      const last = P.port.cups[3];
+      tl.to(last.c, { rotation: m.tip ? 90 : 0, svgOrigin: `${last.x + 26} ${last.y + 32}`, duration: 0.6, ease: m.tip ? 'bounce.out' : 'power2.out' }, at + 0.4);
+      P.port.close.face(tl, m.face, at);
+      P.port.close.slump(tl, m.slump, at, 1.0);
     }
 
     // ---------- the developer on the chart (src/engine/minidev.js) ----------
@@ -344,6 +365,7 @@ export default {
         P.dl = deadline();
         tl.add(D.fadeIn(P.dl.grp), 0.7);
         P.port = portrait();
+        loops2.push(P.port.close.breathe());
         tl.add(D.fadeIn(P.port.grp), 0.8);
         mood(tl, 0, 0.8);
         P.dev = miniDev(svg, { idPrefix: 'sq-dev' });
