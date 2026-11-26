@@ -172,14 +172,19 @@ export default {
         const cur = cursor(svg);
         tl.fromTo(cur, { x: PX + 500, y: PY + 400, opacity: 0 }, { x: PX + PW - 140, y: PY + 92, opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 1.5);
         tl.to(P.copy, { scale: 0.92, transformOrigin: '50% 50%', duration: 0.08, yoyo: true, repeat: 1 }, 2.35);
-        const lines = ['K1 ferdig. K2 i arbeid.', 'K3 blokkert: venter på', 'gateway build 412.'];
+        const lines = ['Opptaksregler: ferdig.', 'Privacy mode: i arbeid.', 'Offline-varsel: venter på', 'gateway build 412.'];
         const fly = D.g(svg, { 'data-bg': '' });
         D.el('rect', { x: PX + PW - 230, y: PY + 70, width: 190, height: 38, rx: 8, style: 'fill: #e7dccb' }, fly);
         tl.fromTo(fly, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 2.5);
         tl.to(fly, { x: -760, y: 220, scale: 0.6, opacity: 0, duration: 0.6, ease: 'power2.in' }, 2.6);
         tl.to(cur, { opacity: 0, duration: 0.3 }, 2.8);
-        chat.user(tl, lines, 3.1);
-        chat.reply(tl, 'Siden når skriver du statusrapporter?', 4.2);
+        const msg = chat.user(tl, lines, 3.1);
+        // the colleague reacts with a thumbs up on the message
+        const bb = msg.getBBox();
+        const thumb = D.g(msg);
+        D.el('circle', { cx: bb.x - 4, cy: bb.y + bb.height - 4, r: 19, style: 'fill: #2c2119; stroke: var(--fg)', 'stroke-width': 2 }, thumb);
+        D.text(thumb, bb.x - 4, bb.y + bb.height + 3, '👍', 'th', { 'text-anchor': 'middle', style: 'font-size: 20px' });
+        tl.fromTo(thumb, { opacity: 0, scale: 0.3, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, 4.3);
         ctx.focus(tl, [chat.root, P.copy, cur, fly], 1.4);
         P.chat = chat;
       }
