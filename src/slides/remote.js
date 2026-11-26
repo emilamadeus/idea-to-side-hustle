@@ -18,8 +18,8 @@ import { codeApp } from '../engine/console.js';
     phone      x 126–394, y 248–768 (screen inset 8; status bar y +24–40; home bar y PH-18)
     attempt    x 560–960, y 120–154
     app        x 560–1480, y 170–760
-    step 2     arrow x 404–486; cloud x 470–1170, y 240–650 with the session x 560–1060,
-               y 360–620; arrow x 1124–1176; GitHub card x 1186–1480, y 360–590
+    step 2     arrow x 404–486; cloud x 470–1140, y 240–650 with Claude's spinner (y 360–480),
+               status line y 528, step pills x 640–1060, y 560–600, progress bar y 612; arrow x 1140–1180; GitHub x 1186–1480, y 360–590
 */
 
 const AX = 560, AY = 170, AW = 920, AH = 590;
@@ -46,8 +46,9 @@ export default {
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
+    let loops = [];
 
-    const reset = () => { svg.innerHTML = ''; P = {}; tip.innerHTML = TIP0; gsap.set(tip, { opacity: 1 }); };
+    const reset = () => { loops.forEach((l) => l.kill()); loops = []; svg.innerHTML = ''; P = {}; tip.innerHTML = TIP0; gsap.set(tip, { opacity: 1 }); };
     const mono = (wt, sz, c) => ({ style: `font: ${wt} ${sz}px var(--font-mono); fill: ${c}` });
 
     // your phone: lock screen, notifications, and the session opened remotely
@@ -207,18 +208,61 @@ export default {
         const sky = D.g(svg, { 'data-bg': '' });
         D.p(sky, 'M560 640 C480 640 470 540 540 520 C510 420 600 350 690 382 C700 270 860 240 900 320 C950 240 1090 270 1080 370 C1130 380 1140 470 1100 510 C1140 560 1120 650 1060 640 Z', '', { style: 'fill: #121a20; stroke: #6fa8c8', 'stroke-width': 3 });
         tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.3);
-        const C = codeApp(svg, 560, 360, 500, 260, { size: 16, sidebar: 140, title: 'Claude Code · sky' });
-        const ck = C.session('varsel', 'Varsler', 'work');
-        ck.ctx(tl, 90, 1.6, 0.1);
-        C.show(tl, 'varsel', 1.6);
-        tl.fromTo(C.root, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.6);
-        ck.tool(tl, 'Bash', 'git clone', 'kamera-api', 2.0);
-        ck.tool(tl, 'Edit', 'varsler.ts', '+6 −2', 2.6);
-        ck.tool(tl, 'Bash', 'npm test', '41 bestått', 3.2);
-        ck.state(tl, 'done', 3.8);
+        // inside the cloud: no window, just Claude at work (its spinner and status line)
+        const GL = ['✻', '✶', '✳', '✢', '✳', '✶'];
+        const work = D.g(svg, { 'data-unit': '' });
+        const star = D.text(work, 800, 446, '✻', 'cs', { 'text-anchor': 'middle', style: 'font: 700 100px var(--font-mono); fill: #ff7a2f' });
+        const say = D.text(work, 800, 528, '', 'cw', { 'text-anchor': 'middle', style: 'font: 700 24px var(--font-mono); fill: #ff7a2f' });
+        tl.fromTo(work, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.6);
+        const WORDS = ['Kloner kamera-api', 'Retter varsler.ts', 'Kjører testene'];
+        const clock = { v: 0 };
+        tl.fromTo(clock, { v: 0 }, {
+          v: 1, duration: 1.8, ease: 'none', immediateRender: false,
+          onUpdate: () => {
+            const k = Math.min(2, Math.floor(clock.v * 3));
+            star.textContent = GL[Math.floor(clock.v * 30) % GL.length];
+            say.textContent = `${WORDS[k]} … ${Math.round(clock.v * 9 * 60 / 60)}m`;
+          },
+        }, 1.9);
+        tl.fromTo(star, { scale: 1 }, { scale: 1.12, svgOrigin: '800 412', duration: 0.3, repeat: 5, yoyo: true, immediateRender: false }, 1.9);
+        tl.call(() => {
+          star.textContent = '✓'; star.setAttribute('style', `font: 700 92px var(--font-mono); fill: ${OK}`);
+          say.textContent = 'Ferdig. Lager PR.'; say.setAttribute('style', `font: 700 24px var(--font-mono); fill: ${OK}`);
+        }, null, 3.7);
+        // the steps it runs: the active one spins and pulses, then ticks off
+        ['klon', 'rett', 'test'].forEach((l, k) => {
+          const x = 640 + k * 150, y = 560;
+          const sg = D.g(svg, { 'data-unit': '' });
+          const pill = D.p(sg, rr(x, y, 130, 40, [20, 20, 20, 20]), '', { style: 'fill: #121a20; stroke: #4a6a80', 'stroke-width': 2.5 });
+          const mark = D.text(sg, x + 24, y + 27, '○', 'cm', { 'text-anchor': 'middle', ...mono(700, 18, '#6fa8c8') });
+          D.text(sg, x + 44, y + 27, l, 'cl', { style: 'font: 700 18px var(--font-display); fill: #e6f2fa' });
+          tl.fromTo(sg, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7 + k * 0.1);
+          const on = 1.9 + k * 0.6, off = on + 0.6;
+          const sp = { v: 0 };
+          tl.call(() => { pill.setAttribute('style', 'fill: #2a1d12; stroke: #ff7a2f'); mark.setAttribute('style', 'font: 700 18px var(--font-mono); fill: #ff7a2f'); }, null, on);
+          tl.fromTo(sp, { v: 0 }, { v: 8, duration: 0.6, ease: 'none', immediateRender: false, onUpdate: () => { mark.textContent = GL[Math.floor(sp.v) % GL.length]; } }, on);
+          tl.fromTo(sg, { scale: 1 }, { scale: 1.06, transformOrigin: '50% 50%', duration: 0.15, repeat: 3, yoyo: true, immediateRender: false }, on);
+          tl.call(() => { mark.textContent = '✓'; mark.setAttribute('style', `font: 700 18px var(--font-mono); fill: ${OK}`); pill.setAttribute('style', `fill: #142218; stroke: ${OK}`); }, null, off);
+        });
+        const bar = D.g(svg, { 'data-bg': '' });
+        D.p(bar, rr(640, 612, 420, 8, [4, 4, 4, 4]), '', { style: 'fill: #1c2a34' });
+        const fill = D.el('rect', { x: 640, y: 612, width: 0, height: 8, rx: 4, style: 'fill: #9fd3ff' }, bar);
+        tl.fromTo(bar, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7);
+        tl.to(fill, { attr: { width: 420 }, duration: 1.8, ease: 'none' }, 1.9);
+        tl.call(() => fill.setAttribute('style', `fill: ${OK}`), null, 3.7);
+        // data moving along the arrows
+        const stream = (x1, x2, y, at) => {
+          const dots = [0, 1, 2].map(() => D.el('circle', { cx: x1, cy: y, r: 5, style: 'fill: #e6f2fa', opacity: 0, 'data-bg': '' }, svg));
+          dots.forEach((d, k) => {
+            tl.fromTo(d, { attr: { cx: x1 }, opacity: 1 }, { attr: { cx: x2 - 14 }, duration: 0.45, ease: 'none', immediateRender: false }, at + k * 0.15);
+            tl.to(d, { opacity: 0, duration: 0.1 }, at + k * 0.15 + 0.45);
+          });
+        };
+        stream(PX + PW + 14, 486, 470, 1.25);
         // cloud → GitHub
         const a2 = arrow(1140, 1180, 470);
         tl.fromTo(a2, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.9);
+        stream(1140, 1180, 470, 3.95);
         const gh = D.g(svg, { 'data-unit': '' });
         D.p(gh, rr(1186, 360, 294, 230, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--fg)', 'stroke-width': 2.5 });
         D.text(gh, 1206, 396, 'GitHub', 'gh', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
@@ -241,6 +285,7 @@ export default {
       return tl;
     };
 
-    return D.stepper(ctx, { reset, play });
+    const st = D.stepper(ctx, { reset, play });
+    return { ...st, dispose() { loops.forEach((l) => l.kill()); } };
   },
 };
