@@ -11,8 +11,8 @@ import { codeApp } from '../engine/console.js';
     1. Attempt 2 (new session), notifications: same question; the phone lights up, you open
        it there and answer "Ja"; the laptop session carries on.
     2. Cloud sessions when the machine isn't running: you start one from the phone; it runs in
-       the cloud (clone, fix, test, commit, notify), the commit lands on GitHub and a notification
-       comes back to the phone. The cloud keeps running (slow loop).
+       the cloud (clone, fix, test, commit, notify) and you lock the phone. The commit lands on
+       GitHub; the notification wakes the phone with a short vibration. The cloud keeps running.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
@@ -37,7 +37,7 @@ export default {
   notes: [
     'Uten varsler: sessionen spør om noe og venter. Du er et annet sted. To timer og førti minutter.',
     'Med varsler: telefonen lyser opp, du svarer ja derfra, sessionen går videre.',
-    'Maskinen er av? Start en cloud session fra telefonen. Den kloner, retter, tester, committer og sender deg et varsel.',
+    'Maskinen er av? Start en cloud session fra telefonen og lås den. Den kloner, retter, tester, committer, og varselet vekker telefonen.',
   ],
 
   create(ctx) {
@@ -197,6 +197,10 @@ export default {
         tl.to(a.children[1], { opacity: 0, duration: 0.2 }, 0.3);
         tl.fromTo([head, ...[...ph.children].slice(1, 3)], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.5);
         tl.fromTo(bub, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3 }, 0.8);
+        // task sent: you lock the phone (the screen goes dark)
+        const off = D.el('rect', { x: PX + 8, y: PY + 8, width: PW - 16, height: PH - 16, rx: 33, style: 'fill: #000', opacity: 0 }, P.ph.g);
+        tl.to(off, { opacity: 1, duration: 0.35 }, 1.4);
+        tl.set([a, P.ph.appBg, P.ph.sbTime], { opacity: 0 }, 1.8);
         // phone → cloud
         const arrow = (x1, x2, y) => {
           const g = D.g(svg, { 'data-bg': '' });
@@ -277,9 +281,6 @@ export default {
         D.text(gh, 1206, 566, '+6 −2 · 1 fil', 'gf', mono(400, 14, MUTED));
         tl.fromTo(gh, { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.4 }, AT_COMMIT + 0.2);
         // and back on the phone
-        const done = D.g(ph);
-        D.text(done, PX + 26, PY + 274, '✓ Committet: a3f9c12', 'pd2', mono(700, 16, OK));
-        tl.fromTo(done, { opacity: 0 }, { opacity: 1, duration: 0.3 }, AT_COMMIT + 0.4);
         // the notification stage: the cloud sends it back to your phone
         const a3 = D.g(svg, { 'data-bg': '' });
         D.p(a3, 'M470 612 H418', '', { style: 'fill: none; stroke: #6fa8c8', 'stroke-width': 3, 'stroke-dasharray': '8 7' });
@@ -287,9 +288,14 @@ export default {
         tl.fromTo(a3, { opacity: 0 }, { opacity: 1, duration: 0.3 }, AT_NOTIFY - 1.5);
         const flow3 = flow(470, 404, 612);
         tl.call(() => flow3(), null, AT_NOTIFY - 1.4);
-        const nb = notif(P.ph.g, PY + 296, 'Varsel-feil er fikset', 'Committet a3f9c12.');
-        tl.fromTo(nb, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.35, ease: 'back.out(2)' }, AT_NOTIFY);
-        tl.to(P.ph.g, { x: 4, duration: 0.05, repeat: 7, yoyo: true }, AT_NOTIFY);
+        // the notification wakes the phone: lock screen, banner, a short vibration
+        tl.call(() => { P.ph.time.textContent = '18:32'; }, null, AT_NOTIFY - 0.1);
+        tl.set(P.ph.lock, { opacity: 1 }, AT_NOTIFY - 0.1);
+        tl.to(off, { opacity: 0, duration: 0.3 }, AT_NOTIFY - 0.1);
+        const nb = notif(P.ph.g, PY + 214, 'Varsel-feil er fikset', 'Committet a3f9c12 til main.');
+        tl.fromTo(nb, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.35, ease: 'back.out(2)' }, AT_NOTIFY + 0.1);
+        tl.to(P.ph.g, { x: 2, duration: 0.04, repeat: 9, yoyo: true }, AT_NOTIFY + 0.15);
+        tl.set(P.ph.g, { x: 0 }, AT_NOTIFY + 0.6);
       }
       return tl;
     };
