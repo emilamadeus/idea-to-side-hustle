@@ -13,7 +13,7 @@ import { K, RAIL_X, room, station, ticket, serve, cookFor, board, boss, METAL } 
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
-    board      x 80–520, y 290–732
+    board      x 80–520, y 290–548 (four sessions; later tasks only appear as work orders)
     mine       x 560–1480, y 150–780 (see engine/kitchen.js); you x 600, lash reaches x ~775
 */
 
@@ -114,7 +114,7 @@ export default {
         // you: the boss with the whip
         P.head = boss(P.R.mid, 600);
         tl.fromTo(P.head.root, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.6 }, 0.4);
-        P.board = board(svg, 80, 290, 440, TASKS.map((name, k) => ({ name, status: k === 0 ? 'done' : k === 1 ? 'cook' : 'queue' })));
+        P.board = board(svg, 80, 290, 440, TASKS.slice(0, 4).map((name, k) => ({ name, status: k === 0 ? 'done' : k === 1 ? 'cook' : 'queue' })));
         tl.fromTo(P.board.g, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6 }, 0.6);
         // Kamera-API and Tester go to the new stations
         const [a, b] = [P.rail.shift(), P.rail.shift()];

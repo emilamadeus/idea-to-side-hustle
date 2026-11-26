@@ -232,6 +232,7 @@ export function board(parent, x, y, w, rows, { title = 'MASTER SESSION' } = {}) 
   return {
     g, rows: out, height: h,
     set(tl, i, s, at) {
+      if (!out[i]) return; // a task that isn't on the board
       tl.call(() => apply(i, s), null, at);
       tl.fromTo(out[i].lamp, { scale: 1.8, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.35, ease: 'back.out(2)', immediateRender: false }, at);
     },
