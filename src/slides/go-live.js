@@ -3,16 +3,17 @@ import QRCode from 'qrcode';
 import * as D from '../engine/draw.js';
 import { FILL } from '../engine/props.js';
 import { varmPeis } from '../engine/varmpeis.js';
+import { liveMap } from '../engine/livemap.js';
 
 /*
   Lansering, the jaw drop: the firewood shop goes live for real and the room orders from it.
     0. The finished site on localhost, and a big "Gå live" button.
     1. Live: the address flips to ved.atladeus.com, the shop opens (for real, through the
        relay), the window steps aside and a big QR code appears. "Bestill ved."
-    2. The map of Oslo. Every real order from the audience lands as logs on its district and
-       as a card in the feed. A small QR stays in the corner for latecomers.
-    3. "Kjør": the route draws itself through every district with orders and the truck drives
-       it. Phones get "Bilen er på vei", then "Levert" as the truck reaches their district.
+    2. A live map of Norway. Every real order lands as a pin on its address (the camera eases
+       to frame them all) and as a card in the feed. A small QR stays for latecomers.
+    3. "Kjør": a route along real roads (OSRM, through the relay) through every address, drawn
+       as the truck drives it. Phones get "Bilen er på vei", then "Levert" at their stop.
 
   Live data: a websocket to the relay (ved/src/worker.js) as the deck. URL and key come from
   .env.local (VITE_VED_WS, VITE_VED_KEY, VITE_VED_SITE); without them it stays offline.
@@ -24,7 +25,7 @@ import { varmPeis } from '../engine/varmpeis.js';
     step 0–1  browser x 330–1270, y 150–710 · button x 640–960, y 735–795
               (step 1: browser scaled to x 80–550, y 250–530; QR card x 876–1324, y 146–594,
                "Bestill ved." y 680, address y 728)
-    step 2–3  feed x 80–520, y 236–770 · map x 600–1480, y 200–760 · small QR x 1356–1480, y 590–742
+    step 2–3  feed x 80–520, y 236–640 · small QR x 80–190, y 662–772 · map (DOM) x 580–1520, y 140–780
 */
 
 const WS = import.meta.env.VITE_VED_WS || 'wss://ved.atladeus.com';
@@ -32,15 +33,19 @@ const KEY = import.meta.env.VITE_VED_KEY || '';
 const SITE = import.meta.env.VITE_VED_SITE || 'https://ved.atladeus.com';
 const HOST = SITE.replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-// schematic Oslo: district → map position
-const M = {
-  'Vestre Aker': [802, 290], 'Nordre Aker': [970, 262], 'Bjerke': [1152, 327], 'Grorud': [1278, 277],
-  'Stovner': [1404, 240], 'Ullern': [704, 427], 'Frogner': [858, 502], 'St. Hanshaugen': [956, 427],
-  'Sagene': [1040, 352], 'Grünerløkka': [1110, 427], 'Alna': [1292, 440], 'Gamle Oslo': [1110, 527],
-  'Østensjø': [1264, 565], 'Nordstrand': [1124, 640], 'Søndre Nordstrand': [1208, 702],
-};
-const DEPOT = [1360, 500];
-const FEED_X = 80, FEED_Y = 270, FEED_H = 64, FEED_GAP = 10, FEED_MAX = 7;
+// where the truck starts: VITE_VED_DEPOT="lon,lat", else Oslo sentrum
+const DEPOT = (import.meta.env.VITE_VED_DEPOT || '10.7522,59.9139').split(',').map(Number);
+const FEED_X = 80, FEED_Y = 270, FEED_H = 64, FEED_GAP = 10, FEED_MAX = 5;
+// the fallback evening: addresses around the country
+const DEMO = [
+  ['Thorvald Meyers gate 5', 'Oslo', 59.9227, 10.7590], ['Bryggen 1', 'Bergen', 60.3975, 5.3245], ['Munkegata 1', 'Trondheim', 63.4305, 10.3951],
+  ['Torget 1', 'Stavanger', 58.9700, 5.7331], ['Bragernes torg 1', 'Drammen', 59.7439, 10.2045], ['Storgata 1', 'Lillehammer', 61.1153, 10.4662],
+  ['Markens gate 1', 'Kristiansand', 58.1450, 7.9956], ['Storgata 1', 'Hamar', 60.7945, 11.0680], ['Kongens gate 1', 'Ålesund', 62.4723, 6.1549],
+  ['Nygata 1', 'Fredrikstad', 59.2181, 10.9298], ['Storgata 1', 'Tromsø', 69.6492, 18.9553], ['Storgata 1', 'Kongsberg', 59.6682, 9.6497],
+  ['Storgata 1', 'Bodø', 67.2804, 14.4049], ['Storgata 1', 'Gjøvik', 60.7957, 10.6916],
+];
+const sacks = (n) => `${n} ${n === 1 ? 'sekk' : 'sekker'}`;
+const short = (t, n) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
 
 export default {
   id: 'go-live',
@@ -61,7 +66,6 @@ export default {
     let P = {};
     let step = -1;
     const orders = [];            // every order seen, live or recorded
-    const drawn = new Set();      // order ids already on the map
 
     // ---- the relay ----
     let ws = null, wsTimer = null, live = false, closed = false;
@@ -72,7 +76,7 @@ export default {
       ws.onopen = () => { live = true; status(); };
       ws.onmessage = (e) => {
         const m = JSON.parse(e.data);
-        if (m.type === 'snapshot') { orders.length = 0; drawn.clear(); m.orders.forEach((o) => orders.push(o)); if (step >= 2) redrawOrders(); }
+        if (m.type === 'snapshot') { orders.length = 0; m.orders.filter((o) => Number.isFinite(o.lat)).forEach((o) => orders.push(o)); if (step >= 2) redrawOrders(); }
         if (m.type === 'order') add(m.order);
       };
       ws.onclose = () => { live = false; status(); clearTimeout(wsTimer); if (!closed) wsTimer = setTimeout(connect, 2000); };
@@ -81,25 +85,33 @@ export default {
 
     // the fallback: a recorded evening of orders
     function replay() {
-      const names = Object.keys(M);
-      const pick = ['Grünerløkka', 'Frogner', 'Sagene', 'St. Hanshaugen', 'Gamle Oslo', 'Nordre Aker', 'Ullern', 'Grünerløkka', 'Østensjø', 'Frogner', 'Nordstrand', 'Bjerke', 'Vestre Aker', 'Grünerløkka', 'Alna', 'Sagene', 'Grorud', 'Frogner'];
-      pick.forEach((b, k) => setTimeout(() => add({ id: `demo-${Date.now()}-${k}`, bydel: names.includes(b) ? b : 'Frogner', sekker: 1 + (k * 7) % 3, t: Date.now(), demo: true }), 300 + k * 420 + (k % 3) * 130));
+      DEMO.forEach(([adresse, sted, lat, lon], k) => setTimeout(() => add({ id: `demo-${Date.now()}-${k}`, adresse, sted, lat, lon, sekker: 1 + (k * 7) % 3, t: Date.now(), demo: true }), 300 + k * 520 + (k % 3) * 140));
     }
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || !control) return;
       if (e.key === 'r' || e.key === 'R') replay();
-      if (e.key === 'x' || e.key === 'X') { if (ws?.readyState === 1) ws.send(JSON.stringify({ type: 'reset' })); orders.length = 0; drawn.clear(); if (step >= 2) redrawOrders(); }
+      if (e.key === 'x' || e.key === 'X') { if (ws?.readyState === 1) ws.send(JSON.stringify({ type: 'reset' })); orders.length = 0; if (step >= 2) redrawOrders(); }
       if (e.key === 'c' || e.key === 'C') { if (ws?.readyState === 1) ws.send(JSON.stringify({ type: 'close' })); }
     };
     window.addEventListener('keydown', onKey);
 
     function add(o) {
-      if (orders.some((x) => x.id === o.id)) return;
+      if (orders.some((x) => x.id === o.id) || !Number.isFinite(o.lat)) return;
       orders.push(o);
-      if (step >= 2) { stackOrder(o, true); feed(o, true); }
+      if (step >= 2) { P.lm?.add(o, { fresh: true }); feed(o, true); reframe(); }
     }
 
-    const reset = () => { svg.innerHTML = ''; P = {}; drawn.clear(); };
+    // the live map lives in the DOM, over the frame's middle; made once, kept across steps
+    const mapEl = document.createElement('div');
+    mapEl.style.cssText = 'left:calc(var(--u)*36.25);top:calc(var(--u)*8.75);width:calc(var(--u)*58.75);height:calc(var(--u)*40);border-radius:calc(var(--u)*1);box-shadow:0 0 0 2px var(--deco), 0 30px 80px -20px rgba(0,0,0,.8);opacity:0;';
+    el.append(mapEl);
+    let lm = null;
+    const ensureMap = () => (lm ??= liveMap(mapEl, { depot: DEPOT }));
+    let frameTimer = null;
+    const reframe = () => { clearTimeout(frameTimer); frameTimer = setTimeout(() => P.lm?.frame(), 500); };
+    let driving = null;
+
+    const reset = () => { svg.innerHTML = ''; P = {}; driving?.kill(); driving = null; lm?.clear(); gsap.set(mapEl, { opacity: 0 }); };
 
     // ---- step 0–1: the browser and the button ----
     function browser() {
@@ -139,55 +151,14 @@ export default {
       return g;
     }
 
-    // ---- step 2–3: the map, the stacks, the feed ----
-    function map() {
-      const g = D.g(svg);
-      const bg = D.g(g, { 'data-bg': '' });
-      // the fjord in the south-west
-      D.p(bg, 'M600 606 C650 590 700 602 752 592 C812 580 872 598 926 636 C968 666 992 706 1006 760 L600 760 Z', '', { style: 'fill: #12262e; stroke: #2c4a55', 'stroke-width': 2.5 });
-      D.text(bg, 660, 712, 'OSLOFJORDEN', 'fj', { style: 'font: 700 13px var(--font-mono); letter-spacing: .3em; fill: #3f6a78' });
-      // faint roads between neighbours
-      const links = [['Vestre Aker', 'Nordre Aker'], ['Nordre Aker', 'Bjerke'], ['Bjerke', 'Grorud'], ['Grorud', 'Stovner'], ['Vestre Aker', 'Ullern'], ['Ullern', 'Frogner'],
-        ['Frogner', 'St. Hanshaugen'], ['St. Hanshaugen', 'Sagene'], ['Sagene', 'Nordre Aker'], ['Sagene', 'Grünerløkka'], ['Grünerløkka', 'Bjerke'], ['Grünerløkka', 'Gamle Oslo'],
-        ['Gamle Oslo', 'Østensjø'], ['Østensjø', 'Alna'], ['Alna', 'Grorud'], ['Gamle Oslo', 'Nordstrand'], ['Nordstrand', 'Søndre Nordstrand'], ['Østensjø', 'Søndre Nordstrand'], ['St. Hanshaugen', 'Gamle Oslo'], ['Alna', 'Bjerke']];
-      D.p(bg, links.map(([a, b]) => `M${M[a][0]} ${M[a][1]} L${M[b][0]} ${M[b][1]}`).join(' '), '', { style: 'fill: none; stroke: #3a2c22', 'stroke-width': 3, 'stroke-linecap': 'round' });
-      // the depot
-      D.el('rect', { x: DEPOT[0] - 22, y: DEPOT[1] - 14, width: 44, height: 28, rx: 4, ...FILL('#4a3020', 2.5) }, bg);
-      D.text(g, DEPOT[0], DEPOT[1] + 40, 'LAGER', 'dp', { 'text-anchor': 'middle', style: 'font: 700 12px var(--font-mono); letter-spacing: .14em; fill: var(--muted)', 'data-unit': '' });
-      const dots = {};
-      for (const [name, [x, y]] of Object.entries(M)) {
-        const d = D.g(g, { 'data-bg': '' });
-        D.el('circle', { cx: x, cy: y, r: 7, style: 'fill: #2a1d14; stroke: #8a7666', 'stroke-width': 2.5 }, d);
-        D.text(g, x, y + 28, name, 'dn', { 'text-anchor': 'middle', style: 'font: 600 14px var(--font-display); fill: #b8a48e', 'data-unit': '' });
-        dots[name] = { d, stack: D.g(g, { 'data-bg': '' }), n: 0 };
-      }
-      return { g, dots };
-    }
-    // a log on a district's stack: a small pyramid that grows; past ten it glows instead
-    const SLOTS = [[0, 0], [-14, 0], [14, 0], [-28, 0], [28, 0], [-7, -12], [7, -12], [-21, -12], [21, -12], [0, -24]];
-    function stackOrder(o, animate) {
-      if (!P.map || drawn.has(o.id)) return;
-      drawn.add(o.id);
-      const s = P.map.dots[o.bydel];
-      if (!s) return;
-      const [x, y] = M[o.bydel];
-      for (let k = 0; k < o.sekker; k++) {
-        const i = s.n++;
-        if (i >= SLOTS.length) { gsap.to(s.d, { scale: 1.25, transformOrigin: '50% 50%', duration: 0.15, yoyo: true, repeat: 1 }); continue; }
-        const [dx, dy] = SLOTS[i];
-        const l = D.g(s.stack);
-        D.el('circle', { cx: x + dx, cy: y - 18 + dy, r: 7, ...FILL('#c9935a', 2) }, l);
-        if (animate) gsap.fromTo(l, { opacity: 0, y: -30 }, { opacity: 1, y: 0, duration: 0.45, delay: k * 0.08, ease: 'bounce.out' });
-      }
-      s.d.querySelector('circle').setAttribute('style', 'fill: #ff7a2f; stroke: #ffd36b');
-    }
+    // ---- step 2–3: the feed beside the live map ----
     function feed(o, animate) {
       if (!P.feed) return;
       const g = D.g(P.feed, { 'data-unit': '' });
       D.el('rect', { x: FEED_X, y: FEED_Y, width: 440, height: FEED_H, rx: 14, style: `fill: #1d1510; stroke: ${o.demo ? 'var(--deco)' : '#ff7a2f'}`, 'stroke-width': 2 }, g);
       [[FEED_X + 26, FEED_Y + 40], [FEED_X + 42, FEED_Y + 40], [FEED_X + 34, FEED_Y + 26]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 7, ...FILL('#c9935a', 1.8) }, g));
-      D.text(g, FEED_X + 66, FEED_Y + 28, 'Ny bestilling', 'fb', { style: 'font: 700 17px var(--font-display); fill: var(--fg)' });
-      D.text(g, FEED_X + 66, FEED_Y + 50, `${o.bydel} · ${o.sekker} ${o.sekker === 1 ? 'sekk' : 'sekker'}`, 'fd', { style: 'font: 600 15px var(--font-display); fill: #b8a48e' });
+      D.text(g, FEED_X + 66, FEED_Y + 28, short(o.adresse || 'Ny bestilling', 26), 'fb', { style: 'font: 700 17px var(--font-display); fill: var(--fg)' });
+      D.text(g, FEED_X + 66, FEED_Y + 50, `${short(o.sted || '', 22)} · ${sacks(o.sekker)}`, 'fd', { style: 'font: 600 15px var(--font-display); fill: #b8a48e' });
       const t = new Date(o.t || Date.now());
       D.text(g, FEED_X + 420, FEED_Y + 28, `${String(t.getHours()).padStart(2, '0')}:${String(t.getMinutes()).padStart(2, '0')}`, 'ft', { 'text-anchor': 'end', style: 'font: 700 13px var(--font-mono); fill: var(--muted)' });
       P.cards.unshift(g);
@@ -201,12 +172,12 @@ export default {
       P.cards = P.cards.slice(0, FEED_MAX);
     }
     function redrawOrders() {
-      if (!P.map) return;
-      Object.values(P.map.dots).forEach((s) => { s.stack.innerHTML = ''; s.n = 0; s.d.querySelector('circle').setAttribute('style', 'fill: #2a1d14; stroke: #8a7666'); });
+      if (!P.feed) return;
       P.feed.innerHTML = ''; P.cards = [];
-      drawn.clear();
-      orders.forEach((o) => { stackOrder(o, false); });
       orders.slice(-FEED_MAX).forEach((o) => feed(o, false));
+      P.lm?.clear();
+      orders.forEach((o) => P.lm?.add(o));
+      P.lm?.frame({ duration: 0 });
     }
     function status() {
       if (!P.status) return;
@@ -214,30 +185,37 @@ export default {
       P.statusDot.setAttribute('style', `fill: ${live ? '#8fe3a2' : '#6b5a48'}`);
     }
 
-    // a small truck for the map, drawn centred on (0, 0) so it parks on the district itself
-    // and turns around its own middle
-    function truck() {
-      const o = D.g(svg, { 'data-unit': '' });
-      const t = D.g(o);
-      D.el('rect', { x: -30, y: -2, width: 40, height: 10, rx: 2, ...FILL('#6b4a30', 2) }, t);
-      [[-22, -8], [-10, -8], [2, -8], [-16, -16], [-4, -16]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 6, ...FILL('#c9935a', 1.8) }, t));
-      D.p(t, 'M10 8 V-12 H22 L30 -2 V8 Z', '', FILL('#ff5a1f', 2));
-      [[-20, 10], [20, 10]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 6, ...FILL('#2a1d14', 2) }, t));
-      return { o, t };
-    }
-    // nearest-neighbour route from the depot through every district with orders
-    function route() {
-      const left = [...new Set(orders.map((o) => o.bydel))].filter((b) => M[b]);
-      const pts = [DEPOT];
-      let cur = DEPOT;
+    // the stops in driving order: nearest neighbour from the depot; one stop per address
+    function stops() {
+      const by = new Map();
+      orders.forEach((o) => {
+        const k = `${o.lat.toFixed(4)},${o.lon.toFixed(4)}`;
+        if (!by.has(k)) by.set(k, { lon: o.lon, lat: o.lat, ids: [], real: [], adresse: o.adresse });
+        by.get(k).ids.push(o.id);
+        if (!o.demo) by.get(k).real.push(o.id);
+      });
+      const left = [...by.values()], out = [];
+      let cur = { lon: DEPOT[0], lat: DEPOT[1] };
+      const d2 = (a, b) => (a.lon - b.lon) ** 2 * Math.cos(a.lat * Math.PI / 180) ** 2 + (a.lat - b.lat) ** 2;
       while (left.length) {
-        left.sort((a, b) => Math.hypot(M[a][0] - cur[0], M[a][1] - cur[1]) - Math.hypot(M[b][0] - cur[0], M[b][1] - cur[1]));
-        const b = left.shift();
-        cur = M[b];
-        pts.push(cur);
-        pts[pts.length - 1].bydel = b;
+        left.sort((a, b) => d2(cur, a) - d2(cur, b));
+        cur = left.shift();
+        out.push(cur);
       }
-      return pts.map((p, k) => ({ x: p[0], y: p[1], bydel: k ? p.bydel : null }));
+      return out;
+    }
+    // real roads from the relay; a straight line for any leg it can't answer
+    async function legsFor(st) {
+      const points = [DEPOT, ...st.map((p) => [p.lon, p.lat])];
+      const straight = points.slice(1).map((b, k) => [points[k], b]);
+      try {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), 9000);
+        const r = await fetch(`${SITE}/api/route`, { method: 'POST', body: JSON.stringify({ points }), signal: ctl.signal });
+        clearTimeout(t);
+        const d = await r.json();
+        return d.legs?.length === straight.length ? d.legs : straight;
+      } catch { return straight; }
     }
 
     const play = (i, instant) => {
@@ -279,9 +257,8 @@ export default {
       }
 
       if (i === 2) {
-        // the map: real orders land on it
+        // the live map: real orders land on it
         tl.to([P.win.g, P.qr], { opacity: 0, duration: 0.4 }, 0);
-        P.map = map();
         P.feed = D.g(svg);
         P.cards = [];
         const head = D.g(svg, { 'data-unit': '' });
@@ -289,40 +266,33 @@ export default {
         P.status = D.text(head, FEED_X + 22, 250, 'BESTILLINGER', 'st', { style: 'font: 700 15px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
         status();
         P.small = D.g(svg, { 'data-unit': '' });
-        qr(P.small, 1356, 590, 124, 10);
-        D.text(P.small, 1418, 738, HOST, 'sq', { 'text-anchor': 'middle', style: 'font: 700 12px var(--font-mono); fill: var(--muted)' });
-        tl.fromTo([P.map.g, head, P.small, P.feed], { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.4);
-        tl.call(() => redrawOrders(), null, 0.4);
+        qr(P.small, FEED_X, 662, 110, 9);
+        D.text(P.small, FEED_X + 128, 712, 'Bestill ved', 'sq1', { style: 'font: 800 22px var(--font-display); fill: var(--fg)' });
+        D.text(P.small, FEED_X + 128, 740, HOST, 'sq2', { style: 'font: 700 14px var(--font-mono); fill: var(--accent)' });
+        tl.fromTo([head, P.small, P.feed], { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.4);
+        P.lm = ensureMap();
+        tl.to(mapEl, { opacity: 1, duration: 0.8 }, 0.3);
+        tl.call(() => { P.lm.ready.then(() => { if (step >= 2) { P.lm.map.resize(); redrawOrders(); } }); }, null, 0.3);
       }
 
       if (i === 3) {
-        // drive: the route through every district with orders
-        const pts = route();
-        const byDistrict = (b) => orders.filter((o) => o.bydel === b && !o.demo).map((o) => o.id);
-        tl.call(() => !instant && send({ type: 'notify', ids: orders.filter((o) => !o.demo).map((o) => o.id), title: 'Ved.', text: 'Bilen er på vei.' }), null, 0.1);
-        if (pts.length > 1) {
-          const d = pts.map((p, k) => `${k ? 'L' : 'M'}${p.x} ${p.y}`).join(' ');
-          const path = D.p(svg, d, '', { style: 'fill: none; stroke: #ff7a2f', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-dasharray': '2 10', 'data-bg': '' });
-          const len = path.getTotalLength ? path.getTotalLength() : 1000;
-          tl.fromTo(path, { opacity: 0 }, { opacity: 0.9, duration: 0.4 }, 0.2);
-          const tr = truck();
-          gsap.set(tr.o, { x: DEPOT[0], y: DEPOT[1] });
-          tl.fromTo(tr.o, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.3);
-          const speed = Math.max(260, len / 14);
-          let at = 0.7;
-          for (let k = 1; k < pts.length; k++) {
-            const a = pts[k - 1], b = pts[k];
-            const dur = Math.hypot(b.x - a.x, b.y - a.y) / speed;
-            tl.set(tr.t, { scaleX: b.x < a.x ? -1 : 1, transformOrigin: '50% 50%' }, at);
-            tl.to(tr.o, { x: b.x, y: b.y, duration: dur, ease: 'none' }, at);
-            at += dur;
-            const s = P.map.dots[b.bydel];
-            tl.to(s.stack, { opacity: 0.35, duration: 0.3 }, at);
-            tl.fromTo(s.d, { scale: 1 }, { scale: 1.6, transformOrigin: '50% 50%', duration: 0.15, yoyo: true, repeat: 1, immediateRender: false }, at);
-            tl.call(() => !instant && send({ type: 'notify', ids: byDistrict(b.bydel), title: 'Ved.', text: 'Levert. Veden står ved døra.' }), null, at);
-            at += 0.35;
-          }
-        }
+        // drive: along real roads through every address
+        tl.call(() => {
+          if (instant || !P.lm) return;
+          const st = stops();
+          if (!st.length) return;
+          send({ type: 'notify', ids: st.flatMap((p) => p.real), title: 'Ved.', text: 'Bilen er på vei.' });
+          Promise.all([P.lm.ready, legsFor(st)]).then(([, legs]) => {
+            if (step !== 3) return;
+            driving = ctx.track(P.lm.drive(st, legs, {
+              duration: Math.min(24, 8 + st.length * 0.9),
+              onArrive: (k) => {
+                P.lm.done(st[k].ids);
+                send({ type: 'notify', ids: st[k].real, title: 'Ved.', text: `Levert til ${st[k].adresse}.` });
+              },
+            }));
+          });
+        }, null, 0.1);
       }
       return tl;
     };
@@ -335,6 +305,7 @@ export default {
         clearTimeout(wsTimer);
         window.removeEventListener('keydown', onKey);
         try { ws?.close(); } catch {}
+        lm?.destroy();
       },
     };
   },

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#140a05">
 <title>Ved. · Ved på døra, hele vinteren</title>
-<meta name="description" content="Tørr bjørkeved levert på døra i Oslo, hver 14. dag. En demo fra foredraget «Fra idé til startup, med AI».">
+<meta name="description" content="Tørr bjørkeved levert på døra, hver 14. dag. En demo fra foredraget «Fra idé til startup, med AI».">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23140a05'/%3E%3Cpath d='M32 12c4 10 14 14 14 28a14 14 0 0 1-28 0c0-8 5-11 7-17 2 5 4 7 7 8-1-7-2-12 0-19z' fill='%23ff7a2f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -115,19 +115,29 @@
   .card h2 + p { color: var(--muted); font-size: 14.5px; margin-top: 6px; }
   .q { display: flex; align-items: baseline; gap: 10px; margin: 24px 0 12px; font-weight: 700; font-size: 15px; }
   .q span { font-size: 11px; font-weight: 700; color: var(--bg); background: var(--soft); border-radius: 99px; width: 20px; height: 20px; display: inline-grid; place-items: center; transform: translateY(-2px); }
-  .bydeler { display: flex; flex-wrap: wrap; gap: 8px; }
-  .bydeler label input, .seg input { position: absolute; opacity: 0; pointer-events: none; }
-  .bydeler label span {
-    display: inline-block; padding: 10px 14px; border-radius: 99px; font-size: 14.5px; font-weight: 600;
-    border: 1px solid var(--line-2); color: var(--soft); background: rgba(255,255,255,.02);
-    cursor: pointer; transition: all .25s var(--ease); user-select: none;
+  .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  .addr { position: relative; }
+  .addr input {
+    width: 100%; padding: 17px 18px 17px 48px; border-radius: 18px; border: 1px solid var(--line-2);
+    background: rgba(0,0,0,.25); color: var(--cream); font: 600 17px/1.2 'Bricolage Grotesque', sans-serif;
+    outline: none; transition: border-color .25s, box-shadow .25s; -webkit-appearance: none;
   }
-  .bydeler label:hover span { border-color: rgba(255,170,100,.5); color: var(--cream); }
-  .bydeler input:checked + span {
-    color: #1a0d07; background: linear-gradient(180deg, #ffb25e, #ff7a2f); border-color: transparent;
-    box-shadow: 0 8px 24px -8px rgba(255,122,47,.8);
+  .addr input::placeholder { color: var(--muted); font-weight: 500; }
+  .addr input:focus { border-color: var(--ember); box-shadow: 0 0 0 4px rgba(255,122,47,.15); }
+  .addr .pin { position: absolute; left: 17px; top: 50%; transform: translateY(-50%); width: 18px; height: 22px; pointer-events: none; }
+  .addr.ok input { border-color: rgba(155,231,176,.6); }
+  .sugg {
+    position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 8px); padding: 6px; border-radius: 18px;
+    background: rgba(32, 19, 11, .96); border: 1px solid var(--line-2); box-shadow: 0 24px 60px -12px rgba(0,0,0,.8);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   }
-  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .sugg button {
+    all: unset; box-sizing: border-box; display: flex; width: 100%; gap: 12px; align-items: baseline; padding: 12px 14px; border-radius: 12px; cursor: pointer;
+  }
+  .sugg button:hover, .sugg button.on { background: rgba(255,122,47,.12); }
+  .sugg b { font-weight: 700; font-size: 16px; color: var(--cream); }
+  .sugg small { font-size: 13.5px; color: var(--muted); }
+  .chosen { margin-top: 10px; font-size: 13.5px; color: var(--ok); display: flex; gap: 6px; align-items: center; }
   .seg label > span {
     display: grid; place-items: center; gap: 6px; padding: 14px 6px 12px; border-radius: 18px; cursor: pointer;
     border: 1px solid var(--line-2); background: rgba(255,255,255,.02); transition: all .25s var(--ease);
@@ -237,7 +247,7 @@
   <section class="closed hide" id="closed">
     <div>
       <div class="ember"></div>
-      <p class="eyebrow" style="justify-content:center">Vedlevering · Oslo</p>
+      <p class="eyebrow" style="justify-content:center">Vedlevering · Hele Norge</p>
       <h1>Åpner <em>straks</em>.</h1>
       <p>Hold siden åpen. Den åpner seg selv når vi går live.</p>
     </div>
@@ -247,7 +257,7 @@
   <section class="hide" id="shop">
     <div class="grid">
       <div class="hero">
-        <p class="eyebrow reveal">Vedlevering · Oslo</p>
+        <p class="eyebrow reveal">Vedlevering · Hele Norge</p>
         <h1 class="reveal d1">Ved på døra,<br><em>hele vinteren.</em></h1>
         <p class="lead reveal d2">Tørr bjørkeved, stablet ved døra di hver 14. dag. <span class="serif">Pause når du vil.</span></p>
       </div>
@@ -255,8 +265,13 @@
         <h2>Bestill ved</h2>
         <p>Første levering i morgen. Så hver 14. dag.</p>
 
-        <div class="q"><span>1</span>Hvor bor du?</div>
-        <div class="bydeler" id="bydeler"></div>
+        <div class="q"><span>1</span>Hvor skal veden?</div>
+        <div class="addr" id="addr">
+          <svg class="pin" viewBox="0 0 18 22"><path d="M9 21s7-6.6 7-12A7 7 0 0 0 2 9c0 5.4 7 12 7 12z" fill="none" stroke="#ff7a2f" stroke-width="2"/><circle cx="9" cy="9" r="2.6" fill="#ff7a2f"/></svg>
+          <input id="addrInput" type="text" inputmode="search" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Gateadresse, f.eks. Storgata 1" aria-label="Adresse">
+          <div class="sugg hide" id="sugg" role="listbox"></div>
+          <p class="chosen hide" id="chosen"></p>
+        </div>
 
         <div class="q"><span>2</span>Hvor mye per levering?</div>
         <div class="seg" id="sekker"></div>
@@ -265,8 +280,8 @@
           <small id="sumLabel">1 sekk · 40 liter</small>
           <b id="sumPrice">590 kr <small>/ levering</small></b>
         </div>
-        <button class="cta" id="cta" type="submit" disabled>Velg bydel</button>
-        <p class="fine">En demo fra foredraget. Ingen betaling, ingen persondata.</p>
+        <button class="cta" id="cta" type="submit" disabled>Skriv inn adressen</button>
+        <p class="fine">En demo fra foredraget. Ingen betaling. Adressen vises på skjermen.</p>
       </form>
       <div class="art">
 
@@ -338,13 +353,12 @@
   </section>
 
   <footer>
-    <span>Ved. · Oslo</span>
+    <span>Ved. · Hele Norge</span>
     <span>Laget med AI for foredraget «Fra idé til startup, med AI».</span>
   </footer>
 </div>
 
 <script>
-  const BYDELER = ['Alna', 'Bjerke', 'Frogner', 'Gamle Oslo', 'Grorud', 'Grünerløkka', 'Nordre Aker', 'Nordstrand', 'Sagene', 'St. Hanshaugen', 'Stovner', 'Søndre Nordstrand', 'Ullern', 'Vestre Aker', 'Østensjø'];
   const PRICE = 590;
   const $ = (s) => document.querySelector(s);
   const store = {
@@ -354,15 +368,53 @@
   };
 
   // the form
-  $('#bydeler').innerHTML = BYDELER.map((b) => `<label><input type="radio" name="bydel" value="${b}"><span>${b}</span></label>`).join('');
+  // the address: suggestions from Kartverket as you type; an order needs a picked address
+  let pick = null, sugg = [], hi = -1, seq = 0, timer;
+  const inp = $('#addrInput'), box = $('#sugg');
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const renderSugg = () => {
+    box.classList.toggle('hide', !sugg.length);
+    box.innerHTML = sugg.map((a, k) => `<button type="button" role="option" class="${k === hi ? 'on' : ''}" data-k="${k}"><b>${esc(a.adresse)}</b><small>${esc(a.postnr || '')} ${esc(a.sted)}</small></button>`).join('');
+  };
+  const choose = (a) => {
+    pick = a; sugg = []; renderSugg();
+    inp.value = a.adresse;
+    $('#addr').classList.add('ok');
+    $('#chosen').textContent = `✓ ${a.adresse}, ${a.postnr || ''} ${a.sted}`;
+    $('#chosen').classList.remove('hide');
+    inp.blur(); update();
+  };
+  inp.addEventListener('input', () => {
+    pick = null; $('#addr').classList.remove('ok'); $('#chosen').classList.add('hide'); update();
+    clearTimeout(timer);
+    const q = inp.value.trim();
+    if (q.length < 3) { sugg = []; renderSugg(); return; }
+    timer = setTimeout(async () => {
+      const my = ++seq;
+      try {
+        const r = await fetch(`/api/sok?q=${encodeURIComponent(q)}`);
+        const list = await r.json();
+        if (my !== seq) return;
+        sugg = list; hi = list.length ? 0 : -1; renderSugg();
+      } catch {}
+    }, 180);
+  });
+  inp.addEventListener('keydown', (e) => {
+    if (!sugg.length) return;
+    if (e.key === 'ArrowDown') { hi = (hi + 1) % sugg.length; renderSugg(); e.preventDefault(); }
+    if (e.key === 'ArrowUp') { hi = (hi - 1 + sugg.length) % sugg.length; renderSugg(); e.preventDefault(); }
+    if (e.key === 'Enter') { e.preventDefault(); choose(sugg[Math.max(0, hi)]); }
+    if (e.key === 'Escape') { sugg = []; renderSugg(); }
+  });
+  box.addEventListener('pointerdown', (e) => { const b = e.target.closest('button'); if (b) { e.preventDefault(); choose(sugg[Number(b.dataset.k)]); } });
   $('#sekker').innerHTML = [1, 2, 3, 4].map((n) => `<label><input type="radio" name="sekker" value="${n}" ${n === 1 ? 'checked' : ''}><span><span class="logs">${'<i></i>'.repeat(n)}</span>${n}<small>${n === 1 ? 'sekk' : 'sekker'}</small></span></label>`).join('');
   const form = $('#form');
   const update = () => {
-    const b = form.bydel.value, n = Number(form.sekker.value || 1);
+    const n = Number(form.sekker.value || 1);
     $('#sumLabel').textContent = `${n} ${n === 1 ? 'sekk' : 'sekker'} · ${n * 40} liter`;
     $('#sumPrice').innerHTML = `${(n * PRICE).toLocaleString('nb-NO')} kr <small>/ levering</small>`;
-    $('#cta').disabled = !b;
-    $('#cta').textContent = b ? `Bestill til ${b}` : 'Velg bydel';
+    $('#cta').disabled = !pick;
+    $('#cta').textContent = pick ? `Bestill til ${pick.adresse}` : 'Skriv inn adressen';
   };
   form.addEventListener('change', update);
 
@@ -380,7 +432,7 @@
     orders.forEach((o) => {
       const p = document.createElement('div');
       p.className = 'order-pill';
-      p.textContent = `${o.bydel} · ${sacks(o.sekker)}`;
+      p.textContent = `${o.adresse || o.bydel} · ${sacks(o.sekker)}`;
       $('#pills').append(p);
     });
   };
@@ -390,7 +442,8 @@
     e.preventDefault();
     const cta = $('#cta');
     cta.disabled = true; cta.textContent = 'Bestiller …';
-    const body = { bydel: form.bydel.value, sekker: Number(form.sekker.value || 1) };
+    if (!pick) return;
+    const body = { adresse: pick.adresse, sted: pick.sted, lat: pick.lat, lon: pick.lon, sekker: Number(form.sekker.value || 1) };
     try {
       const r = await fetch('/api/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();
@@ -398,6 +451,7 @@
       orders.push({ id: j.id, ...body });
       store.set('ved-orders', orders);
       shopping = false;
+      pick = null; inp.value = ''; $('#addr').classList.remove('ok'); $('#chosen').classList.add('hide'); update();
       navigator.vibrate?.(30);
       window.scrollTo({ top: 0 });
       show();

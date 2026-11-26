@@ -2,32 +2,71 @@
   ved.atladeus.com: the firewood shop from the talk, live.
     GET  /            the order page (static, ./public)
     GET  /api/state   { open }
-    POST /api/order   { bydel, sekker } → { id }     only while the shop is open
+    GET  /api/sok?q=  address suggestions from Kartverket (all of Norway)
+    POST /api/order   { adresse, sted, lat, lon, sekker } → { id }     only while the shop is open
+    POST /api/route   { points: [[lon, lat], …] } → { legs: [[[lon, lat], …], …] }  real roads (OSRM),
+                      a straight line for any leg the router can't answer
     GET  /api/ws      websocket
          ?role=deck&key=…   the talk: gets a snapshot and every new order; sends open/close/reset/notify
          ?role=customer&id=a,b  a phone: gets open/close, and messages addressed to its orders
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
-  No payment and no personal data: an order is a district and a number of sacks.
+  No payment. An order is an address (any address; it is shown on the screen) and a number of sacks.
 */
 
-export const BYDELER = [
-  'Alna', 'Bjerke', 'Frogner', 'Gamle Oslo', 'Grorud', 'Grünerløkka', 'Nordre Aker', 'Nordstrand',
-  'Sagene', 'St. Hanshaugen', 'Stovner', 'Søndre Nordstrand', 'Ullern', 'Vestre Aker', 'Østensjø',
-];
 const MAX_ORDERS = 400;
 
 export default {
   async fetch(req, env) {
     const url = new URL(req.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(req);
+    if (url.pathname === '/api/sok') return search(url.searchParams.get('q') || '');
+    if (url.pathname === '/api/route' && req.method === 'POST') return route(req);
     const room = env.ROOM.get(env.ROOM.idFromName('talk'));
     return room.fetch(req);
   },
 };
 
+const UA = { 'user-agent': 'ved-atladeus-demo/1.0 (talk demo)' };
+
+// address suggestions: Kartverket's open address register
+async function search(q) {
+  q = q.trim().slice(0, 80);
+  if (q.length < 3) return json([]);
+  const u = `https://ws.geonorge.no/adresser/v1/sok?sok=${encodeURIComponent(q)}&fuzzy=true&treffPerSide=6&utkoordsys=4258`;
+  try {
+    const r = await fetch(u, { headers: UA, cf: { cacheTtl: 3600, cacheEverything: true } });
+    const d = await r.json();
+    return json((d.adresser || []).filter((a) => a.representasjonspunkt).map((a) => ({
+      adresse: a.adressetekst, sted: titleCase(a.poststed || a.kommunenavn || ''), postnr: a.postnummer,
+      lat: a.representasjonspunkt.lat, lon: a.representasjonspunkt.lon,
+    })));
+  } catch { return json([]); }
+}
+const titleCase = (s) => s.toLowerCase().replace(/(^|[\s-])\p{L}/gu, (m) => m.toUpperCase());
+
+// the drive: one router call per leg, in parallel; a straight line when a leg fails
+async function route(req) {
+  let body;
+  try { body = await req.json(); } catch { return json({ error: 'bad request' }, 400); }
+  const pts = (body?.points || []).filter((p) => Array.isArray(p) && Number.isFinite(p[0]) && Number.isFinite(p[1])).slice(0, 41);
+  const legs = await Promise.all(pts.slice(1).map(async (b, k) => {
+    const a = pts[k];
+    try {
+      const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${a[0]},${a[1]};${b[0]},${b[1]}?overview=simplified&geometries=geojson`,
+        { headers: UA, signal: AbortSignal.timeout(7000), cf: { cacheTtl: 86400, cacheEverything: true } });
+      const d = await r.json();
+      const c = d.routes?.[0]?.geometry?.coordinates;
+      if (c?.length > 1) return [a, ...c, b];
+    } catch {}
+    return [a, b];
+  }));
+  return json({ legs });
+}
+
+// the talk (another origin) reads /api/route, so answers carry an open CORS header
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
-  headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
+  headers: { 'content-type': 'application/json', 'cache-control': 'no-store', 'access-control-allow-origin': '*' },
 });
 
 export class Room {
@@ -57,11 +96,14 @@ export class Room {
     if (now - (this.recent.get(ip) || 0) < 4000) return json({ error: 'slow down' }, 429);
     let body;
     try { body = await req.json(); } catch { return json({ error: 'bad request' }, 400); }
-    const bydel = BYDELER.includes(body?.bydel) ? body.bydel : null;
+    const clean = (v, n) => String(v ?? '').replace(/[<>]/g, '').trim().slice(0, n);
+    const adresse = clean(body?.adresse, 70), sted = clean(body?.sted, 40);
+    const lat = Number(body?.lat), lon = Number(body?.lon);
     const sekker = Math.max(1, Math.min(4, Math.round(Number(body?.sekker) || 1)));
-    if (!bydel) return json({ error: 'bydel' }, 400);
+    // anywhere in Norway, roughly (Svalbard included)
+    if (!adresse || !(lat > 57 && lat < 81 && lon > 3 && lon < 34)) return json({ error: 'adresse' }, 400);
     this.recent.set(ip, now);
-    const o = { id: crypto.randomUUID().slice(0, 8), bydel, sekker, t: now };
+    const o = { id: crypto.randomUUID().slice(0, 8), adresse, sted, lat: +lat.toFixed(5), lon: +lon.toFixed(5), sekker, t: now };
     this.orders.push(o);
     await this.ctx.storage.put('orders', this.orders);
     this.send('deck', { type: 'order', order: o });
