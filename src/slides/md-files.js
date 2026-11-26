@@ -7,8 +7,8 @@ import { speech, chatPhone, meter, FILL } from '../engine/props.js';
   Tip: split the instructions. The same task, three setups. The story runs in the app flow
   (the Claude chat on the left); the scene shows what Claude does.
     0 files  : asks everything, gets told four times, still installs with the wrong tool.
-    1 file   : reads one long CLAUDE.md top to bottom (tokens climb); an outdated line in a
-               section nobody maintains decides what it does; you correct it.
+    1 file   : reads one long CLAUDE.md top to bottom (tokens climb). It works, but it is
+               expensive: everything is read every time.
     several  : a short CLAUDE.md points to a cabinet; opens three drawers; done.
                A new session continues from STATUS / HANDOFF.
   Example: the firewood subscription (a new district). Twist: STATUS is three days old; the
@@ -43,7 +43,7 @@ export default {
   notes: [
     'Tre like AI-arbeidere, samme oppgave. Forskjellen er instruksjonsfilene.',
     'Ingen filer: den spør om alt. Du forklarer fire ganger. Den installerer med feil verktøy.',
-    'Én fil: den leser hele CLAUDE.md hver gang, også Vipps og release. En gammel linje om bydeler styrer.',
+    'Én fil: bedre, den får det til. Men den leser hele CLAUDE.md hver gang, også Vipps og release. Dyrt.',
     'Flere filer: en kort CLAUDE.md peker videre. Den åpner bare skuffene den trenger.',
     'Nye sessions fortsetter der forrige slapp, fra STATUS og HANDOFF.',
     'STATUS er tre dager gammel. Ny session starter på pause, som er ferdig. «Du har helt rett!»',
@@ -200,8 +200,6 @@ export default {
           for (let r = 0; r < 4; r++) lines += `M${DX + 10} ${y + 12 + r * 11} H${DX + 70 + ((k * 31 + r * 17) % 45)} `;
         });
         D.p(doc, lines, '', { style: 'fill: none; stroke: #b9a88f', 'stroke-width': 3, 'stroke-linecap': 'round' });
-        // the outdated line in "Bydeler"
-        const stale = D.el('rect', { x: DX + 4, y: DY + 46 + 3 * 68 + 15, width: DW - 8, height: 14, rx: 3, style: 'fill: none; stroke: #c4405e', 'stroke-width': 3, opacity: 0 }, doc);
         tl.fromTo(doc, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0);
         // the reading highlight sweeps through every section; the tokens follow
         const read = D.el('rect', { x: DX, y: DY + 26, width: DW, height: 26, style: 'fill: #ffd23f', opacity: 0, 'data-bg': '' }, g);
@@ -216,15 +214,10 @@ export default {
         c.clear(tl, 0);
         c.user(tl, 'Legg til en ny bydel.', 0.15, { label: 'NY SESSION' });
         c.reply(tl, 'Leser hele CLAUDE.md.', 0.5);
-        tl.to(stale, { opacity: 1, duration: 0.15, repeat: 3, yoyo: true }, 3.0);
-        tl.set(stale, { opacity: 1 }, 3.6);
-        c.reply(tl, 'Følger CLAUDE.md: legger bydelen i bydeler.json.', 3.2);
+        // it works, but it read everything to get there
+        c.reply(tl, 'Ferdig. Bydelen er lagt til.', 3.2);
         agent.expr(tl, { eyes: 'open', brows: 'neutral', mouth: 'smile' }, 3.2);
-        c.user(tl, 'Vi sluttet med bydeler.json i mars.', 4.4);
-        const t = c.think(tl, 5.0, 1.0);
-        c.reply(tl, 'Du har helt rett. Den linjen er utdatert. Jeg gjør det om.', t);
-        agent.expr(tl, { eyes: 'down', brows: 'raised', mouth: 'neutral' }, t);
-        verdict(tl, 1, false, t + 0.4);
+        verdict(tl, 1, true, 3.6);
       }
 
       if (i === 3) {
