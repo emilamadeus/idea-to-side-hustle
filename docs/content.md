@@ -159,22 +159,7 @@ Point: different projects teach you what exists. You become "I know a guy" for m
   - Unreal Engine game (about 80 %), Game pipeline, 3D asset pipeline (Atladeus Studio, on Fab), Texture pipeline.
 
 ## Failure/humor: the recursive side quest [given]
-Names on screen: Game pipeline, 3D asset pipeline, Texture pipeline. Keep the texture pipeline simple and illustrative.
-Point: almost finishing a task, then starting a new project it inspired, recursively. And each side project is built far bigger than the need that started it.
-Game with full destruction → no good destructible assets → build a destructible-asset pipeline → needs textures/materials, expensive → build a texture pipeline. Three complete pipelines, attention split three ways, original game not finished.
-- Storyboard [agreed: the Gantt chart that spills, revised]:
-  1. Game pipeline runs to 40 % and blocks: red break, hatched remainder, and the bar prints an order slip "Trenger: 50 assets".
-  2. The slip drops and drips into a new row: 3D asset pipeline. The game's remainder is pushed right; launch moves (×2). Developer gets tired.
-  3. 3D asset pipeline runs to 20 % and blocks: prints "Trenger: 20 teksturer".
-  4. Slip drips into Texture pipeline. Both remainders pushed right; launch ×3. Developer exhausted.
-  5. Textures finish: avalanche of swatches, counter 3 000 (trengte 20).
-  6. Assets resume and finish: conveyor, counter 5 000 000 (trengte 50). "PUBLISERT" stamp (Fab).
-  7. Game resumes to 80 % and stalls, still trying for 81 %. Developer near giving up: X eyes, seven coffees, white flag.
-  8. "Hvilken kjører jeg nå? 1 utvikler · 3 pipelines." A spotlight hops between the rows and can't settle.
-  9. The answer: a fourth row drips in, "Pipeline-velger". "Løsningen: én pipeline til."
-- The game is at about 80%. Running gag [proposed]: a progress bar stuck at 80% that reappears through the talk.
-- Payoff [proposed]: the side quest shipped. The destructible-asset pipeline produced a real product on Fab (see Atladeus Studio above), while the game it was meant for is still at 80%. Shoot a cart on stage: it breaks along the grain.
-- Phone moment [proposed]: audience answers "How many unfinished side projects do you have?" Answers rain down as particles.
+- Built: src/slides/side-quest.js. The developer builds and breaks the Gantt chart himself: a small figure (1.5 bars tall) types at a standing laptop while a bar fills, gets the next need as a thought bubble ("Trenger: 50 assets", "Trenger: 20 teksturer"), chops the bar, leans in and pushes the rest to its new estimate (the launch line moves with it), then drags in the next pipeline. Slower and more slumped each round; a "Pff." sigh; coffee cups pile up on his desk. Textures 3 000 and assets 5 000 000 as before. At 80 % he slumps over the laptop. "Hvilken nå?" as he hops between rows. Finale: "Løsningen: én pipeline til." and an endless zoom into his laptop screen, which holds this same chart.
 
 ## Work examples [given]
 - Not a slide of its own: the product mechanics (rules, privacy mode, four repos) didn't say anything about working with AI. The AI point (spec vs hardware: exclusion zones checked against the gateway code) is the last step of the gateway slide (src/slides/gateway.js).
