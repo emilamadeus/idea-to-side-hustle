@@ -31,7 +31,7 @@ export const HELP = {
   ],
   planning: [
     'Én og én: hver ny oppgave river opp noe som er bygget.',
-    'Kun planlegging i auto mode. Bare produktvalg kommer til deg.',
+    'Hele produktspecen først. Bare produktvalg kommer til deg.',
     'Så bygges alt i riktig rekkefølge, én gang.',
   ],
   goal: [

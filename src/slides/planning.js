@@ -6,20 +6,37 @@ import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
   Tip: plan the whole batch first, build after.
     0. Attempt 1: one task at a time. Each new task needs something under an earlier one,
        so the stack comes apart and is rebuilt. Twice.
-    1. Attempt 2 (new session): "Kun planlegging" in auto mode. Six sheets go up on the wall.
-       One is a product decision: it comes to you as a question.
+    1. Attempt 2 (new session): the whole product spec goes in with the prompt (goal, users,
+       all six features, requirements, what is left out), "kun planlegging" in auto mode. The
+       spec opens beside the wall; six sheets go up from it. One is a product decision: it
+       comes to you as a question.
     2. The whole set is built in one pass.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     chat       x 80–520, y 262–782
     attempt    x 560–960, y 120–154
-    site       x 600–1480, y 170–760 (wall of sheets y 190–470, stack base y 740)
+    site       x 600–1480, y 170–760 (stack base y 740)
+    step 1     spec document x 600–900, y 190–530; sheets 2×3, x 950–1460, y 190–530
 */
 
 const BASE = 740, BW = 220, BH = 64, BX = 1040 - BW / 2;
 const COLORS = { Innlogging: '#c4562a', Varsler: '#9a4a22', Roller: '#55603a', Kamera: '#2f5b5a', Deling: '#7e2f45', Logg: '#3c4a5c' };
 const FINAL = ['Roller', 'Innlogging', 'Deling', 'Kamera', 'Varsler', 'Logg'];
+// the product spec handed over before any work starts
+const SPEC = [
+  ['MÅL', 'Se hjemmet fra appen'],
+  ['BRUKERE', 'Eier, familie, gjest'],
+  ['FUNKSJONER', 'Alle seks, i sammenheng'],
+  ['KRAV', 'Personvern, varsel ved feil'],
+  ['IKKE NÅ', 'Opptak i skyen'],
+];
+// the spec as a tiny document, for the attachment chip
+function specChip(g, x, y, w, h) {
+  D.el('rect', { x, y, width: w, height: h, rx: 6, style: 'fill: #fff3e3; stroke: #1a120c', 'stroke-width': 2 }, g);
+  D.text(g, x + 10, y + 18, 'SPEC', 'sc', { style: 'font: 700 11px var(--font-mono); letter-spacing: .12em; fill: #1a120c' });
+  D.p(g, [0, 1, 2, 3].map((k) => `M${x + 10} ${y + 30 + k * 9} h${[70, 52, 64, 40][k]}`).join(' '), '', { style: 'fill: none; stroke: #b9a88f', 'stroke-width': 3, 'stroke-linecap': 'round' });
+}
 
 export default {
   id: 'planning',
@@ -27,7 +44,7 @@ export default {
   steps: 3,
   notes: [
     'Én oppgave om gangen: hver ny oppgave må under en gammel. Rives og bygges på nytt.',
-    'Ny økt i auto mode, «kun planlegging». Alt på veggen først. Bare produktbeslutninger kommer til deg.',
+    'Ny økt i auto mode. Hele produktspecen går inn først: mål, brukere, alle funksjoner, krav, hva som ikke er med. «Kun planlegging.» Bare produktbeslutninger kommer til deg.',
     'Så bygges alt i én runde.',
   ],
 
@@ -128,36 +145,48 @@ export default {
         D.el('rect', { x: 920, y: 120, width: 150, height: 34, rx: 17, style: 'fill: none; stroke: #8fe3a2', 'stroke-width': 2.5 }, mode);
         D.text(mode, 995, 143, 'auto mode', 'md', { 'text-anchor': 'middle', style: 'font: 700 17px var(--font-mono); fill: #8fe3a2' });
         tl.fromTo(mode, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.3);
-        P.chat.user(tl, ['Kun planlegging.', 'Lag en plan for alle seks.', 'Spør meg bare om', 'produktbeslutninger.'], 0.6);
-        const t = P.chat.think(tl, 1.4, 1.2);
-        P.tok.set(tl, 6, t, 1.2);
-        // the wall of sheets
+        // the whole product goes in first, as a spec, before any work
+        const msg = P.chat.user(tl, ['Her er hele produktet.', 'Kun planlegging. Spør', 'meg bare om produktvalg.'], 0.6, { attach: specChip });
+        const doc = D.g(svg, { 'data-unit': '' });
+        D.el('rect', { x: 600, y: 190, width: 300, height: 340, rx: 6, style: 'fill: #fff3e3; stroke: #1a120c', 'stroke-width': 2.5, 'data-bg': '' }, doc);
+        D.text(doc, 624, 228, 'PRODUKTSPEC', 'dt', { style: 'font: 700 16px var(--font-mono); letter-spacing: .14em; fill: #1a120c' });
+        SPEC.forEach(([k, v], j) => {
+          D.text(doc, 624, 272 + j * 54, k, 'dk', { style: 'font: 700 13px var(--font-mono); letter-spacing: .12em; fill: #8a6a4a' });
+          D.text(doc, 624, 294 + j * 54, v, 'dv', { style: 'font: 700 19px var(--font-display); fill: #1a120c' });
+        });
+        const c = msg.chip;
+        const zoom = D.p(svg, `M${c.x + c.w} ${c.y + 8} L600 200`, 'dash', { opacity: 0.6, 'data-bg': '' });
+        tl.fromTo(doc, { opacity: 0, scale: 0.9, transformOrigin: '0% 0%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.0);
+        tl.fromTo(zoom, { opacity: 0 }, { opacity: 0.6, duration: 0.4 }, 1.1);
+        const t = P.chat.think(tl, 1.8, 1.2);
+        P.tok.set(tl, 8, t, 1.2);
+        // the plan: one sheet per feature, from the spec
         P.wall = D.g(svg);
         P.sheets = FINAL.map((n, k) => {
           const s = D.g(P.wall, { 'data-unit': '' });
-          const x = 620 + (k % 3) * 290, y = 190 + Math.floor(k / 3) * 150;
-          D.el('rect', { x, y, width: 250, height: 120, rx: 3, style: 'fill: #fff3e3', 'data-bg': '' }, s);
-          D.el('circle', { cx: x + 125, cy: y + 10, r: 7, style: 'fill: #ff5a1f' }, s);
-          D.text(s, x + 18, y + 48, n, 'sn', { style: 'font: 800 24px var(--font-display); fill: #1a120c' });
-          D.p(s, `M${x + 18} ${y + 74} h${140 + (k * 37) % 60} M${x + 18} ${y + 94} h${100 + (k * 23) % 50}`, '', { style: 'fill: none; stroke: #b9a88f', 'stroke-width': 4, 'stroke-linecap': 'round' });
+          const x = 950 + (k % 2) * 260, y = 190 + Math.floor(k / 2) * 120;
+          D.el('rect', { x, y, width: 240, height: 100, rx: 3, style: 'fill: #fff3e3', 'data-bg': '' }, s);
+          D.el('circle', { cx: x + 120, cy: y + 10, r: 7, style: 'fill: #ff5a1f' }, s);
+          D.text(s, x + 18, y + 46, n, 'sn', { style: 'font: 800 24px var(--font-display); fill: #1a120c' });
+          D.p(s, `M${x + 18} ${y + 70} h${120 + (k * 37) % 60} M${x + 18} ${y + 86} h${80 + (k * 23) % 50}`, '', { style: 'fill: none; stroke: #b9a88f', 'stroke-width': 4, 'stroke-linecap': 'round' });
           tl.fromTo(s, { opacity: 0, y: -20, rotation: -4 + k * 2, transformOrigin: '50% 0%' }, { opacity: 1, y: 0, rotation: 0, duration: 0.35, ease: 'back.out(2)' }, t + k * 0.25);
           return { s, x, y };
         });
         // one sheet is a product decision: it comes to you
         const pd = P.sheets[2];
         const flag = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: pd.x + 100, y: pd.y + 50, width: 140, height: 26, rx: 3, style: 'fill: #ffd23f' }, flag);
-        D.text(flag, pd.x + 170, pd.y + 68, 'PRODUKT', 'pf', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-mono); letter-spacing: .1em; fill: #1a120c' });
+        D.el('rect', { x: pd.x + 120, y: pd.y + 26, width: 104, height: 24, rx: 3, style: 'fill: #ffd23f' }, flag);
+        D.text(flag, pd.x + 172, pd.y + 43, 'PRODUKT', 'pf', { 'text-anchor': 'middle', style: 'font: 700 13px var(--font-mono); letter-spacing: .1em; fill: #1a120c' });
         tl.fromTo(flag, { opacity: 0, scale: 1.6, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(3)' }, t + 1.8);
         P.chat.reply(tl, 'Skal gjester kunne se kameraene?', t + 2.3);
         P.chat.user(tl, 'Nei.', t + 3.4);
-        P.flag = flag;
-        ctx.focus(tl, [P.wall, flag, P.chat.root, P.att.g], t);
+        P.flag = flag; P.doc = doc; P.zoom = zoom;
+        ctx.focus(tl, [doc, zoom, P.wall, flag, P.chat.root, P.att.g], 0.6);
       }
 
       if (i === 2) {
         // built in one pass, in the planned order
-        tl.to(P.flag, { opacity: 0, duration: 0.2 }, 0);
+        tl.to([P.flag, P.zoom], { opacity: 0, duration: 0.2 }, 0);
         const b = FINAL.map((n) => block(svg, n));
         // the plan comes off the wall, then the whole set is built bottom-up in one pass
         tl.to(P.sheets.map((sh) => sh.s), { opacity: 0, y: -10, duration: 0.3, stagger: 0.05 }, 0.1);
