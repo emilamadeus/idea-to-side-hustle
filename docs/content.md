@@ -80,11 +80,11 @@ Point: one session per task, plus one master session that talks to the others an
 - Built: src/slides/helpers.js.
 Point: the lead (the active agent in each session) does the work itself. Helpers (subagents spawned by a session) only occasionally, mostly for planning or research, almost never for implementation. With helpers implementing: poorer results, long waits, and wait locks where a helper never reports back as finished while the lead keeps waiting.
 - Terminology for the slide: "session" = a task you started; "helper" = a subagent a session starts by itself.
-- Storyboard [agreed]: the Claude Code app, one session ("Eksport"); running helpers sit in a right-hand panel, each with its run time.
+- Storyboard [agreed]: the Claude Code app, one session ("Appen"); running helpers sit in a right-hand panel, each with its run time.
   1. The lead works itself: Read, Edit, Bash.
   2. A research helper: a "Hjelper · Finn DVR-innlogging" card returns in 12 s; the lead uses the answer.
-  3. A whole job to a helper in the background ("Bygg fakturamodulen"). The lead carries on with its own work; the helper panel keeps showing it running, past two hours; it never reports back. Only when the lead checks does it turn out to have been done for 40 minutes.
-  4. You ask "Er ikke fakturamodulen ferdig ennå?". The lead breaks off its own work ("Avbrutt: eksport"), checks the helper: done 40 minutes ago, 12 files. Back to the export.
+  3. "Bygg fakturamodulen med en hjelper. Ta eksporten etterpå." The helper runs in the background; the lead does nothing while it waits. The helper panel keeps showing it running, past two hours.
+  4. "Hva jobber du med nå?" → "Ingenting kjører nå. Venter på at hjelperen blir ferdig før neste jobb. 11 / 64 GB RAM ledig, 18 GB trengs. Hjelperen bruker 24 GB." "Er ikke hjelperen ferdig ennå?" → "Sjekker status på hjelperen." Done 40 minutes ago, never reported. 24 GB freed; the lead starts the export.
 
 ## Cross-model loop through a shared file [given]
 - Built: src/slides/asset-loop.js.

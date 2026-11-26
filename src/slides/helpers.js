@@ -7,10 +7,11 @@ import { codeApp } from '../engine/console.js';
   research. Shown in the Claude Code app.
     0. The lead works: Read, Edit, Bash, the context fills steadily.
     1. A research helper: a short Task block comes back in seconds, the lead uses the answer.
-    2. A whole job to a helper, in the background. The lead carries on with its own work.
+    2. A whole job to a helper, in the background; the lead waits for it before the next job.
        The helper panel keeps showing it running, past two hours; it never reports back.
-    3. You ask the lead whether the helper is done yet; it has to break off its own work to
-       check: done 40 minutes ago.
+    3. You ask what it is doing: nothing, waiting on the helper (RAM: 11 of 64 GB free, 18 needed,
+       the helper holds 24). You ask if the helper is done; it checks: done 40 minutes ago,
+       never reported. 24 GB freed, the next job starts.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–260
@@ -27,8 +28,8 @@ export default {
   notes: [
     'Leaden gjør jobben selv. Den har hele konteksten.',
     'Hjelper til research: kort oppdrag, svar på sekunder.',
-    'Hjelper med en hel jobb i bakgrunnen: ferdig, men sier aldri fra.',
-    'Leaden må avbryte sitt eget arbeid for å sjekke. Det løser vakta på neste.',
+    'Hjelper med en hel jobb i bakgrunnen. Leaden venter på den før neste jobb.',
+    'Hva jobber du med? Ingenting, den venter på hjelperen og RAM. Først når du spør, sjekker den: ferdig for 40 minutter siden. Det løser vakta på neste.',
   ],
 
   create(ctx) {
@@ -51,11 +52,11 @@ export default {
         const app = codeApp(svg, AX, AY, AW, AH, { size: 18, sidebar: 170, panel: 240 });
         P.app = app;
         tl.fromTo(app.root, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 0.2);
-        const t = app.session('eksport', 'Eksport', 'work');
-        app.show(tl, 'eksport', 0.2);
-        t.user(tl, 'Lag eksport til CSV.', 0.6);
+        const t = app.session('app', 'Appen', 'work');
+        app.show(tl, 'app', 0.2);
+        t.user(tl, 'Lag rapportsiden.', 0.6);
         t.tool(tl, 'Read', 'src/rapport.ts', '212 linjer', 1.1);
-        t.tool(tl, 'Edit', 'src/eksport.ts', '+48 −3', 1.8);
+        t.tool(tl, 'Edit', 'src/rapport.ts', '+48 −3', 1.8);
         t.tool(tl, 'Bash', 'npm test', '24 bestått', 2.5);
         t.ctx(tl, 180, 0.6, 2.4);
         P.t = t;
@@ -75,30 +76,32 @@ export default {
       }
 
       if (i === 2) {
-        // a whole job to a helper, in the background; the lead carries on
+        // a whole job to a helper, in the background; the lead waits for it before the next job
         const t = P.t;
         t.fadeOld(tl, 0);
-        t.agent(tl, 'Bygg fakturamodulen', 'kjører i bakgrunnen', 0.3);
+        t.user(tl, 'Bygg fakturamodulen med en hjelper. Ta eksporten etterpå.', 0.3);
+        t.agent(tl, 'Bygg fakturamodulen', 'kjører i bakgrunnen', 1.0);
         P.h2 = P.app.helper('Fakturamodul');
-        tl.fromTo(P.h2.g, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.3 }, 0.3);
+        tl.fromTo(P.h2.g, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.3 }, 1.0);
         // it keeps showing as running: it never reports back
-        P.h2.run(tl, 0.3, { from: 0, to: 2 * 3600 + 14 * 60, dur: 4.6 });
-        t.tool(tl, 'Edit', 'src/eksport.ts', '+20 −4', 1.0);
-        P.spin = t.spin(tl, 'Lager eksport', 1.4, { from: 0, to: 41 * 60 + 12, dur: 3.6 });
-        t.ctx(tl, 320, 1.4, 3.6);
+        P.h2.run(tl, 1.0, { from: 0, to: 2 * 3600 + 14 * 60, dur: 4.4 });
+        t.state(tl, 'block', 1.6);
       }
 
       if (i === 3) {
+        // you ask what it is doing: nothing, it is waiting on the helper and the RAM
         const t = P.t;
-        // you ask; the lead has to stop its own work to find out
         t.fadeOld(tl, 0.1);
-        t.user(tl, 'Er ikke fakturamodulen ferdig ennå?', 0.3);
-        P.spin.end(tl, 1.0, '■ Avbrutt: eksport', 'dim');
-        t.say(tl, 'Vet ikke. Avbryter eksporten og sjekker.', 1.3);
-        t.tool(tl, 'TaskOutput', 'fakturamodul', 'Ferdig for 40 min siden. 12 filer.', 2.2, { tone: '#8fe3a2' });
-        P.h2.run(tl, 0, { from: 2 * 3600 + 14 * 60, to: 2 * 3600 + 16 * 60, dur: 2.4 });
-        P.h2.done(tl, 2.6, 'hentet');
-        t.say(tl, 'Tilbake til eksporten.', 3.4);
+        t.user(tl, 'Hva jobber du med nå?', 0.3);
+        t.say(tl, 'Ingenting kjører nå. Venter på at hjelperen blir ferdig før neste jobb. 11 / 64 GB RAM ledig, 18 GB trengs. Hjelperen bruker 24 GB.', 1.0);
+        P.h2.run(tl, 0, { from: 2 * 3600 + 14 * 60, to: 2 * 3600 + 17 * 60, dur: 3.6 });
+        t.user(tl, 'Er ikke hjelperen ferdig ennå?', 2.6);
+        t.say(tl, 'Sjekker status på hjelperen.', 3.3);
+        t.tool(tl, 'TaskOutput', 'fakturamodul', 'Ferdig for 40 min siden.', 4.0, { tone: '#8fe3a2' });
+        P.h2.done(tl, 4.0, 'ferdig');
+        t.say(tl, 'Den ble ferdig uten å melde fra. 24 GB frigjort. Starter eksporten.', 4.8);
+        t.state(tl, 'work', 5.2);
+        t.tool(tl, 'Edit', 'src/eksport.ts', '+52 −0', 5.6);
       }
       return tl;
     };
