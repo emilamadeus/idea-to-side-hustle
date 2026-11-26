@@ -10,7 +10,9 @@ import { chatPhone, FILL } from '../engine/props.js';
     3. A colleague asks for status; "Kopier status" drops a short summary into the reply. 👍
     4. They ask about one task; that row's own copy button drops all of it: status, why, what
        it waits for, the plan.
-    5. The page becomes the real spec of this talk, live.
+    5. Each task also has "✻ prompt": a short prompt for that task, written from where it stands.
+       Pasted into Claude, which picks it up.
+    6. The page becomes the real spec of this talk, live.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
@@ -39,13 +41,14 @@ const HIDDEN = [
 export default {
   id: 'spec',
   title: 'Levende spec',
-  steps: 6,
+  steps: 7,
   notes: [
     'En spec i HTML. AI-en oppdaterer den mens den jobber.',
     'Åpne en oppgave: hvorfor den er blokkert, og hva den venter på.',
     'Røntgen: det skjulte laget som bare agentene leser.',
     'Kollega spør om status. Kopier, lim inn.',
     'Spør de om én oppgave, kopierer du den: status, hvorfor, hva den venter på, planen.',
+    'Hver oppgave har også en ferdig prompt, skrevet ut fra hvor den står. Lim inn, så fortsetter Claude.',
     'Og dette er specen for denne presentasjonen.',
   ],
 
@@ -106,7 +109,11 @@ export default {
         D.el('rect', { x: PX + PW - 214, y: y - 22, width: 34, height: 32, rx: 7, style: 'fill: #2c2119; stroke: #6b5a48', 'stroke-width': 2 }, cpy);
         D.el('rect', { x: PX + PW - 205, y: y - 16, width: 13, height: 15, rx: 2, style: 'fill: none; stroke: #cfc3b2', 'stroke-width': 2 }, cpy);
         D.el('rect', { x: PX + PW - 200, y: y - 11, width: 13, height: 15, rx: 2, style: 'fill: #2c2119; stroke: #cfc3b2', 'stroke-width': 2 }, cpy);
-        return { g: rg, chip: c, y, cpy };
+        // and a ready prompt for this task, written from where it stands
+        const ai = D.g(rg);
+        D.el('rect', { x: PX + PW - 318, y: y - 22, width: 94, height: 32, rx: 16, style: 'fill: #2c2119; stroke: #ff7a2f', 'stroke-width': 2 }, ai);
+        D.text(ai, PX + PW - 271, y, '✻ prompt', 'aip', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-mono); fill: #ff9a5f' });
+        return { g: rg, chip: c, y, cpy, ai };
       });
       return { g, body };
     }
@@ -216,6 +223,27 @@ export default {
       }
 
       if (i === 5) {
+        // the task's own prompt, into Claude
+        tl.to(P.chat.root, { opacity: 0, duration: 0.3 }, 0);
+        const claude = chatPhone(svg, 80, 280, 440, 440, { app: 'Claude', size: 18 });
+        tl.fromTo(claude.root, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
+        const r = P.rows[2];
+        const cur = cursor(svg);
+        tl.fromTo(cur, { x: PX + 500, y: PY + 500, opacity: 0 }, { x: PX + PW - 290, y: r.y - 8, opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 0.7);
+        tl.to(r.ai, { scale: 0.88, transformOrigin: '50% 50%', duration: 0.08, yoyo: true, repeat: 1 }, 1.55);
+        const fly = D.g(svg, { 'data-bg': '' });
+        D.el('rect', { x: PX + PW - 318, y: r.y - 22, width: 94, height: 32, rx: 16, style: 'fill: #ff7a2f' }, fly);
+        tl.fromTo(fly, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 1.7);
+        tl.to(fly, { x: -640, y: 160, opacity: 0, duration: 0.6, ease: 'power2.in' }, 1.8);
+        tl.to(cur, { opacity: 0, duration: 0.3 }, 2.0);
+        claude.user(tl, ['Fortsett: varsel når kamera går', 'offline. Blokkert til gateway', 'build 412 er ute. Da: lytt på', 'event-strømmen, varsle innen', 'ett minutt, oppdater specen.'], 2.3);
+        const t = claude.think(tl, 3.1, 1.0);
+        claude.reply(tl, 'Build 412 er ute. Starter på varselet.', t);
+        ctx.focus(tl, [claude.root, r.g, cur, fly], 0.3);
+        P.chat = claude;
+      }
+
+      if (i === 6) {
         // this talk's own spec, live
         tl.to(P.chat.root, { opacity: 0, duration: 0.3 }, 0);
         tl.to(P.page.body, { opacity: 0, duration: 0.4 }, 0.1);

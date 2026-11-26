@@ -19,6 +19,7 @@ export const HELP = {
     'Et skjult lag med regler som bare agentene leser.',
     'Status til andre er ett klikk unna.',
     'Hver oppgave har sin egen knapp: hele historien, klar til å sende.',
+    'Eller en ferdig prompt for akkurat den oppgaven.',
     'Denne presentasjonen har sin egen.',
   ],
   'full-scope': [
