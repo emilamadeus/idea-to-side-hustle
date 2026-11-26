@@ -51,7 +51,7 @@ const STAGED = [
   [goLive],                                     // Lansering (placeholder)
 ];
 const PARTS = [
-  { name: 'Arbeidsflyt', slides: [kitchen, helpers, skills, watchdog, remote, effort, gateway] },
+  { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, skills, gateway] },
   { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, knowAGuy, alwaysWorking] },
   { name: 'Ekte prosjekter', slides: [projects, launch, htmlDeck] },
 ];
