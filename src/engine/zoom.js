@@ -346,7 +346,7 @@ export function createZoom(deck, stage) {
   });
 
   // ── wheel: smooth zoom toward the pointer; past the limits, the next level ──
-  const FMIN = 0.32, FMAX = 1.3, PUSH = 240;
+  const FMIN = 0.18, FMAX = 1.9, PUSH = 520; // range inside a level, and how hard you push past it to change level
   let acc = 0, lock = 0;
   const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
   const hit = new THREE.Vector3();
@@ -381,7 +381,7 @@ export function createZoom(deck, stage) {
     }
     e.preventDefault();
     if (busy || now < lock || !view) return;
-    const nf = view.f * Math.exp(dy * 0.0016);
+    const nf = view.f * Math.exp(dy * 0.0008); // about 8 % per wheel notch
     if (nf < FMIN) {
       view.f = FMIN; acc += -dy;
       if (acc > PUSH) {
