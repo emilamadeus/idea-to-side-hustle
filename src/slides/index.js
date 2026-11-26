@@ -2,6 +2,7 @@
 import { HELP } from './help.js';
 import { chapter } from './chapter.js';
 import takeaways from './takeaways.js';
+import readyToBuild from './ready-to-build.js';
 import opening from './opening.js';
 import launch from './launch.js';
 import validate from './validate.js';
@@ -37,7 +38,7 @@ import projects from './projects.js';
 const STAGED = [
   [validate],                                                           // 1. Idé
   [spec, fullScope, planning, goal, mdFiles],                           // 2. Plan
-  [prototypes, visualRef, kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
+  [readyToBuild, prototypes, visualRef, kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
   [selfCheck, show, fails, effort],                                     // 4. Kvalitet
   [projects, sideQuest, assetLoop, launch, htmlDeck],                   // 5. Lansering
 ];

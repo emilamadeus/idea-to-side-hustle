@@ -156,6 +156,10 @@ export const HELP = {
     'Prisen settes etter hva lignende pakker koster.',
     'Publisert, og den selger.',
   ],
+  'ready-to-build': [
+    'Planen er ferdig. Alt AI-en trenger, står på ett ark.',
+    'Nå er du klar til å bygge.',
+  ],
   opening: [
     'Det startet med et ønske om å få ett prosjekt i mål.',
     '15 prosjekter senere er 1 av dem i mål, og 14 nær målstreken.',
