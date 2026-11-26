@@ -5,7 +5,7 @@ import { chatPhone, FILL } from '../engine/props.js';
 /*
   Check the idea before starting. One everyday idea (firewood delivered to the door, as a
   subscription) run through four checks, one card at a time, each answered in the chat.
-    0. The idea, drawn: a van brings firewood to a city door, every 14 days all winter.
+    0. The idea, drawn: a truck with a load of logs brings firewood to a city door, every 14 days all winter.
     1. The four questions in the chat; the cards are empty.
     2. Kunde: city people with a fireplace and no car.
     3. Betalingsvilje: they already pay extra for small sacks at the petrol station.
@@ -18,7 +18,7 @@ import { chatPhone, FILL } from '../engine/props.js';
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
-    step 0     headline centred y 300; house x 1060–1400, y 330–620; van x 560–800, y 520–620;
+    step 0     headline centred y 300; house x 1060–1400, y 330–620; truck x 548–798, y 500–622 (flatbed of logs, cab in front);
                ground y 620; delivery calendar x 300–1300, y 660–740
     chat       x 80–520, y 262–782
     cards      2×2, x 600–1480, y 170–740 (each 420×270): label y+38, question y+72,
@@ -171,12 +171,20 @@ export default {
       D.el('circle', { cx: 1314, cy: 556, r: 4, style: 'fill: #ffd23f' }, house);
       D.text(house, 1288, 476, '14B', 'hn', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-mono); fill: #e6d8c6' });
       const smoke = D.p(g, 'M1335 322 q-12 -16 0 -30 q12 -14 0 -30', '', { style: 'fill: none; stroke: #9a8a78', 'stroke-width': 4, 'stroke-linecap': 'round', opacity: 0, 'data-bg': '' });
-      // the delivery van with firewood in the back
+      // the delivery truck: a flatbed stacked with split logs, cab in front
       const van = D.g(g, { 'data-unit': '' });
-      D.p(van, 'M560 610 V520 H740 L790 560 V610 Z', '', FILL('#ff5a1f', 2.5));
-      D.el('rect', { x: 744, y: 528, width: 30, height: 26, rx: 3, style: 'fill: #a9c6d6; stroke: #1a120c', 'stroke-width': 2 }, van);
-      D.text(van, 650, 574, 'VED', 'vt', { 'text-anchor': 'middle', style: 'font: 800 26px var(--font-display); fill: #1a120c' });
-      [600, 740].forEach((cx) => D.el('circle', { cx, cy: 612, r: 16, ...FILL('#2a1d14', 2.5) }, van));
+      D.el('rect', { x: 548, y: 578, width: 182, height: 20, rx: 3, ...FILL('#6b4a30', 2.5) }, van);   // flatbed
+      [552, 716].forEach((x) => D.el('rect', { x, y: 500, width: 10, height: 80, rx: 2, ...FILL('#4a3020', 2) }, van)); // rack posts
+      const log = (cx, cy) => {
+        D.el('circle', { cx, cy, r: 13, ...FILL('#c9935a', 2.2) }, van);
+        D.el('circle', { cx, cy, r: 6, style: 'fill: none; stroke: #8a5a34', 'stroke-width': 2 }, van);
+      };
+      [574, 602, 630, 658, 686].forEach((x) => log(x, 564));
+      [588, 616, 644, 672].forEach((x) => log(x, 539));
+      [602, 630, 658].forEach((x) => log(x, 514));
+      D.p(van, 'M732 598 V538 H770 L798 566 V598 Z', '', FILL('#ff5a1f', 2.5));                   // cab
+      D.el('rect', { x: 740, y: 546, width: 26, height: 20, rx: 3, style: 'fill: #a9c6d6; stroke: #1a120c', 'stroke-width': 2 }, van);
+      [590, 760].forEach((cx) => D.el('circle', { cx, cy: 606, r: 16, ...FILL('#2a1d14', 2.5) }, van));
       // two sacks left at the door
       const sacks = D.g(g, { 'data-bg': '' });
       sack(sacks, 1150, 620, 0.62); sack(sacks, 1206, 620, 0.62);
