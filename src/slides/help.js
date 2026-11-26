@@ -111,7 +111,7 @@ export const HELP = {
     'AI-en leser nåværende status og sier hva som kan bygges nå',
     'Ingenting relevant? Da slipper du å lese den.',
     'Du leser din egen spec-fil for status',
-    'Uten kontakt med det ansvarlige teamet får du svar på hva som eksisterer',
+    'Svar på hva som finnes, uten å spørre teamet.',
   ],
   'know-a-guy': [
     'Jobben lærer deg én del av kartet.',
