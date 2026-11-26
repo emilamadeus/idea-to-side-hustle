@@ -1,11 +1,11 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
-import { PALETTE } from '../engine/characters.js';
 import { speech, chatPhone, meter } from '../engine/props.js';
-import { K, room, station, serve, cookFor, runner, guard, plate, clipToKitchen } from '../engine/kitchen.js';
+import { K, room, station, serve, cookFor, runner, guard, plate, clipToKitchen, METAL } from '../engine/kitchen.js';
 
 /*
-  Tip: a watchdog checks every session every 10 minutes. Same kitchen, night shift.
+  Tip: a watchdog checks every session every 10 minutes. Same mine, night shift; the
+  watchdog is a robot overseer with a whip and a headlamp, cracking it when he finds trouble.
     0. Asked in plain words (chat). Lights go down, the clock starts at 22:00.
     1. 23:40 two sessions wait for each other. The guard breaks the tie.
     2. 02:20 one session is asleep. Woken up.
@@ -24,11 +24,7 @@ import { K, room, station, serve, cookFor, runner, guard, plate, clipToKitchen }
 
 // spaced so the guard (149 wide with his torch arm) fits between two cooks without touching either
 const SX = [858, 1114, 1368];
-const LOOKS = [
-  { hair: 'curly', hairColor: PALETTE.hair.dark, skin: PALETTE.skin[3] },
-  { hair: 'messy', hairColor: PALETTE.hair.brown, skin: PALETTE.skin[0], glasses: true },
-  { hair: 'bun', hairColor: PALETTE.hair.blonde, skin: PALETTE.skin[2] },
-];
+const LOOKS = [{ metal: METAL[0] }, { metal: METAL[1], glasses: true }, { metal: METAL[2] }];
 const ROUNDS = [22 * 60, 23 * 60 + 40, 26 * 60 + 20, 27 * 60 + 30, 28 * 60 + 20, 29 * 60 + 10, 30 * 60];
 const G0 = 960, G2 = 760; // guard (facing right) and guard2 (facing left) starting x
 const RUN_X = 620, RUN_NECK = K.floor - 252 * 0.6;
@@ -80,6 +76,7 @@ export default {
     // P.guard faces right; P.guard2 is the same guard facing left (swapped in for the corridor)
     const beam = (tl, on, at) => {
       tl.to([P.guard.beam, P.guard2.beam], { opacity: on ? 1 : 0.35, duration: 0.3 }, at);
+      if (on) [P.guard, P.guard2].forEach((g) => g.whip.crack(tl, at + 0.2));
       tl.to(P.dark, { opacity: on ? 0.22 : 0.55, duration: 0.4 }, at);
     };
     const pop = (tl, node, at) => tl.fromTo(node, { opacity: 0, scale: 0.7, transformOrigin: '50% 100%' }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(2.5)' }, at);

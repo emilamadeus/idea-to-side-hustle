@@ -1,13 +1,12 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
-import { figure, PALETTE } from '../engine/characters.js';
 import { speech, paperCard, FILL } from '../engine/props.js';
-import { K, room, door, station, ticket, plate, serve, cookFor, toque, cap, runner, guard, clipToKitchen } from '../engine/kitchen.js';
+import { K, room, door, station, ticket, plate, serve, cookFor, robot, runner, guard, clipToKitchen, METAL } from '../engine/kitchen.js';
 
 /*
   Tip: do the work in the session itself; helpers (subagents) for research only.
-  Same kitchen, now with a corridor.
-    1. The head chef (session) cooks; plates go out steadily.
+  Same mine, now with a side tunnel.
+    1. The robot miner (session) digs; carts go out steadily.
     2. Research errand: the runner (helper) checks the store room and is back at once.
     3. A whole dish handed to the runner: done, but it stands in the corridor holding
        the plate and never reports back. The chef waits; tickets pile up; the clock spins.
@@ -22,7 +21,7 @@ import { K, room, door, station, ticket, plate, serve, cookFor, toque, cap, runn
 
 const RX = [790, 935, 1080, 1225];
 const SX = 1100, HOME = 830, CORR = 670;
-const CHEF = { hair: 'curly', hairColor: PALETTE.hair.brown, skin: PALETTE.skin[0] };
+const CHEF = { metal: METAL[0] };
 const RUN_NECK = K.floor - 252 * 0.6;
 
 export default {
@@ -30,9 +29,9 @@ export default {
   title: 'Hjelpere',
   steps: 4,
   notes: [
-    'Sessionen lager maten selv. Jevn flyt.',
+    'Sessionen graver selv. Jevn flyt.',
     'Hjelper til research: henter og sjekker, tilbake med en gang.',
-    'Hjelper som lager en hel rett: ferdig, men sier aldri fra. Hovedsessionen venter.',
+    'Hjelper som tar en hel ordre: ferdig, men sier aldri fra. Hovedsessionen venter.',
     'Vakta finner den. Mer om vakta på neste.',
   ],
 
@@ -71,8 +70,8 @@ export default {
 
     function legend(g) {
       const rows = [
-        { y: 360, label: 'SESSION', sub: 'du startet den', make: (x, y) => { const f = figure(g, { x, y, s: 0.5, pose: 'sit', arms: 'table', outfit: 'shirt', color: '#e9e2d6', ...CHEF }); toque(f); } },
-        { y: 490, label: 'HJELPER', sub: 'sessionen startet den', make: (x, y) => { const f = figure(g, { x, y, s: 0.5, pose: 'sit', arms: 'down', outfit: 'hoodie', color: PALETTE.cloth.teal, hair: 'short', hairColor: PALETTE.hair.red, skin: PALETTE.skin[2] }); cap(f, '#ffd23f'); } },
+        { y: 360, label: 'SESSION', sub: 'du startet den', make: (x, y) => robot(g, { x, y, s: 0.5, metal: CHEF.metal }) },
+        { y: 490, label: 'HJELPER', sub: 'sessionen startet den', make: (x, y) => robot(g, { x, y, s: 0.5, arms: 'down', metal: METAL[2], helmet: '#2f8a4a' }) },
       ];
       rows.forEach((r) => {
         const fg = D.g(g, { 'data-bg': '' });
@@ -143,7 +142,7 @@ export default {
         tl.to(P.run.root, { x: CORR - HOME, opacity: 1, duration: 0.4 }, 2.0);
         openDoor(tl, 2.3);
         walk(tl, HOME, 2.4);
-        P.list = paperCard(P.R.top, 1166, 300, 210, 'LAGER', ['egg  12', 'smør  2', 'mel  4 kg'], { size: 19 });
+        P.list = paperCard(P.R.top, 1166, 300, 210, 'LAGER', ['dynamitt  12', 'lykter  2', 'skinner  40 m'], { size: 19 });
         tl.fromTo(P.list, { opacity: 0, x: -400, y: 260, scale: 0.4, transformOrigin: '0% 0%' }, { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.6, ease: 'power2.out' }, 3.1);
         P.ok = D.p(P.R.top, 'M1334 318 l10 12 l22 -26', '', { style: 'fill: none; stroke: #1f9d63', 'stroke-width': 6, 'stroke-linecap': 'round', opacity: 0 });
         tl.to(P.ok, { opacity: 1, duration: 0.2 }, 3.8);
@@ -156,10 +155,11 @@ export default {
         // a whole dish handed to the helper
         tl.to([P.list, P.ok], { opacity: 0, duration: 0.3 }, 0);
         P.st.cook.expr(tl, { mouth: 'neutral' }, 0);
-        P.say2 = speech(P.R.top, 800, 300, 'Lag denne.', [1040, 420], { size: 20 });
+        P.say2 = speech(P.R.top, 800, 300, 'Grav ut denne.', [1040, 420], { size: 20 });
         tl.fromTo(P.say2, { opacity: 0, scale: 0.8, transformOrigin: '100% 100%' }, { opacity: 1, scale: 1, duration: 0.3 }, 0.1);
         tl.to(P.say2, { opacity: 0, duration: 0.25 }, 1.3);
         const job = P.rail.shift();
+        job.setAttribute('data-overlap-ok', ''); // handed to the helper: contact by design
         hop(tl, job, { x: HOME - 60, y: 560 }, 0.5); // into the runner's hands, below the chef's bubble
         P.rail.forEach((t, k) => fly(tl, t, slot(k), 0.9, 0.4));
         // the ticket goes with the runner into the corridor

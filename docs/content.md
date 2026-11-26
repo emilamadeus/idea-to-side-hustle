@@ -64,21 +64,21 @@ Point: for bigger work, the AI keeps an HTML spec up to date as it works: titles
 ## Parallel sessions with a lead session [given]
 - Built: src/slides/kitchen.js.
 Point: one session per task, plus one lead session.
-- Storyboard [proposed]: a restaurant kitchen.
-  1. One cook makes every dish in order; tickets pile up on the rail.
-  2. A brigade: one station per task group (one session per task). The head chef (lead session) stands at the pass with a board: cooking, waiting for an answer, done. One ticket blinks "venter på deg".
-  3. Orders go out in parallel; the ticket pile empties.
+- Storyboard [agreed]: a mine. You are the boss with a whip; the AI sessions and helpers are robot miners (engine/kitchen.js keeps its old name).
+  1. One robot digs every work order in turn; orders pile up on the beam and fall to the floor.
+  2. One rock face per task (one session per task). You arrive with the whip; the lead session's board shows digging, waiting for you, done. One row blinks "venter på deg".
+  3. You answer and crack the whip; carts of ore roll out in parallel; the beam empties.
 - The lead session tracks the others: which are working, which are waiting for a response, which are done.
 
 ## Lead session first, helpers rarely [given]
 - Built: src/slides/helpers.js.
 Point: do the work in the lead session itself. Helpers (subagents spawned by a session) only occasionally, mostly for planning or research, almost never for implementation. With helpers implementing: poorer results, long waits, and wait locks where a helper never reports back as finished while the lead keeps waiting.
 - Terminology for the slide: "session" = a task you started; "helper" = a subagent a session starts by itself.
-- Storyboard [proposed]: same kitchen as the parallel-sessions scene.
-  1. The head chef cooks the main course themself. Plates go out steadily.
-  2. The head chef sends a runner to fetch and check an ingredient list (planning help): the runner comes back fast with the answer. Good use.
-  3. The head chef hands the runner a whole dish to cook. The runner finishes, then stands in the corridor holding the plate, never calls "ferdig". The head chef waits at the pass; tickets pile up; a clock runs. Pencil: "ferdig for 40 min siden".
-  4. The night guard (watchdog) opens the corridor door, finds the runner, and walks the plate to the pass.
+- Storyboard [agreed]: same mine, with a side tunnel.
+  1. The robot miner (session) digs itself. Carts go out steadily.
+  2. Research errand: the small helper robot checks the store room (dynamite, lamps, rails) and is back at once. Good use.
+  3. A whole work order handed to the helper: it finishes, then stands in the side tunnel holding the ore and never says so. The session waits; orders pile up; the clock spins. Pencil: ferdig for 40 min siden.
+  4. The overseer (watchdog, a robot with a whip and headlamp) finds the helper and puts the ore on the track.
 
 ## Cross-model loop through a shared file [given]
 - Built: src/slides/asset-loop.js.
@@ -98,7 +98,7 @@ Point: Claude and ChatGPT cooperate through one shared file. Example: 3D asset p
   Wood splits along the grain, metal bends, cloth tears, glass shatters.
 
 ## Watchdog [given]
-- Built: src/slides/watchdog.js (same kitchen at night; set up by a plain chat request).
+- Built: src/slides/watchdog.js (same mine at night; the watchdog is a robot overseer with a whip and headlamp who cracks it at every problem; set up by a plain chat request).
 Point: a scheduled check every ~10 min looks at all running jobs: RAM lock, agents waiting on each other, idle agents, and helpers that finished but never reported back to the lead. Keeps work going overnight.
 - Storyboard [proposed]: night shift.
   1. Lights dim, the clock runs from 22:00 to 06:00. A night guard with a flashlight does a round every 10 minutes.

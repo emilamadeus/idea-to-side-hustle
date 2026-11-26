@@ -224,7 +224,7 @@ export async function auditMotion(deck, { slides, samples = [0.1, 0.2, 0.3, 0.4,
         for (const m of moving) {
           const dm = delta(m);
           for (const o of all) {
-            if (o === m || o.contains(m) || m.contains(o) || o.hasAttribute('data-overlap-ok')) continue;
+            if (o === m || o.contains(m) || m.contains(o) || o.hasAttribute('data-overlap-ok') || m.hasAttribute('data-overlap-ok')) continue;
             const ob = now.get(o), mb = now.get(m);
             if (!ob || !mb) continue;
             // moving together (a whole scene sliding) is not a crossing

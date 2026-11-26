@@ -1,29 +1,25 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
-import { figure, PALETTE } from '../engine/characters.js';
 import { speech } from '../engine/props.js';
-import { K, RAIL_X, room, station, ticket, serve, cookFor, board, toque } from '../engine/kitchen.js';
+import { K, RAIL_X, room, station, ticket, serve, cookFor, board, boss, METAL } from '../engine/kitchen.js';
 
 /*
   Tip: one session per task, plus one lead session that keeps track.
-    1. One cook makes every dish in order; tickets pile up and overflow the rail.
-    2. A brigade: one station per task. The head chef (lead session) has a board:
-       cooking, waiting for you, done. One row blinks "venter på deg".
-    3. You answer; dishes go out in parallel; the rail empties.
+    The mine: robot miners are sessions, work orders hang from the beam, you hold the whip.
+    1. One robot digs every order in turn; orders pile up and overflow the beam.
+    2. One rock face per task; you (whip) arrive; the lead session's board shows
+       digging, waiting for you, done. One row blinks "venter på deg".
+    3. You answer (whip crack); carts go out in parallel; the beam empties.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     board      x 80–520, y 290–732
-    kitchen    x 560–1480, y 150–780 (see engine/kitchen.js)
+    mine       x 560–1480, y 150–780 (see engine/kitchen.js); you x 600, lash reaches x ~775
 */
 
 const TASKS = ['Innlogging', 'Varsler', 'Kamera-API', 'Tester', 'Eksport', 'Mørk modus', 'Fakturaer', 'Søk'];
-const SX = [790, 1035, 1280];
-const LOOKS = [
-  { hair: 'curly', hairColor: PALETTE.hair.dark, skin: PALETTE.skin[3] },
-  { hair: 'messy', hairColor: PALETTE.hair.brown, skin: PALETTE.skin[0], glasses: true },
-  { hair: 'bun', hairColor: PALETTE.hair.blonde, skin: PALETTE.skin[2] },
-];
+const SX = [840, 1075, 1310];
+const LOOKS = [{ metal: METAL[0] }, { metal: METAL[1], glasses: true }, { metal: METAL[2] }];
 const FOOD = ['#ff7a2f', '#ffd23f', '#c4562a'];
 
 export default {
@@ -31,9 +27,9 @@ export default {
   title: 'Parallelle sessions',
   steps: 3,
   notes: [
-    'Én session gjør alt i rekkefølge. Bongene hoper seg opp.',
+    'Én session graver alt i rekkefølge. Ordrene hoper seg opp.',
     'Én session per oppgave. Hovedsessionen har tavla: lager, venter på deg, ferdig.',
-    'Du svarer på den ene. Alt går ut samtidig.',
+    'Du svarer på den ene, og svinger pisken. Alt går ut samtidig.',
   ],
 
   create(ctx) {
@@ -115,8 +111,8 @@ export default {
         tl.fromTo([P.st[0].g, P.st[2].g], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, stagger: 0.15 }, 0);
         tl.to(P.pile, { opacity: 0, duration: 0.3 }, 0);
         P.st[1].cook.expr(tl, { brows: 'neutral', mouth: 'neutral' }, 0.3);
-        P.head = figure(P.R.mid, { x: 636, y: K.floor - 252 * 0.72, s: 0.72, pose: 'stand', arms: 'cross', outfit: 'blazer', color: '#e9e2d6', hair: 'curly', hairColor: PALETTE.hair.brown, skin: PALETTE.skin[0] });
-        toque(P.head);
+        // you: the boss with the whip
+        P.head = boss(P.R.mid, 600);
         tl.fromTo(P.head.root, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: 0.6 }, 0.4);
         P.board = board(svg, 80, 290, 440, TASKS.map((name, k) => ({ name, status: k === 0 ? 'done' : k === 1 ? 'cook' : 'queue' })));
         tl.fromTo(P.board.g, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6 }, 0.6);
@@ -144,6 +140,7 @@ export default {
         tl.to(P.ask, { opacity: 0, duration: 0.25 }, 0.2);
         P.st[0].cook.expr(tl, { brows: 'neutral' }, 0.3);
         P.board.set(tl, 2, 'cook', 0.4);
+        P.head.whip.crack(tl, 0.3);
         const round = (at, picks, rows) => {
           P.st.forEach((s, k) => { if (P.at[k]) cookFor(tl, s, at, 0.9); });
           P.st.forEach((s, k) => {
