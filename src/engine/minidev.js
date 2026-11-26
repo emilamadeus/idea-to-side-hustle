@@ -205,17 +205,17 @@ export function miniDev(parent, { idPrefix = 'md' } = {}) {
   // thought cloud: three rising dots, a bumpy cloud with a soft shadow, a gentle float
   function think(tl, str, at, hold = 0) {
     const t = D.g(g, { 'data-overlap-ok': '' });
-    const w = Math.max(70, str.length * 9 + 30), x0 = 22, y0 = -79, h = 28; // clear of a chart's header above
-    const dots = [[10, -60, 2], [15, -66, 2.8], [21, -72, 3.6]].map(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #fff3e3' }, t));
+    const w = Math.max(90, str.length * 13.4 + 44), x0 = 26, y0 = -86, h = 42; // readable on the TV; fits the gap above a chart row
+    const dots = [[10, -62, 2.4], [15, -68, 3.4], [21, -73, 4.4]].map(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #fff3e3' }, t));
     const cloud = D.g(t);
     const blob = (dx, dy, fill, op = 1) => {
       const b = D.g(cloud, { opacity: op });
       D.el('rect', { x: x0 + dx, y: y0 + dy, width: w, height: h, rx: h / 2, style: `fill: ${fill}` }, b);
-      [0.22, 0.5, 0.76].forEach((f, k) => D.el('circle', { cx: x0 + dx + w * f, cy: y0 + dy + 2, r: [7, 9, 7][k], style: `fill: ${fill}` }, b));
+      [0.2, 0.48, 0.78].forEach((f, k) => D.el('circle', { cx: x0 + dx + w * f, cy: y0 + dy + h - 2, r: [7, 9, 7][k], style: `fill: ${fill}` }, b)); // bumps underneath
     };
     blob(2, 3, '#000', 0.3);
     blob(0, 0, '#fff3e3');
-    D.text(cloud, x0 + w / 2, y0 + 19, str, 'th', { 'text-anchor': 'middle', style: `font: 700 16px var(--font-display); fill: ${INK}` });
+    D.text(cloud, x0 + w / 2, y0 + 29, str, 'th', { 'text-anchor': 'middle', style: `font: 700 24px var(--font-display); fill: ${INK}` });
     gsap.set(t, { opacity: 1 });
     tl.fromTo(dots, { opacity: 0, scale: 0.2, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.18, stagger: 0.09, ease: 'back.out(3)' }, at);
     tl.fromTo(cloud, { opacity: 0, scale: 0.4, transformOrigin: '10% 90%' }, { opacity: 1, scale: 1, duration: 0.55, ease: 'elastic.out(1, 0.6)' }, at + 0.25);
