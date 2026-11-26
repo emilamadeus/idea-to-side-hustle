@@ -7,7 +7,8 @@ import { chatPhone, attempt, FILL } from '../engine/props.js';
     1. You dictate every turn (each turn is a technical choice). The car goes round the
        roundabout three times and ends at road works.
     2. Attempt 2, a new session: the first route is cleared. You give only the destination
-       (the requirement). The AI takes a road you didn't know about (an existing event stream).
+       (the requirement). The AI takes a road you didn't know about (the route plan already
+       has the delivery days).
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
@@ -22,7 +23,8 @@ const A = [600, 720], B = [1400, 240];
 const ROUTE1 = 'M600 720 V560 H722 a38 38 0 1 1 0.1 0 a38 38 0 1 1 -0.1 0 a38 38 0 1 1 0.1 0 H760 V400 H1240 V318';
 const ROUTE2 = 'M600 720 H760 L1240 240 H1400';
 const TURNS = [[600, 560], [760, 560], [760, 400], [1240, 400]];
-const DICTATED = ['1. Poll kamera-API-et hvert 5. sek.', '2. Lagre status i en ny tabell.', '3. Lag en egen cron-jobb.', '4. Sammenlign med forrige manuelt.'];
+// the firewood subscription: the customer should get a text the day before delivery
+const DICTATED = ['1. Hent alle bestillinger hver natt.', '2. Lagre dem i en ny tabell.', '3. Lag en egen cron-jobb for SMS.', '4. Sjekk ruten manuelt.'];
 
 export default {
   id: 'goal',
@@ -142,9 +144,9 @@ export default {
         tl.to(P.first, { opacity: 0, duration: 0.4 }, 0);
         tl.to(P.card1.rows, { attr: { style: 'font: 600 18px var(--font-display); fill: #1a120c' }, duration: 0.1 }, 0);
         P.chat.clear(tl, 0);
-        P.chat.user(tl, 'Brukeren skal få varsel innen ett minutt når et kamera går offline.', 0.4);
+        P.chat.user(tl, 'Kunden skal få SMS dagen før veden kommer.', 0.4);
         const T = P.chat.think(tl, 1.1, 1.5);
-        P.chat.reply(tl, 'Dere har allerede en event-strøm fra DVR-en. Jeg lytter på den.', T);
+        P.chat.reply(tl, 'Ruteplanen har allerede leveringsdagene. Jeg sender fra den.', T);
         tl.to(P.short, { attr: { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 30 }, opacity: 1, duration: 0.6 }, T);
         tl.to(P.bridge, { opacity: 1, duration: 0.5 }, T);
         const r2 = D.p(svg, ROUTE2, '', { style: 'fill: none; stroke: #8fe3a2', 'stroke-width': 10, 'stroke-linecap': 'round', 'stroke-dasharray': '18 10' });
