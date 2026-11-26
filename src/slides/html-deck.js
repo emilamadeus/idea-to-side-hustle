@@ -8,7 +8,7 @@ import { paperCard, FILL } from '../engine/props.js';
        site is a missing plugin, the 80 % bar will not move.
     1. Pull back: this deck, live, in a browser window (an iframe of itself).
     2. Its source scrolls past: it is text, so the AI can write and change all of it.
-    3. The other side, on a card: what had to be built, who can't edit it, what it needs.
+    3. The other side, on a card: it takes some imagination, and others can't edit it as easily.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
@@ -130,7 +130,7 @@ export default {
         // the other side
         tl.to(code, { opacity: 0, duration: 0.3 }, 0);
         tl.to(P.codeBox, { opacity: 0, duration: 0.3 }, 0);
-        const card = paperCard(svg, 80, 300, 460, 'ULEMPER', ['Presentervisning: bygd selv', 'Kan ikke redigeres', 'i PowerPoint', 'Trenger en grei GPU'], { size: 22, lineGap: 16 });
+        const card = paperCard(svg, 80, 300, 460, 'ULEMPER', ['Krever litt fantasi', 'Kan ikke redigeres like', 'lett av andre'], { size: 22, lineGap: 16 });
         tl.fromTo(card, { opacity: 0, y: 20, rotation: -2, transformOrigin: '50% 0%' }, { opacity: 1, y: 0, rotation: 0, duration: 0.5 }, 0.3);
       }
       return tl;
