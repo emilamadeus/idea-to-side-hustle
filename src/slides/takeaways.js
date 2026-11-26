@@ -10,7 +10,7 @@ import gsap from 'gsap';
 
 const GROUPS = [
   { stage: 'Idé', tips: ['Sjekk ideen før du starter'] },
-  { stage: 'Plan', tips: ['La AI-en føre en levende spec', 'Gi hele omfanget før du starter', 'Planlegg bunken i auto mode', 'Del opp instruksjonsfilene'] },
+  { stage: 'Plan', tips: ['La AI-en føre en levende spec', 'Definer hele scopet før du starter', 'Planlegg bunken i auto mode', 'Del opp instruksjonsfilene'] },
   { stage: 'Bygg', tips: ['Beskriv målet, ikke veien', 'Lag fire versjoner, velg én', 'Gi den et bilde, ikke en liste'] },
   { stage: 'Kvalitet', tips: ['La den sjekke sitt eget arbeid', 'Vis med skjermbilde', 'Ny session når den lapper symptomer'] },
   { stage: 'Arbeidsflyt', tips: ['Én session per oppgave, én master session', 'Hjelpere til research', 'En vakt hvert 10. minutt', 'Få varsel når den trenger deg', 'Medium effort er nok'] },

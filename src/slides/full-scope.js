@@ -11,7 +11,7 @@ import { chatPhone, attempt, tokenMeter } from '../engine/props.js';
 */
 
 const CSS = `
-.slide-full-scope .fs-tip { position: absolute; left: var(--pad); top: calc(var(--u) * 10.5); width: calc(var(--u) * 36); }
+.slide-full-scope .fs-tip { position: absolute; left: var(--pad); top: calc(var(--u) * 10.5); width: max-content; white-space: nowrap; font-size: calc(var(--u) * 3.4); }
 .slide-full-scope .fs-revs { display: none; }
 .slide-full-scope .revs .rev span { color: var(--fg); }
 `;
@@ -64,7 +64,7 @@ export default {
     el.innerHTML = `
       <style>${CSS}</style>
       <div class="pin-tl label">Omfang</div>
-      <h2 class="tip fs-tip">Gi hele omfanget<br><em>før</em> du starter.</h2>
+      <h2 class="tip fs-tip">Definer hele scopet<br><em>før</em> du starter.</h2>
       <div class="revs fs-revs"></div>`;
     const svg = D.stage(el);
     const revs = ctx.$('.fs-revs');

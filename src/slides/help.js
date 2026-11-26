@@ -23,7 +23,7 @@ export const HELP = {
   'full-scope': [
     'Ett krav om gangen: hver løsning bygger på den forrige.',
     'Nye krav lappes på det som allerede står.',
-    'Lappene må bære hverandre.',
+    'AI-en vil forsøke å tilpasse seg det du allerede har.',
     'Til slutt kaller den noe som ikke henger sammen for ferdig.',
     'Alle krav i én prompt: kjernen designes for hele omfanget.',
     'Samme krav, én ren konstruksjon, og færre tokens.',
