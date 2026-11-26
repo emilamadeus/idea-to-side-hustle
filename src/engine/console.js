@@ -150,7 +150,11 @@ export function codeApp(parent, x, y, w, h, { sidebar = 250, size = 18, title = 
         const t = text(g, MX + pad, cursor + size, '', 'sp', { style: font(700, C.orange) });
         cursor += lh + 6; ensure(tl, at, cursor);
         const glyphs = ['✻', '✶', '✳', '✢'];
-        const fmt = (v) => { v = Math.round(v); const m = Math.floor(v / 60); return m ? `${m}m ${String(v % 60).padStart(2, '0')}s` : `${v}s`; };
+        const fmt = (v) => {
+          v = Math.round(v); const t = Math.floor(v / 3600), m = Math.floor((v % 3600) / 60);
+          if (t) return `${t}t ${String(m).padStart(2, '0')}m`;
+          return m ? `${m}m ${String(v % 60).padStart(2, '0')}s` : `${v}s`;
+        };
         const st = { v: from };
         const show = () => { t.textContent = `${glyphs[Math.floor(st.v / 3) % 4]} ${label} … ${fmt(st.v)}`; };
         show();

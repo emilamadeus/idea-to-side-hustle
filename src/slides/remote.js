@@ -1,33 +1,37 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
-import { figure, LOOK } from '../engine/characters.js';
-import { attempt, FILL } from '../engine/props.js';
+import { attempt, rr, wrap } from '../engine/props.js';
+import { codeApp } from '../engine/console.js';
 
 /*
-  Tip: let it notify you, and reach it from anywhere.
-  A production line that runs on your laptop; you are at a café.
-    0. Attempt 1, no notifications: the line reaches a gate, red lamp, and waits. You sit at
-       the café, unaware. Cups pile up, night falls outside, dust settles on the line.
-    1. Attempt 2, notifications: your phone buzzes on the café table. "Ja." The gate opens.
-    2. You close the laptop. The line lifts into a cloud and keeps going. "Ferdig."
+  Tip: let it notify you, and reach it from anywhere. Shown in the Claude Code app on the
+  laptop, and on your phone.
+    0. Attempt 1, no notifications: Kamera-API stops on a question. The phone stays dark;
+       the wait runs to 2 h 40 min.
+    1. Attempt 2 (new session), notifications: same question; the phone lights up, you open
+       it there and answer "Ja"; the laptop session carries on.
+    2. You close the laptop. The session runs on in the cloud; the phone shows it finishing.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
+    phone      x 126–394, y 248–768 (screen inset 8; status bar y +24–40; home bar y PH-18)
     attempt    x 560–960, y 120–154
-    café       x 80–540, y 250–770 (notification card y 250–410, you, table, cups, phone)
-    line       x 600–1480, belt y 600; gate x 1180; laptop x 610–720; cloud y 180–420
+    app        x 560–1480, y 170–760 (step 2: closed laptop y 712–742; cloud x 600–1420,
+               y 220–640, with the session inside x 760–1280, y 330–600)
 */
 
-const BELT = 600, GATE = 1180;
+const AX = 560, AY = 170, AW = 920, AH = 590;
+const PX = 130, PY = 248, PW = 260, PH = 520;
+const OK = '#8fe3a2', WARN = '#ffd23f', FG = '#f3e9da', MUTED = '#9a8a78';
 
 export default {
   id: 'remote',
   title: 'Varsler og fjernstyring',
   steps: 3,
   notes: [
-    'Uten varsler: linja venter på en beslutning. Du er på kafé.',
-    'Med varsler: telefonen surrer, du svarer ja, linja går.',
-    'Lukk laptopen. Den fortsetter i skyen.',
+    'Uten varsler: sessionen spør om noe og venter. Du er et annet sted. To timer og førti minutter.',
+    'Med varsler: telefonen lyser opp, du svarer ja derfra, sessionen går videre.',
+    'Lukk laptopen. Den fortsetter i skyen, og du ser den bli ferdig på telefonen.',
   ],
 
   create(ctx) {
@@ -38,67 +42,84 @@ export default {
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
-    let loops = [];
 
-    const reset = () => { loops.forEach((l) => l.kill()); loops = []; svg.innerHTML = ''; P = {}; };
+    const reset = () => { svg.innerHTML = ''; P = {}; };
+    const mono = (wt, sz, c) => ({ style: `font: ${wt} ${sz}px var(--font-mono); fill: ${c}` });
 
-    function line(g) {
-      const l = D.g(g);
-      const belt = D.g(l, { 'data-bg': '' });
-      D.el('rect', { x: 760, y: BELT, width: 700, height: 22, rx: 11, ...FILL('#4b4f57', 2.5) }, belt);
-      for (let x = 780; x < 1460; x += 40) D.el('circle', { cx: x, cy: BELT + 11, r: 6, style: 'fill: #8b8f96' }, belt);
-      D.p(belt, `M780 ${BELT + 22} V700 M1440 ${BELT + 22} V700`, 'ln');
-      // the build machine: work comes out of it
-      const mach = D.g(l, { 'data-bg': '' });
-      D.el('rect', { x: 850, y: 430, width: 190, height: 170, rx: 8, ...FILL('#3c4a5c', 2.5) }, mach);
-      D.el('rect', { x: 1000, y: 540, width: 46, height: 60, ...FILL('#2a2d33', 2) }, mach);
-      D.el('rect', { x: 872, y: 452, width: 110, height: 60, rx: 4, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 2 }, mach);
-      D.p(mach, 'M884 492 l14 -14 l14 10 l16 -22 l14 12 l18 -6', '', { style: 'fill: none; stroke: #8fe3a2', 'stroke-width': 3 });
-      [0, 1, 2].forEach((k) => D.el('circle', { cx: 880 + k * 26, cy: 560, r: 7, style: `fill: ${['#ff5a1f', '#ffd23f', '#8fe3a2'][k]}` }, mach));
-      // gate with a lamp
-      const gate = D.g(l, { 'data-bg': '' });
-      D.p(gate, `M${GATE - 50} ${BELT} V${BELT - 150} H${GATE + 50} V${BELT}`, '', { style: 'fill: none; stroke: var(--fg)', 'stroke-width': 5 });
-      const bar = D.el('rect', { x: GATE - 6, y: BELT - 140, width: 12, height: 140, style: 'fill: #ffd23f; stroke: #1a120c', 'stroke-width': 2 }, gate);
-      const lamp = D.el('circle', { cx: GATE, cy: BELT - 175, r: 18, style: 'fill: #ff3b2f; stroke: #1a120c', 'stroke-width': 2.5 }, gate);
-      // laptop driving it
-      const lap = D.g(l, { 'data-bg': '' });
-      D.el('rect', { x: 610, y: BELT - 6, width: 130, height: 14, rx: 3, ...FILL('#8b8f96', 2) }, lap);
-      const lid = D.el('rect', { x: 618, y: BELT - 96, width: 114, height: 90, rx: 6, ...FILL('#2a2d33', 2.5) }, lap);
-      D.p(lap, `M740 ${BELT} Q 752 ${BELT + 40} 770 ${BELT + 12}`, '', { style: 'fill: none; stroke: var(--fg)', 'stroke-width': 3 });
-      return { l, bar, lamp, lid, lap };
+    // your phone: lock screen, notifications, and the session opened remotely
+    function phone() {
+      const g = D.g(svg, { 'data-unit': '' });
+      // side buttons, behind the body
+      [[PX - 4, PY + 104, 30], [PX - 4, PY + 146, 46], [PX - 4, PY + 200, 46]].forEach(([x, y, h]) => D.el('rect', { x, y, width: 6, height: h, rx: 2, style: 'fill: #4b4f57' }, g));
+      D.el('rect', { x: PX + PW - 2, y: PY + 160, width: 6, height: 74, rx: 2, style: 'fill: #4b4f57' }, g);
+      D.el('rect', { x: PX, y: PY, width: PW, height: PH, rx: 40, style: 'fill: #0a0705; stroke: #8b8f96', 'stroke-width': 3, 'data-body': '' }, g);
+      // screen with a warm wallpaper
+      const gid = `wp-${Math.random().toString(36).slice(2, 7)}`;
+      const defs = D.el('defs', {}, g);
+      const lg = D.el('linearGradient', { id: gid, x1: 0, y1: 0, x2: 0.4, y2: 1 }, defs);
+      D.el('stop', { offset: '0%', 'stop-color': '#3a2416' }, lg);
+      D.el('stop', { offset: '100%', 'stop-color': '#120c09' }, lg);
+      D.el('rect', { x: PX + 8, y: PY + 8, width: PW - 16, height: PH - 16, rx: 33, style: `fill: url(#${gid})` }, g);
+      const appBg = D.el('rect', { x: PX + 8, y: PY + 8, width: PW - 16, height: PH - 16, rx: 33, style: 'fill: #1c140e', opacity: 0 }, g);
+      // dynamic island
+      D.el('rect', { x: PX + PW / 2 - 42, y: PY + 18, width: 84, height: 24, rx: 12, style: 'fill: #000' }, g);
+      // status bar: time (when unlocked), signal, wifi, battery
+      const sbTime = D.text(g, PX + 40, PY + 36, '14:05', 'sbt', { style: 'font: 700 14px var(--font-display); fill: #f3e9da', opacity: 0 });
+      const ix = PX + PW - 84;
+      [0, 1, 2, 3].forEach((k) => D.el('rect', { x: ix + k * 5, y: PY + 36 - (4 + k * 2.5), width: 3.5, height: 4 + k * 2.5, rx: 1, style: 'fill: #f3e9da' }, g));
+      D.p(g, `M${ix + 26} ${PY + 30} q7 -6 14 0 M${ix + 29} ${PY + 33} q4 -3 8 0`, '', { style: 'fill: none; stroke: #f3e9da', 'stroke-width': 2, 'stroke-linecap': 'round' });
+      D.el('circle', { cx: ix + 33, cy: PY + 35.5, r: 1.6, style: 'fill: #f3e9da' }, g);
+      D.el('rect', { x: ix + 46, y: PY + 27, width: 22, height: 11, rx: 3, style: 'fill: none; stroke: #f3e9da', 'stroke-width': 1.5 }, g);
+      D.el('rect', { x: ix + 48, y: PY + 29, width: 14, height: 7, rx: 1.5, style: 'fill: #f3e9da' }, g);
+      // lock screen
+      const lock = D.g(g);
+      D.el('rect', { x: PX + PW / 2 - 7, y: PY + 62, width: 14, height: 11, rx: 2, style: 'fill: #f3e9da' }, lock);
+      D.p(lock, `M${PX + PW / 2 - 4.5} ${PY + 62} v-4 a4.5 4.5 0 0 1 9 0 v4`, '', { style: 'fill: none; stroke: #f3e9da', 'stroke-width': 2 });
+      D.text(lock, PX + PW / 2, PY + 98, 'tirsdag 10. desember', 'pd', { 'text-anchor': 'middle', style: 'font: 600 15px var(--font-display); fill: #e6d8c6' });
+      const time = D.text(lock, PX + PW / 2, PY + 164, '14:05', 'pt', { 'text-anchor': 'middle', style: 'font: 800 66px var(--font-display); fill: #f3e9da' });
+      [[PX + 46, 'M-5 -8 h10 l-2 6 v10 h-6 v-10 Z'], [PX + PW - 46, 'M-9 -5 h4 l2 -3 h6 l2 3 h4 v12 h-18 Z']].forEach(([cx, d]) => {
+        D.el('circle', { cx, cy: PY + PH - 62, r: 21, style: 'fill: #2c2119' }, lock);
+        D.p(lock, d, '', { transform: `translate(${cx} ${PY + PH - 62})`, style: 'fill: none; stroke: #f3e9da', 'stroke-width': 1.8, 'stroke-linejoin': 'round' });
+      });
+      // the session, opened on the phone
+      const app = D.g(g, { opacity: 0 });
+      D.text(app, PX + 26, PY + 70, '‹ Sessions', 'pb', { style: 'font: 600 15px var(--font-display); fill: var(--accent)' });
+      D.text(app, PX + 26, PY + 100, 'Kamera-API', 'ph', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
+      D.p(app, `M${PX + 20} ${PY + 114} H${PX + PW - 20}`, '', { style: 'fill: none; stroke: #33271d', 'stroke-width': 2 });
+      D.p(app, rr(PX + 18, PY + PH - 92, PW - 36, 38, [19, 19, 19, 19]), '', { style: 'fill: #241b15; stroke: #4a3c30', 'stroke-width': 2 });
+      D.text(app, PX + 36, PY + PH - 67, 'Svar til Claude …', 'pc', mono(400, 14, MUTED));
+      // home indicator
+      D.el('rect', { x: PX + PW / 2 - 52, y: PY + PH - 20, width: 104, height: 5, rx: 2.5, style: 'fill: #f3e9da' }, g);
+      return { g, lock, time, app, appBg, sbTime };
     }
-    const box = (g) => {
-      const b = D.g(g, { 'data-bg': '' });
-      D.el('rect', { x: -26, y: -46, width: 52, height: 46, rx: 3, ...FILL('#c98f5a', 2) }, b);
-      D.p(b, 'M-26 -30 H26 M0 -46 V-30', '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2 });
-      return b;
-    };
-    function cafe(g) {
-      const c = D.g(g);
-      const bg = D.g(c, { 'data-bg': '' });
-      // café window behind you
-      const glass = D.el('rect', { x: 96, y: 300, width: 440, height: 250, rx: 6, style: 'fill: #5d7d9a; stroke: #1a120c', 'stroke-width': 3 }, bg);
-      const moon = D.el('circle', { cx: 470, cy: 350, r: 18, style: 'fill: #fff3e3', opacity: 0 }, bg);
-      D.p(bg, 'M316 300 V550 M96 425 H536', '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 3 });
-      D.p(bg, 'M110 300 h412 l-22 -36 h-368 Z', '', FILL('#c4562a', 2.5));
-      D.p(bg, 'M140 300 l-6 -36 M190 300 l-4 -36 M240 300 l-2 -36 M290 300 v-36 M340 300 v-36 M390 300 l2 -36 M440 300 l4 -36 M490 300 l6 -36', '', { style: 'fill: none; stroke: #fff3e3', 'stroke-width': 3 });
-      D.el('rect', { x: 160, y: 600, width: 330, height: 16, rx: 4, ...FILL('#6b4a30', 2.5) }, bg);
-      D.p(bg, 'M325 616 V760 M265 760 H385', 'ln');
-      const you = figure(c, { x: 220, y: 508, s: 0.9, pose: 'sit', arms: 'table', ...LOOK.me, mouth: 'smile' });
-      // a cup
-      const cup = (x) => {
-        const k = D.g(c, { 'data-bg': '' });
-        D.p(k, `M${x} 600 l4 -34 h32 l4 34 Z`, '', FILL('#fff3e3', 2));
-        D.p(k, `M${x + 38} 576 q14 2 2 16`, '', { style: 'fill: none; stroke: var(--fg)', 'stroke-width': 2.5 });
-        return k;
-      };
-      const phone = D.g(c, { 'data-bg': '' });
-      D.el('rect', { x: 400, y: 588, width: 62, height: 12, rx: 3, ...FILL('#1a120c', 2) }, phone);
-      const screen = D.el('rect', { x: 404, y: 590, width: 54, height: 8, rx: 2, style: 'fill: #2a2d33' }, phone);
-      return { c, you, cup, phone, screen, glass, moon };
+    // a notification banner with the app icon
+    function notif(parent, y, title, body) {
+      const n = D.g(parent);
+      D.p(n, rr(PX + 16, y, PW - 32, 118, [18, 18, 18, 18]), '', { style: 'fill: #3a2c22; stroke: #5a4636', 'stroke-width': 2 });
+      D.p(n, rr(PX + 28, y + 12, 26, 26, [7, 7, 7, 7]), '', { style: 'fill: #d97757' });
+      D.text(n, PX + 41, y + 31, '✻', 'ni', { 'text-anchor': 'middle', style: 'font: 700 17px var(--font-mono); fill: #fff3e3' });
+      D.text(n, PX + 62, y + 30, 'Claude', 'nl', { style: 'font: 700 14px var(--font-display); fill: #e6d8c6' });
+      D.text(n, PX + PW - 30, y + 30, 'nå', 'nn', { 'text-anchor': 'end', style: 'font: 400 13px var(--font-display); fill: #b9a88f' });
+      D.text(n, PX + 28, y + 62, title, 'nt', { style: 'font: 700 16px var(--font-display); fill: #f3e9da' });
+      wrap(body, 22).forEach((l, i) => D.text(n, PX + 28, y + 84 + i * 20, l, 'nb', { style: 'font: 400 15px var(--font-display); fill: #e6d8c6' }));
+      return n;
+    }
+    // the app on the laptop, with Kamera-API stopping on a question
+    function laptop(tl, at) {
+      const app = codeApp(svg, AX, AY, AW, AH, { size: 18, sidebar: 200 });
+      tl.fromTo(app.root, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, at);
+      app.session('varsler', 'Varsler', 'done');
+      const k = app.session('kamera', 'Kamera-API', 'work');
+      app.show(tl, 'kamera', at);
+      k.user(tl, 'Lag kamera-API.', at + 0.4);
+      k.tool(tl, 'Bash', 'npm run db:migrate', 'Endrer tabellen cameras', at + 0.9);
+      const ask = k.ask(tl, 'Kjøre migreringen mot prod?', ['Ja', 'Nei'], at + 1.5);
+      k.state(tl, 'wait', at + 1.5);
+      k.ctx(tl, 140, at + 0.4, 1.0);
+      return { app, k, ask };
     }
 
-    const play = (i, instant) => {
+    const play = (i) => {
       const tl = gsap.timeline();
       if (i === 0) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
@@ -106,99 +127,86 @@ export default {
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.att = attempt(svg, 560, 120);
         P.att.show(tl, 'FORSØK 1 · UTEN VARSLER', 0.3);
-        P.L = line(svg);
-        P.C = cafe(svg);
-        tl.fromTo([P.L.l, P.C.c], { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.3);
-        P.C.cup(330);
-        // boxes roll to the gate and stop
-        P.boxes = [0, 1, 2].map((k) => {
-          const b = box(svg);
-          gsap.set(b, { x: 1050, y: BELT });
-          tl.to(b, { x: GATE - 80 - k * 60, duration: 1.4 + k * 0.4, ease: 'power1.out' }, 0.8 + k * 0.5);
-          return b;
-        });
-        const sign = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: GATE - 130, y: BELT - 262, width: 260, height: 40, rx: 6, style: 'fill: #1a120c; stroke: #ff3b2f', 'stroke-width': 2.5 }, sign);
-        D.text(sign, GATE, BELT - 236, 'VENTER PÅ BESLUTNING', 'ws', { 'text-anchor': 'middle', style: 'font: 700 16px var(--font-mono); fill: #ff3b2f' });
-        tl.fromTo(sign, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 2.6);
-        P.sign = sign;
-        // the café afternoon: more coffee, dust on the line, chairs up
-        P.cups = [];
-        [270, 220, 170].forEach((x, k) => {
-          const c = P.C.cup(x);
-          P.cups.push(c);
-          tl.fromTo(c, { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.3 }, 3.4 + k * 0.6);
-        });
-        const dust = D.g(svg, { 'data-bg': '' });
-        for (let k = 0; k < 14; k++) D.el('circle', { cx: 1000 + (k * 53) % 180, cy: BELT - 50 - (k * 17) % 10, r: 3, style: 'fill: #9b8f83' }, dust);
-        D.p(dust, `M${GATE - 50} ${BELT - 150} q 30 30 60 0 M${GATE - 40} ${BELT - 150} l 20 22 M${GATE - 50} ${BELT - 128} l 30 -4`, '', { style: 'fill: none; stroke: #cfc3b2', 'stroke-width': 2 });
-        tl.fromTo(dust, { opacity: 0 }, { opacity: 0.9, duration: 1.2 }, 4.0);
-        // day turns to night outside the café window
-        tl.to(P.C.glass, { attr: { style: 'fill: #121a2a; stroke: #1a120c' }, duration: 2.4, ease: 'none' }, 3.4);
-        tl.to(P.C.moon, { opacity: 1, duration: 0.6 }, 5.4);
-        P.C.you.expr(tl, { mouth: 'smile', eyes: 'closed' }, 5.0);
-        P.extra = [dust, ...P.cups];
+        P.ph = phone();
+        tl.fromTo(P.ph.g, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
+        P.L = laptop(tl, 0.3);
+        // nothing reaches you; the wait goes on
+        const w = P.L.k.spin(tl, 'Venter på svar', 2.2, { from: 0, to: 2 * 3600 + 40 * 60, dur: 3.6 });
+        const clock = { m: 14 * 60 + 5 };
+        tl.to(clock, { m: 16 * 60 + 45, duration: 3.6, ease: 'none', onUpdate: () => { P.ph.time.textContent = `${Math.floor(clock.m / 60)}:${String(Math.floor(clock.m % 60)).padStart(2, '0')}`; } }, 2.2);
+        P.wait = w;
       }
 
       if (i === 1) {
-        // attempt 2: the phone buzzes; you answer; the gate opens
-        P.att.show(tl, 'FORSØK 2 · MED VARSLER', 0);
-        tl.to(P.extra, { opacity: 0, duration: 0.4 }, 0);
-        tl.to(P.C.glass, { attr: { style: 'fill: #5d7d9a; stroke: #1a120c' }, duration: 0.4 }, 0);
-        tl.to(P.C.moon, { opacity: 0, duration: 0.3 }, 0);
-        P.C.you.expr(tl, { eyes: 'open', mouth: 'neutral' }, 0.4);
-        tl.to(P.C.screen, { attr: { style: 'fill: #ffd23f' }, duration: 0.1 }, 0.8);
-        tl.to(P.C.phone, { x: 3, duration: 0.05, repeat: 9, yoyo: true }, 0.8);
-        // the notification, enlarged
-        const note = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: 100, y: 250, width: 420, height: 160, rx: 22, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3 }, note);
-        D.text(note, 126, 290, 'CLAUDE', 'nl', { style: 'font: 700 14px var(--font-mono); letter-spacing: .14em; fill: var(--accent)' });
-        D.text(note, 126, 324, 'Trenger beslutning:', 'n1', { style: 'font: 600 21px var(--font-display); fill: var(--fg)' });
-        D.text(note, 126, 352, 'publisere til test nå?', 'n2', { style: 'font: 600 21px var(--font-display); fill: var(--fg)' });
-        const yes = D.g(note);
-        D.el('rect', { x: 400, y: 360, width: 96, height: 36, rx: 18, style: 'fill: #8fe3a2' }, yes);
-        D.text(yes, 448, 384, 'Ja', 'ny', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); fill: #1a120c' });
-        const zoom = D.p(svg, 'M432 588 L410 410', 'dash', { opacity: 0.6, 'data-bg': '' });
-        tl.fromTo([note, zoom], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.0);
-        P.C.you.expr(tl, { eyes: 'down' }, 1.0);
-        tl.to(yes, { scale: 0.9, transformOrigin: '50% 50%', duration: 0.1, yoyo: true, repeat: 1 }, 2.0);
-        tl.to([note, zoom], { opacity: 0, duration: 0.3 }, 2.6);
-        tl.to(P.sign, { opacity: 0, duration: 0.3 }, 2.4);
-        tl.to(P.L.lamp, { attr: { style: 'fill: #8fe3a2; stroke: #1a120c' }, duration: 0.2 }, 2.3);
-        tl.to(P.L.bar, { scaleY: 0, transformOrigin: '50% 0%', duration: 0.4 }, 2.4);
-        P.boxes.forEach((b, k) => tl.to(b, { x: 1500, duration: 1.4, ease: 'power1.in' }, 2.6 + k * 0.25));
-        tl.to(P.boxes, { opacity: 0, duration: 0.2 }, 4.2);
-        P.C.you.expr(tl, { eyes: 'open', mouth: 'smile' }, 2.6);
-        ctx.focus(tl, [P.C.c, note, zoom, P.L.l, ...P.boxes, P.att.g], 0.4);
+        // attempt 2, a new session: the phone lights up, you answer from there
+        P.att.show(tl, 'FORSØK 2 · NY SESSION, MED VARSLER', 0);
+        tl.to(P.L.app.root, { opacity: 0, duration: 0.4 }, 0);
+        tl.call(() => { P.ph.time.textContent = '14:05'; }, null, 0.2);
+        P.L = laptop(tl, 0.5);
+        const n = notif(P.ph.g, PY + 214, 'Kamera-API venter på deg', 'Kjøre migreringen mot prod?');
+        tl.fromTo(n, { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.35, ease: 'back.out(2)' }, 2.3);
+        tl.to(P.ph.g, { x: 4, duration: 0.05, repeat: 7, yoyo: true }, 2.4);
+        // open it on the phone: the same session
+        const a = P.ph.app;
+        D.p(a, rr(PX + 18, PY + 132, PW - 36, 116, [14, 14, 14, 14]), '', { style: `fill: #2a2412; stroke: ${WARN}`, 'stroke-width': 2.5 });
+        ['Kjøre migreringen', 'mot prod?'].forEach((l, k) => D.text(a, PX + 34, PY + 162 + k * 24, l, 'pq', mono(700, 16, WARN)));
+        const yes = D.g(a);
+        D.p(yes, rr(PX + 34, PY + 198, 80, 36, [18, 18, 18, 18]), '', { style: 'fill: var(--accent)' });
+        D.text(yes, PX + 74, PY + 222, 'Ja', 'py', { 'text-anchor': 'middle', style: 'font: 700 16px var(--font-display); fill: #1a120c' });
+        D.p(a, rr(PX + 124, PY + 198, 80, 36, [18, 18, 18, 18]), '', { style: 'fill: #3a2f18; stroke: #6b5a2a', 'stroke-width': 2 });
+        D.text(a, PX + 164, PY + 222, 'Nei', 'pn', { 'text-anchor': 'middle', style: 'font: 700 16px var(--font-display); fill: #f3e9da' });
+        tl.to([P.ph.lock, n], { opacity: 0, duration: 0.3 }, 3.2);
+        tl.to([a, P.ph.appBg, P.ph.sbTime], { opacity: 1, duration: 0.3 }, 3.4);
+        tl.to(yes, { scale: 1.12, transformOrigin: '50% 50%', duration: 0.15, yoyo: true, repeat: 1 }, 4.0);
+        const you = D.g(a);
+        D.p(you, rr(PX + PW - 18 - 64, PY + 262, 64, 34, [16, 16, 4, 16]), '', { style: 'fill: #3a2d22' });
+        D.text(you, PX + PW - 50, PY + 285, 'Ja', 'pu', { 'text-anchor': 'middle', style: 'font: 400 16px var(--font-display); fill: #f3e9da' });
+        tl.fromTo(you, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.3);
+        // the laptop session gets the answer and carries on
+        P.L.k.user(tl, 'Ja (fra telefonen)', 4.3);
+        P.L.k.state(tl, 'work', 4.4);
+        P.run = P.L.k.spin(tl, 'Migrerer', 4.6, { from: 0, to: 30, dur: 1.0 });
+        P.run.end(tl, 5.7, '✓ Migrert', 'ok');
+        P.L.k.tool(tl, 'Bash', 'npm test', 'Kjører …', 6.0);
+        P.n = n;
       }
 
       if (i === 2) {
-        // close the laptop: the line goes to the cloud and keeps going
-        tl.to(P.L.lid, { scaleY: 0.08, transformOrigin: '50% 100%', duration: 0.3, ease: 'power2.in' }, 0.2);
-        const cloud = D.g(svg, { 'data-bg': '' });
-        D.p(cloud, 'M760 400 C700 400 700 320 770 320 C770 250 870 240 900 290 C930 200 1060 210 1070 290 C1120 230 1260 250 1240 320 C1340 320 1340 400 1260 400 Z', '', { style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 3 });
-        tl.fromTo(cloud, { opacity: 0, scale: 0.6, transformOrigin: '50% 100%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.6)' }, 0.6);
-        // the line leaves the floor and runs up there
-        const moving = [P.L.l.children[0], P.L.l.children[1], P.L.l.children[2]]; // belt, machine and gate go up together
-        tl.to(moving, { y: -40, opacity: 0, duration: 0.6, ease: 'power2.in' }, 0.9);
-        const up = D.g(svg, { 'data-bg': '' });
-        D.el('rect', { x: 820, y: 372, width: 400, height: 14, rx: 7, ...FILL('#4b4f57', 2) }, up);
-        for (let x = 834; x < 1210; x += 28) D.el('circle', { cx: x, cy: 379, r: 4, style: 'fill: #8b8f96' }, up);
-        tl.fromTo(up, { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' }, 1.3);
-        const bs = [0, 1, 2, 3].map(() => { const b = box(svg); gsap.set(b, { x: 850, y: 372, scale: 0.62, opacity: 0 }); return b; });
-        bs.forEach((b, k) => {
-          tl.to(b, { opacity: 1, duration: 0.1 }, 2.0 + k * 0.5);
-          tl.to(b, { x: 1190, duration: 1.4, ease: 'none' }, 2.0 + k * 0.5);
-          tl.to(b, { opacity: 0, duration: 0.2 }, 3.3 + k * 0.5);
-        });
-        tl.to(P.C.screen, { attr: { style: 'fill: #8fe3a2' }, duration: 0.1 }, 4.4);
-        tl.to(P.C.phone, { x: 3, duration: 0.05, repeat: 7, yoyo: true }, 4.4);
-        const done = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: 100, y: 250, width: 420, height: 100, rx: 22, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3 }, done);
-        D.text(done, 126, 290, 'CLAUDE · SKY', 'nl', { style: 'font: 700 14px var(--font-mono); letter-spacing: .14em; fill: var(--accent)' });
-        D.text(done, 126, 326, 'Ferdig. Alt publisert til test.', 'n1', { style: 'font: 600 21px var(--font-display); fill: var(--fg)' });
-        tl.fromTo(done, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3 }, 4.6);
-        ctx.focus(tl, [cloud, up, ...bs, P.L.lap, P.C.phone, done], 0.2);
+        // close the laptop: the session moves to the cloud and finishes there
+        const r = P.L.app.root;
+        tl.to(r, { scaleY: 0.03, transformOrigin: '50% 100%', duration: 0.6, ease: 'power2.in' }, 0.3);
+        tl.to(r, { opacity: 0, duration: 0.3 }, 0.9);
+        // the closed laptop, and the session carrying on in the cloud
+        const lap = D.g(svg, { 'data-bg': '' });
+        D.p(lap, rr(860, 712, 320, 14, [4, 4, 2, 2]), '', { style: 'fill: #4b4f57; stroke: #1a120c', 'stroke-width': 2.5 });
+        D.p(lap, 'M840 726 H1200 L1186 742 H854 Z', '', { style: 'fill: #3a3d44; stroke: #1a120c', 'stroke-width': 2.5 });
+        tl.fromTo(lap, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.9);
+        const sky = D.g(svg, { 'data-bg': '' });
+        D.p(sky, 'M690 630 C610 630 600 520 680 500 C650 400 740 330 830 362 C850 250 1010 220 1060 300 C1110 220 1290 250 1290 350 C1380 350 1420 470 1350 515 C1420 560 1380 640 1300 630 Z', '', { style: 'fill: #121a20; stroke: #6fa8c8', 'stroke-width': 3 });
+        tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.1);
+        const C = codeApp(svg, 760, 330, 520, 270, { size: 16, sidebar: 150, title: 'Claude Code · sky' });
+        const ck = C.session('kamera', 'Kamera-API', 'work');
+        ck.ctx(tl, 160, 1.4, 0.1);
+        C.show(tl, 'kamera', 1.4);
+        tl.fromTo(C.root, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.4);
+        const cs = ck.spin(tl, 'npm test', 1.6, { from: 0, to: 9 * 60, dur: 1.6 });
+        cs.end(tl, 3.3, '✓ Ferdig. 41 bestått.', 'ok');
+        ck.state(tl, 'done', 3.3);
+        const a = P.ph.app;
+        tl.to([...a.children].slice(5), { opacity: 0.3, duration: 0.3 }, 1.0);
+        const cloud = D.g(a);
+        D.p(cloud, rr(PX + 18, PY + 310, 110, 28, [14, 14, 14, 14]), '', { style: 'fill: #22303a; stroke: #6fa8c8', 'stroke-width': 2 });
+        D.text(cloud, PX + 73, PY + 329, 'i skyen', 'pc', { 'text-anchor': 'middle', ...mono(700, 14, '#9fd3ff') });
+        tl.fromTo(cloud, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.3);
+        const lines = D.g(a);
+        const sp = D.text(lines, PX + 26, PY + 370, '', 'ps', mono(700, 16, '#ff7a2f'));
+        const st = { v: 0 };
+        tl.fromTo(lines, { opacity: 0 }, { opacity: 1, duration: 0.2 }, 1.6);
+        tl.fromTo(st, { v: 0 }, { v: 9 * 60, duration: 1.6, ease: 'none', onUpdate: () => { sp.textContent = `✻ npm test … ${Math.floor(st.v / 60)}m`; } }, 1.6);
+        tl.call(() => { sp.textContent = '✓ Ferdig'; sp.setAttribute('style', `font: 700 16px var(--font-mono); fill: ${OK}`); }, null, 3.3);
+        const done = D.text(lines, PX + 26, PY + 396, '41 tester bestått.', 'pf', mono(400, 15, '#cfc3b2'));
+        tl.fromTo(done, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.3);
+        tl.to(P.ph.g, { x: 4, duration: 0.05, repeat: 7, yoyo: true }, 3.4);
       }
       return tl;
     };

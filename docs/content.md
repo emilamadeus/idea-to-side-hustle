@@ -119,10 +119,10 @@ Point: a scheduled check every ~10 min looks at all running jobs: RAM lock, agen
 ## Remote sessions and notifications [given]
 - Built: src/slides/remote.js.
 Point: a big win. The AI always sends a notification when it is done or needs a decision, so work never stops waiting for you. Reach sessions from anywhere (phone); use cloud sessions when possible, or when the desktop/laptop isn't available.
-- Storyboard [proposed]: a production line.
-  1. Without: the line reaches a gate with a red lamp "venter på beslutning". You are at a café. The clock runs; dust settles on the line.
-  2. With: your phone buzzes on the café table. You tap "Ja". The gate opens, the line moves again.
-  3. The laptop lid slams shut. The whole line lifts into a drawn cloud and keeps running up there. The phone shows it finishing.
+- Storyboard [agreed]: the Claude Code app on the laptop, and your phone (lock screen, notification banner, the session opened remotely).
+  1. Attempt 1, no notifications: Kamera-API stops on "Kjøre migreringen mot prod?". The phone stays dark; the clock runs 14:05 → 16:45, "Venter på svar … 2t 40m".
+  2. Attempt 2, new session, notifications: the same question; a Claude banner lights up the phone. You open the session there and tap "Ja"; the laptop session gets "Ja (fra telefonen)", migrates, runs the tests.
+  3. You close the laptop. The session runs on in the cloud ("Claude Code · sky"); the phone shows "i skyen", then "✓ Ferdig, 41 tester bestått."
 
 ## Always working (humor) [given]
 Point: being this productive with AI means you are always working. Notifications arrive at odd times and you start the next task.
