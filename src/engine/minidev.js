@@ -202,24 +202,34 @@ export function miniDev(parent, { idPrefix = 'md' } = {}) {
     tw(tl, head, { r: lean * 0.6 + 14 }, 0.9, at + 0.6, 'power2.in');
     return at + 1.5;
   }
-  // thought cloud: three rising dots, a bumpy cloud with a soft shadow, a gentle float
+  // thought cloud: a comic-style scalloped cloud (one outline around overlapping lobes), a soft
+  // shadow, and three dots that shrink toward his head. It sits up and to the right of him.
   function think(tl, str, at, hold = 0) {
     const t = D.g(g, { 'data-overlap-ok': '' });
-    const w = Math.max(90, str.length * 13.4 + 44), x0 = 26, y0 = -86, h = 42; // readable on the TV; fits the gap above a chart row
-    const dots = [[10, -62, 2.4], [15, -68, 3.4], [21, -73, 4.4]].map(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #fff3e3' }, t));
+    const h = 46, w = Math.max(110, str.length * 12.6 + h), x0 = 30, y0 = -102;
+    const dots = [[13, -64, 2.2], [19, -71, 3.2], [26, -78, 4.2]].map(([cx, cy, r]) => D.el('circle', { cx, cy, r, ...S('#fff3e3', 2) }, t));
     const cloud = D.g(t);
-    const blob = (dx, dy, fill, op = 1) => {
-      const b = D.g(cloud, { opacity: op });
-      D.el('rect', { x: x0 + dx, y: y0 + dy, width: w, height: h, rx: h / 2, style: `fill: ${fill}` }, b);
-      [0.2, 0.48, 0.78].forEach((f, k) => D.el('circle', { cx: x0 + dx + w * f, cy: y0 + dy + h - 2, r: [7, 9, 7][k], style: `fill: ${fill}` }, b)); // bumps underneath
+    // the lobes: a big one at each end, scallops along the top and bottom, a body in between
+    const lobes = [];
+    const n = Math.max(2, Math.round((w - h) / (h * 0.62)));
+    for (let k = 0; k <= n; k++) {
+      const cx = x0 + h * 0.5 + ((w - h) * k) / n;
+      lobes.push([cx, y0 + h * 0.3, h * 0.34]);
+      if (k < n) lobes.push([cx + (w - h) / n / 2, y0 + h * 0.74, h * 0.3]);
+    }
+    lobes.push([x0 + h * 0.44, y0 + h * 0.52, h * 0.44], [x0 + w - h * 0.44, y0 + h * 0.52, h * 0.44]);
+    const layer = (fill, stroke, sw, dx = 0, dy = 0, op = 1) => {
+      const l = D.g(cloud, { opacity: op });
+      lobes.forEach(([cx, cy, r]) => D.el('circle', { cx: cx + dx, cy: cy + dy, r, style: `fill: ${fill}; stroke: ${stroke}; stroke-width: ${sw}` }, l));
+      D.el('rect', { x: x0 + h * 0.4 + dx, y: y0 + h * 0.24 + dy, width: w - h * 0.8, height: h * 0.54, style: `fill: ${fill}; stroke: none` }, l);
     };
-    blob(2, 3, '#000', 0.3);
-    blob(0, 0, '#fff3e3');
-    D.text(cloud, x0 + w / 2, y0 + 29, str, 'th', { 'text-anchor': 'middle', style: `font: 700 24px var(--font-display); fill: ${INK}` });
-    gsap.set(t, { opacity: 1 });
+    layer('#000', '#000', 5, 2, 4, 0.28);      // shadow
+    layer('#c9ad92', '#c9ad92', 5);             // outline: drawn wide …
+    layer('#fff3e3', 'none', 0);                // … and covered, so only the outer edge shows
+    D.text(cloud, x0 + w / 2, y0 + h / 2 + 8, str, 'th', { 'text-anchor': 'middle', style: `font: 700 24px var(--font-display); fill: ${INK}` });
     tl.fromTo(dots, { opacity: 0, scale: 0.2, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.18, stagger: 0.09, ease: 'back.out(3)' }, at);
-    tl.fromTo(cloud, { opacity: 0, scale: 0.4, transformOrigin: '10% 90%' }, { opacity: 1, scale: 1, duration: 0.55, ease: 'elastic.out(1, 0.6)' }, at + 0.25);
-    tl.to(cloud, { y: -1.6, duration: 1.2, yoyo: true, repeat: 3, ease: 'sine.inOut' }, at + 0.8);
+    tl.fromTo(cloud, { opacity: 0, scale: 0.5, transformOrigin: '8% 80%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'elastic.out(1, 0.65)' }, at + 0.25);
+    tl.to(cloud, { y: -1.6, duration: 1.2, yoyo: true, repeat: 3, ease: 'sine.inOut' }, at + 0.85);
     if (hold) tl.to(t, { opacity: 0, duration: 0.35 }, at + hold);
     return t;
   }

@@ -21,10 +21,10 @@ import { miniDev } from '../engine/minidev.js';
 
   Layout zones (svg units, 1600×900 frame):
     tip            y  95–235  (left)
-    month header   y 285–305
+    month header   y 252–272 (room above the top row for a thought)
     rows           game 370 · asset 470 · texture 570 · picker 652 (bars 44 tall, x 460–1516)
     developer      on a row: feet at row + 22, 66 tall; desk and laptop to his right (+14…+50)
-    thoughts       right of his head, over the empty part of his row (deliberate overlap)
+    thoughts       up and right of his head, in the gap above his row
     deadline label y 672 (below the chart), multiplier y 708
     counters       x 700–1130, y 700–800
     title block    x ≥ 1160, y ≥ 790 (engine)
@@ -54,7 +54,6 @@ const CSS = `
 .slide-side-quest .zone { position: absolute; left: ${U(700)}; top: ${U(700)}; width: ${U(430)}; opacity: 0; }
 .slide-side-quest .zone .counter { font-size: calc(var(--u) * 4.2); }
 .slide-side-quest .zone .ask { font: var(--display-weight) calc(var(--u) * 2.6) / 1.05 var(--font-display); letter-spacing: var(--display-tracking); color: var(--fg); }
-.slide-side-quest canvas.avalanche { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 `;
 
 export default {
@@ -90,7 +89,6 @@ export default {
     let P = {};
     let loops = [];
     let loops2 = []; // breathing: runs across steps
-    let canvas = null;
     let zoomer = null;
 
     // ---------- building blocks ----------
@@ -205,51 +203,32 @@ export default {
       return at + 0.55;
     }
 
-    // ---------- avalanche of texture swatches ----------
-    function avalanche() {
-      canvas = document.createElement('canvas');
-      canvas.className = 'avalanche';
-      el.appendChild(canvas);
-      const g2 = canvas.getContext('2d');
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      canvas.width = canvas.clientWidth * dpr; canvas.height = canvas.clientHeight * dpr;
-      const W = canvas.width, H = canvas.height, s = W / 1600;
-      const COLORS = ['#ff5a1f', '#ffd23f', '#ff6f9c', '#7fd0ff', '#c9ad92', '#8fe3a2', '#b98cff', '#fff3e3'];
-      const COLW = 16 * s;
-      const heights = new Float32Array(Math.ceil(W / COLW) + 1);
-      const items = [];
-      let spawned = 0, last = performance.now();
-      const mine = canvas;
-      const step = () => {
-        if (canvas !== mine) return;
-        const now = performance.now();
-        const dt = Math.min(0.05, (now - last) / 1000); last = now;
-        const want = Math.min(900, spawned + Math.ceil(dt * 420));
-        while (spawned < want) {
-          items.push({ x: (520 + Math.random() * 1060) * s, y: -40 * s - Math.random() * 300 * s, vy: 0, size: (16 + Math.random() * 16) * s, r: Math.random() * 6, vr: (Math.random() - 0.5) * 6, c: COLORS[(Math.random() * COLORS.length) | 0], rest: false });
-          spawned++;
+    // ---------- overshoot: a bar filled with small tiles, past a "trengte" mark ----------
+    const MATERIALS = ['#8a6040', '#a5784e', '#7d7a73', '#9a958c', '#6f7b85', '#a3adb5', '#8c4a3c', '#5e6b4a', '#9a4a2e', '#b59a6e'];
+    const PROPS = ['#c9935a', '#a5784e', '#8a6040', '#d9b27a', '#7a5233', '#b98a5a'];
+    // inside: the bar group to live in, under its % label (so the label stays on top)
+    function mosaic(tl, x, w, row, palette, at, dur, inside = null) {
+      const g = inside ? D.el('g', {}, null) : D.g(svg, { 'data-unit': '' });
+      if (inside) inside.insertBefore(g, inside.querySelector('.bar-pct'));
+      const cols = Math.floor(w / 11), rows = 4, tw = (w - 2) / cols, th = (BH - 2) / rows;
+      const colsG = [];
+      for (let c = 0; c < cols; c++) {
+        const cg = D.g(g, { opacity: 0 });
+        for (let r = 0; r < rows; r++) {
+          const k = (c * 7 + r * 13) % palette.length;
+          D.el('rect', { x: x + 1 + c * tw + 0.6, y: row - BH / 2 + 1 + r * th + 0.6, width: tw - 1.2, height: th - 1.2, rx: 1.2, style: `fill: ${palette[k]}` }, cg);
         }
-        g2.clearRect(0, 0, W, H);
-        for (const it of items) {
-          if (!it.rest) {
-            it.vy += 2600 * s * dt; it.y += it.vy * dt; it.r += it.vr * dt;
-            const col = Math.min(heights.length - 1, Math.max(0, (it.x / COLW) | 0));
-            const floor = H - heights[col];
-            if (it.y + it.size / 2 >= floor) {
-              it.y = floor - it.size / 2; it.rest = true;
-              heights[col] += it.size * 0.55;
-              if (col > 0) heights[col - 1] += it.size * 0.2;
-              if (col < heights.length - 1) heights[col + 1] += it.size * 0.2;
-            }
-          }
-          g2.save(); g2.translate(it.x, it.y); g2.rotate(it.r);
-          g2.fillStyle = it.c; g2.fillRect(-it.size / 2, -it.size / 2, it.size, it.size);
-          g2.strokeStyle = 'rgba(0,0,0,.35)'; g2.lineWidth = 2 * s; g2.strokeRect(-it.size / 2, -it.size / 2, it.size, it.size);
-          g2.restore();
-        }
-        requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
+        colsG.push(cg);
+      }
+      tl.to(colsG, { opacity: 1, duration: 0.12, stagger: dur / cols, ease: 'none' }, at);
+      return g;
+    }
+    function need(tl, x, row, label, at) {
+      const g = D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' }); // a mark on the bar, by design
+      D.p(g, `M${x} ${row - BH / 2 - 8} V${row + BH / 2 + 2}`, '', { style: 'fill: none; stroke: #fff3e3; stroke-width: 3; stroke-linecap: round' });
+      D.text(g, x + 6, row - BH / 2 - 10, label.toUpperCase(), 'need', { style: 'font: 700 14px var(--font-mono); letter-spacing: .1em; fill: #fff3e3' });
+      tl.fromTo(g, { opacity: 0 }, { opacity: 1, duration: 0.4 }, at);
+      return g;
     }
 
     // ---------- the finale: an endless zoom into the developer's laptop screen ----------
@@ -303,7 +282,6 @@ export default {
       loops2.forEach((l) => l.kill()); loops2 = [];
       typer?.kill(); typer = null;
       svg.innerHTML = '';
-      canvas?.remove(); canvas = null;
       gsap.set([zTex, zAsset], { opacity: 0, x: 0, y: 0 });
       zoomer?.kill(); zoomer = null;
       gsap.set(tip, { opacity: 1 });
@@ -356,7 +334,7 @@ export default {
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         const grid = D.g(svg, { 'data-bg': '' });
         MONTHS.forEach((m, k) => {
-          D.text(grid, X0 + k * MW + MW / 2, 300, m, 'mono', { 'text-anchor': 'middle', style: 'font: 400 18px var(--font-mono); fill: var(--muted); letter-spacing: .06em' });
+          D.text(grid, X0 + k * MW + MW / 2, 268, m, 'mono', { 'text-anchor': 'middle', style: 'font: 400 18px var(--font-mono); fill: var(--muted); letter-spacing: .06em' });
           D.p(grid, `M${X0 + k * MW} 318 V640`, 'thin', { opacity: 0.3 });
         });
         D.p(grid, `M${X0 + 12 * MW} 318 V640`, 'thin', { opacity: 0.3 });
@@ -448,14 +426,15 @@ export default {
         tl.call(stopTyping, null, 2.4);
         d.pose(tl, 'idle', 2.5, 0.3);
         counter(zTex, 500, 2.4, 'power2.in', 0.3, tl);
-        if (!instant) tl.call(() => avalanche(), null, 0.4);
+        mosaic(tl, TEX.x, TEX.w, ROW.tex, MATERIALS, 0, 2.4, P.tex.grp);
+        tl.call(() => P.tex.pct.setAttribute('style', 'font: 700 18px var(--font-mono); fill: #fff3e3; paint-order: stroke; stroke: #1a0d05; stroke-width: 4'), null, 0.4);
+        need(tl, TEX.x + TEX.w * (20 / 500), ROW.tex, 'trengte 20', 0.2);
         P.subT = D.text(svg, 120, ROW.tex + 40, '500 teksturer', 'mono', { style: 'font: 400 18px var(--font-mono); fill: var(--accent)' });
         tl.add(D.fadeIn(P.subT), 2.6);
       }
 
       if (i === 5) {
         // assets resume: needed 50, made 20 000+, published. He allows himself a fist pump.
-        if (canvas) tl.to(canvas, { opacity: 0, duration: 0.6 }, 0);
         tl.to(zTex, { opacity: 0, duration: 0.3 }, 0);
         const rem = P.assetBlock;
         cutTo(tl, AFTER3.assetRest + 2, ROW.asset, 0.1);              // the pushed rest starts here
@@ -467,6 +446,8 @@ export default {
         tl.to(d.g, { x: AFTER3.assetRest + rem.w + 2, duration: 2.4, ease: 'power1.inOut' }, 0.7);
         tl.call(stopTyping, null, 3.1);
         counter(zAsset, 20000, 3, 'expo.in', 0.4, tl, '+');
+        mosaic(tl, AFTER3.assetRest, rem.w, ROW.asset, PROPS, 0.7, 2.4);
+        need(tl, ASSET.x + 2, ROW.asset, 'trengte 50', 0.4);
         P.subA = D.text(svg, 120, ROW.asset + 40, '20 000+ assets', 'mono', { style: 'font: 400 18px var(--font-mono); fill: var(--accent-2)' });
         tl.add(D.fadeIn(P.subA), 2.8);
         P.stamp = D.stamp(svg, (ASSET.x + ASSET.w * ASSET.block + AFTER3.assetRest) / 2, ROW.asset, 'PUBLISERT', { size: 24, rotate: -6 });
@@ -575,6 +556,6 @@ export default {
     };
 
     const s = D.stepper(ctx, { reset, play });
-    return { ...s, dispose() { loops.forEach((l) => l.kill()); loops2.forEach((l) => l.kill()); typer?.kill(); zoomer?.kill(); canvas = null; } };
+    return { ...s, dispose() { loops.forEach((l) => l.kill()); loops2.forEach((l) => l.kill()); typer?.kill(); zoomer?.kill(); } };
   },
 };
