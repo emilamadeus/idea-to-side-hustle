@@ -31,6 +31,7 @@ import effort from './effort.js';
 import remote from './remote.js';
 import htmlDeck from './html-deck.js';
 import projects from './projects.js';
+import skills from './skills.js';
 import goLive from './go-live.js';
 
 // Story order: the journey, three parts and a closing.
@@ -50,7 +51,7 @@ const STAGED = [
   [goLive],                                     // Lansering (placeholder)
 ];
 const PARTS = [
-  { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, gateway] },
+  { name: 'Arbeidsflyt', slides: [kitchen, helpers, skills, watchdog, remote, effort, gateway] },
   { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, knowAGuy, alwaysWorking] },
   { name: 'Ekte prosjekter', slides: [projects, launch, htmlDeck] },
 ];

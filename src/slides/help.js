@@ -161,6 +161,12 @@ export const HELP = {
     'Kan du levere, og lønner det seg hele året?',
     'AI gjør hele verdikjeden billig. Derfor blir det trangt.',
   ],
+  skills: [
+    'Samme lange prompt, nytt resultat hver gang.',
+    'Claude skriver oppskriften én gang.',
+    'Én linje. Samme stil, rett i riktig mappe.',
+    'ChatGPT leser bestillingen fra fila selv.',
+  ],
   'go-live': [
     'Ekte kunder slår en ferdig plan.',
     'Live. Ta frem telefonen.',
