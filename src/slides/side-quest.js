@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { figure, LOOK } from '../engine/characters.js';
+import { miniDev } from '../engine/minidev.js';
 
 /*
   Tip: side quests multiply. A Gantt chart, built and broken by the developer himself: a small
@@ -11,8 +12,8 @@ import { figure, LOOK } from '../engine/characters.js';
     1. He splits the bar and pushes the rest out; the launch moves. He drags in the asset pipeline.
     2. Typing: assets to 20 %. Thought: "Trenger: 20 teksturer".
     3. Split, push; the game's rest is knocked along too. A sigh. He drags in the texture pipeline.
-    4. Textures: needed 20, made 3 000.
-    5. Assets: needed 50, made 5 000 000, published.
+    4. Textures: needed 20, made 500.
+    5. Assets: needed 50, made 20 000+, published.
     6. Back to the game: 80 %, and it stalls. He slumps over the laptop.
     7. Three pipelines, one developer: he hops between rows. "Hvilken nå?"
     8. His answer: a pipeline that picks the pipeline. He types at it, and the camera dives into
@@ -88,6 +89,7 @@ export default {
 
     let P = {};
     let loops = [];
+    let loops2 = []; // breathing: runs across steps
     let canvas = null;
     let zoomer = null;
 
@@ -152,99 +154,55 @@ export default {
       tl.fromTo(P.dl.mult, { opacity: 0 }, { opacity: 1, duration: 0.4 }, at + 1.15);
     };
 
-    // ---------- the developer: small, on the chart itself ----------
-    // Local coordinates: feet at (0, 0), 66 tall; hips at (0, -22). Rotations are set by hand
-    // (a proxy angle per part), since the parts sit inside a moving group.
-    const INKS = 'stroke: #1a120c; stroke-width: 2; stroke-linejoin: round';
-    function developer() {
-      const g = D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' });
-      // the standing desk and laptop, to his right; the screen is 32×18 (16:9) for the finale
-      const desk = D.g(g);
-      D.el('rect', { x: 28, y: -30, width: 5, height: 30, style: `fill: #4a3020; ${INKS}` }, desk);
-      D.el('rect', { x: 14, y: -33, width: 38, height: 5, rx: 1.5, style: `fill: #6b4a30; ${INKS}` }, desk);
-      const screen = D.g(desk);
-      D.el('rect', { x: 17, y: -53, width: 32, height: 18, rx: 1, style: `fill: #0f0a07; ${INKS}` }, screen);
-      const code = [0, 1, 2].map((k) => D.el('rect', { x: 21, y: -49 + k * 5, width: [18, 12, 22][k], height: 2.4, style: 'fill: #8fe3a2' }, screen));
-      const cups = D.g(desk);
-      const legL = D.el('rect', { x: -7, y: -23, width: 6, height: 23, rx: 2, style: `fill: #2c3550; ${INKS}` }, g);
-      const legR = D.el('rect', { x: 1, y: -23, width: 6, height: 23, rx: 2, style: `fill: #2c3550; ${INKS}` }, g);
-      const torso = D.g(g);
-      const armB = D.el('rect', { x: -3, y: -43, width: 6, height: 18, rx: 3, style: `fill: #34404f; ${INKS}` }, torso);
-      D.el('rect', { x: -10, y: -46, width: 20, height: 26, rx: 7, style: `fill: #3c4a5c; ${INKS}` }, torso);
-      const armF = D.el('rect', { x: -3, y: -43, width: 6, height: 18, rx: 3, style: `fill: #46576c; ${INKS}` }, torso);
-      const head = D.g(torso);
-      D.el('circle', { cx: 0, cy: -56, r: 10, style: `fill: #e2b48f; ${INKS}` }, head);
-      D.p(head, 'M-10 -58 l-1 -6 l4 2 l1 -6 l4 4 l3 -6 l3 5 l4 -3 l1 6 l3 1 C6 -66 -4 -67 -10 -58 Z', '', { style: `fill: #6b4128; ${INKS}` });
-      D.p(head, 'M-6 -56 h4 M2 -56 h4 M-2 -56 h4', '', { style: 'fill: none; stroke: #1a120c; stroke-width: 2' });
-      return { g, torso, head, armF, armB, legL, legR, screen, code, cups };
-    }
-    // rotate a part about a point, tweened through a stored angle
-    const turn = (tl, node, cx, cy, to, dur, at, ease = 'sine.inOut') => {
-      const st = node._a ??= { a: 0 };
-      tl.to(st, { a: to, duration: dur, ease, onUpdate: () => node.setAttribute('transform', `rotate(${st.a} ${cx} ${cy})`) }, at);
-    };
-    const SHOULDER = [0, -41], HIP = [0, -22];
-    // posture: how slumped he is (degrees); grows step by step
-    const slump = (tl, deg, at, dur = 0.8) => { turn(tl, P.dev.torso, HIP[0], HIP[1], deg, dur, at); turn(tl, P.dev.head, 0, -46, deg * 0.8, dur, at); };
-    // typing: arms bob and code lines flicker until stop() is called
-    function typing() {
-      const d = P.dev;
-      const t = gsap.timeline({ repeat: -1 });
-      [d.armF, d.armB].forEach((a, k) => {
-        const st = a._a ??= { a: 0 };
-        t.to(st, { a: -70 - k * 6, duration: 0.09, onUpdate: () => a.setAttribute('transform', `rotate(${st.a} ${SHOULDER[0]} ${SHOULDER[1]})`) }, k * 0.09)
-          .to(st, { a: -58, duration: 0.09, onUpdate: () => a.setAttribute('transform', `rotate(${st.a} ${SHOULDER[0]} ${SHOULDER[1]})`) }, k * 0.09 + 0.09);
-      });
-      d.code.forEach((c, k) => t.to(c, { opacity: 0.25, duration: 0.12, yoyo: true, repeat: 1 }, k * 0.06));
-      loops.push(t);
-      return t;
-    }
-    const stopTyping = () => { loops.forEach((l) => l.kill()); loops = []; };
-    // arms down by his sides / straight forward (pushing)
-    const arms = (tl, deg, at, dur = 0.3) => { turn(tl, P.dev.armF, ...SHOULDER, deg, dur, at); turn(tl, P.dev.armB, ...SHOULDER, deg - 6, dur, at); };
-    // walk to x along his row: legs swing, slower when tired
-    function walk(tl, x, at, speed, from) {
-      const dur = Math.max(0.4, Math.abs(x - from) / speed);
-      tl.to(P.dev.g, { x, duration: dur, ease: 'none' }, at);
-      const n = Math.max(1, Math.round(dur / 0.36));
-      for (let k = 0; k < n; k++) {
-        turn(tl, P.dev.legL, ...HIP, 16, 0.18, at + k * 0.36);
-        turn(tl, P.dev.legR, ...HIP, -16, 0.18, at + k * 0.36);
-        turn(tl, P.dev.legL, ...HIP, -16, 0.18, at + k * 0.36 + 0.18);
-        turn(tl, P.dev.legR, ...HIP, 16, 0.18, at + k * 0.36 + 0.18);
+    // ---------- motivation: the portrait bottom left ----------
+    const DEV = { hx: 190, hy: 790 };
+    function portrait() {
+      const grp = D.g(svg);
+      D.text(grp, 120, 700, 'UTVIKLER', 'mono', { style: 'font: 400 16px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+      const fig = figure(grp, { x: DEV.hx, y: DEV.hy + 40, s: 0.56, pose: 'sit', arms: 'down', ...LOOK.me, mouth: 'smile' });
+      const sweat = D.p(grp, `M${DEV.hx + 30} ${DEV.hy - 26} q-6 10 0 14 q6 -4 0 -14 Z`, '', { style: 'fill: #9fd3ff; stroke: none', opacity: 0 });
+      D.text(grp, 330, 742, 'MOTIVASJON', 'mono', { style: 'font: 400 16px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+      const meter = D.g(grp, { 'data-unit': '' });
+      D.el('rect', { x: 330, y: 754, width: 220, height: 14, rx: 3, fill: 'none', style: 'stroke: var(--deco)', 'stroke-width': 2 }, meter);
+      const energy = D.el('rect', { x: 332, y: 756, width: 216, height: 10, rx: 2, style: 'fill: var(--accent-2)' }, meter);
+      const cups = D.g(grp);
+      for (let k = 0; k < 7; k++) {
+        const c = D.g(cups, { opacity: 0 });
+        const cx = 332 + k * 32;
+        D.p(c, `M${cx} 800 h20 v26 q0 6 -6 6 h-8 q-6 0 -6 -6 Z M${cx + 20} 806 q10 0 10 8 q0 8 -10 8`, 'thin');
+        D.p(c, `M${cx + 6} 794 q-3 -6 0 -12 M${cx + 14} 794 q-3 -6 0 -12`, 'thin', { opacity: 0.6 });
       }
-      turn(tl, P.dev.legL, ...HIP, 0, 0.15, at + dur);
-      turn(tl, P.dev.legR, ...HIP, 0, 0.15, at + dur);
-      return at + dur;
+      return { grp, head: fig.root, fig, sweat, energy, cups: [...cups.children] };
     }
+    // 0 fresh · 1 first detour · 2 second detour · 3 stuck at 80 % · 4 a lift: it got published
+    const MOOD = [
+      { energy: 1.0, cups: 1, color: 'var(--accent-2)', tilt: 0, face: { eyes: 'open', brows: 'neutral', mouth: 'smile' } },
+      { energy: 0.65, cups: 2, color: 'var(--accent-2)', tilt: 0, face: { eyes: 'open', brows: 'tired', mouth: 'neutral' } },
+      { energy: 0.3, cups: 4, color: 'var(--accent)', tilt: -6, face: { eyes: 'down', brows: 'tired', mouth: 'frown' } },
+      { energy: 0.06, cups: 7, color: 'var(--note)', tilt: -14, face: { eyes: 'closed', brows: 'tired', mouth: 'frown' } },
+      { energy: 0.5, cups: 5, color: 'var(--accent-2)', tilt: -2, face: { eyes: 'open', brows: 'raised', mouth: 'smile' } },
+    ];
+    function mood(tl, k, at = 0) {
+      const m = MOOD[k];
+      P.port.fig.expr(tl, m.face, at);
+      tl.to(P.port.sweat, { opacity: k === 2 || k === 3 ? 1 : 0, duration: 0.3 }, at + 0.2);
+      tl.to(P.port.energy, { attr: { width: 216 * m.energy }, duration: 0.9, ease: 'power2.inOut' }, at);
+      tl.call(() => { P.port.energy.style.fill = m.color; }, null, at);
+      P.port.cups.forEach((c, i) => tl.to(c, { opacity: i < m.cups ? 1 : 0, duration: 0.2 }, at + 0.1 + i * 0.06));
+      tl.to(P.port.head, { rotation: m.tilt, svgOrigin: `${DEV.hx} ${DEV.hy + 90}`, duration: 0.8, ease: 'power2.inOut' }, at);
+    }
+
+    // ---------- the developer on the chart (src/engine/minidev.js) ----------
+    let typer = null, breath = null;
+    const startTyping = (speed) => { typer?.kill(); typer = P.dev.typing(speed); };
+    const stopTyping = () => { typer?.kill(); typer = null; loops.forEach((l) => l.kill()); loops = []; };
+    const here = () => gsap.getProperty(P.dev.g, 'x');
     // to another row: a cut (out, move, in), never a walk through the chart
     function cutTo(tl, x, row, at) {
       tl.to(P.dev.g, { opacity: 0, duration: 0.25 }, at);
       tl.set(P.dev.g, { x, y: row + BH / 2 }, at + 0.25);
       tl.to(P.dev.g, { opacity: 1, duration: 0.25 }, at + 0.3);
       return at + 0.55;
-    }
-    const deskShown = (tl, on, at) => tl.to(P.dev.g.firstChild, { opacity: on ? 1 : 0, duration: 0.3 }, at);
-    // a thought: a cloud to the right of his head, with two small dots leading to it
-    function think(tl, str, at, hold = 0) {
-      const x = 0, y = 0; // inside his group: the bubble follows him
-      const g = D.g(P.dev.g, { 'data-overlap-ok': '' });
-      const w = str.length * 9.6 + 34;
-      D.el('circle', { cx: x + 13, cy: y - 50, r: 3, style: 'fill: #fff3e3' }, g);
-      D.el('circle', { cx: x + 21, cy: y - 58, r: 4.5, style: 'fill: #fff3e3' }, g);
-      D.el('rect', { x: x + 28, y: y - 76, width: w, height: 32, rx: 16, style: 'fill: #fff3e3' }, g);
-      D.text(g, x + 28 + w / 2, y - 54, str, 'th', { 'text-anchor': 'middle', style: 'font: 700 17px var(--font-display); fill: #1a120c' });
-      tl.fromTo(g, { opacity: 0, scale: 0.6, transformOrigin: '0% 100%' }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(2.2)' }, at);
-      if (hold) tl.to(g, { opacity: 0, duration: 0.3 }, at + hold);
-      return g;
-    }
-    const pop = (tl, g, at) => g && tl.to(g, { opacity: 0, scale: 1.15, transformOrigin: '0% 100%', duration: 0.25 }, at);
-    // coffee on the desk, one more each round
-    function cup(k) {
-      const c = D.g(P.dev.cups);
-      const cx = 34 + k * 7;
-      D.el('rect', { x: cx, y: -40, width: 5, height: 7, rx: 1, style: `fill: #fff3e3; ${INKS}` }, c);
-      return c;
     }
 
     // ---------- avalanche of texture swatches ----------
@@ -300,7 +258,7 @@ export default {
     // The camera zooms about T's fixed point by 1/k, the scale of T, and loops: after one
     // loop the first copy fills the frame exactly as the original did, so the seam is invisible.
     function dive() {
-      const scr = P.dev.screen.firstChild.getBoundingClientRect();
+      const scr = P.dev.screen.getBoundingClientRect();
       const box = svg.getBoundingClientRect();
       const f = 1600 / box.width;
       const sx = (scr.left - box.left) * f, sy = (scr.top - box.top) * f, sw = scr.width * f;
@@ -332,16 +290,18 @@ export default {
       gsap.to(tip, { opacity: 0, duration: 0.6 }); // the title would sit still over the dive
     }
 
-    const counter = (zone, to, dur, ease, at, tl) => {
+    const counter = (zone, to, dur, ease, at, tl, suffix = '') => {
       const c = zone.querySelector('.counter');
       const s = { v: 0 };
       tl.fromTo(zone, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.4 }, at);
-      tl.to(s, { v: to, duration: dur, ease, onUpdate: () => { c.textContent = Math.round(s.v).toLocaleString('nb-NO'); } }, at + 0.2);
+      tl.to(s, { v: to, duration: dur, ease, onUpdate: () => { c.textContent = Math.round(s.v).toLocaleString('nb-NO') + (s.v >= to ? suffix : ''); } }, at + 0.2);
     };
 
     // ---------- steps ----------
     const reset = () => {
       loops.forEach((l) => l.kill()); loops = [];
+      loops2.forEach((l) => l.kill()); loops2 = [];
+      typer?.kill(); typer = null;
       svg.innerHTML = '';
       canvas?.remove(); canvas = null;
       gsap.set([zTex, zAsset], { opacity: 0, x: 0, y: 0 });
@@ -354,34 +314,40 @@ export default {
     const play = (i, instant) => {
       const tl = gsap.timeline();
 
-      // a split and a push: chop at the block, lean into the rest, push it to its new place
-      const splitPush = (bar, frac, key, to, at, speed, sag) => {
+      const d = P.dev;
+      // a split and a push: crack on, chop, step up, brace, and push the rest out to its new place
+      const splitPush = (bar, frac, key, to, at, { speed, tired }) => {
         const bx = bar.p.x + bar.p.w * frac;
-        stopTyping();
-        deskShown(tl, false, at);
-        arms(tl, -150, at + 0.2, 0.25);                       // arm up …
-        arms(tl, -20, at + 0.55, 0.12);                      // … and down: the chop
+        tl.call(stopTyping, null, at);
+        d.desk(tl, false, at);
+        d.pose(tl, 'idle', at, 0.3);
+        d.pose(tl, 'chopUp', at + 0.35, 0.45, 'power2.out');            // anticipation
+        d.pose(tl, 'chopDown', at + 0.85, 0.12, 'power4.in');           // the chop
         P[key] = block(bar, frac);
-        tl.add(showBlock(P[key]), at + 0.62);
-        let t = walk(tl, bx - 12, at + 0.9, speed, gsap.getProperty(P.dev.g, 'x'));  // step up to the cut
-        slump(tl, sag + 14, t, 0.4);                         // lean in
-        arms(tl, -90, t, 0.3);
-        const d = Math.abs(to - bx) / (speed * 0.45);
-        tl.to(P.dev.g, { x: to - 12, duration: d, ease: 'power1.inOut' }, t + 0.3);
-        tl.to(P[key].rem, { x: to - bx, duration: d, ease: 'power1.inOut' }, t + 0.3);
-        return { t: t + 0.3, d };
+        tl.add(showBlock(P[key]), at + 0.95);
+        tl.fromTo(bar.grp, { x: 0 }, { x: 2, duration: 0.05, yoyo: true, repeat: 3, immediateRender: false }, at + 0.97);
+        d.pose(tl, 'idle', at + 1.15, 0.35);
+        let t = d.walk(tl, bx + 2, bx - 12, at + 1.4, { speed: 60 });
+        d.pose(tl, 'push', t, 0.45, 'power2.out');                     // brace
+        d.face(tl, tired ? 'tired' : 'frown', t);
+        const dist = Math.abs(to - bx);
+        const end = d.walk(tl, bx - 12, to - 12, t + 0.5, { speed, push: true });
+        tl.to(P[key].rem, { x: to - bx, duration: end - t - 0.5, ease: 'none' }, t + 0.5);
+        void dist;
+        return { t: t + 0.5, end };
       };
-      const place = (pipe, x, row, at, sag) => {
-        // he drags the new bar in: the track grows from his position as he backs to the start
-        let t = cutTo(tl, x + pipe.p.w * 0.35, row, at);
-        slump(tl, sag, t, 0.3);
-        arms(tl, -60, t, 0.3);
-        tl.to(pipe.track, { attr: { width: pipe.p.w }, duration: 1.1, ease: 'power2.out' }, t + 0.2);
+      // the next pipeline: he drags it in, leaning back, then steps to its start and types
+      const place = (pipe, x, row, at, { tired }) => {
+        let t = cutTo(tl, x + pipe.p.w * 0.45, row, at);
+        d.desk(tl, false, at);
+        d.pose(tl, 'drag', t, 0.35);
+        tl.to(pipe.track, { attr: { width: pipe.p.w }, duration: 1.2, ease: 'power2.out' }, t + 0.15);
         tl.add(D.fadeIn(pipe.lbl), t + 0.2);
-        t = walk(tl, x + 14, t + 0.3, 70, x + pipe.p.w * 0.35);
-        deskShown(tl, true, t);
-        arms(tl, -60, t, 0.2);
-        return t + 0.3;
+        t = d.walk(tl, x + pipe.p.w * 0.45, x + 2, t + 0.3, { speed: tired ? 70 : 95 });
+        d.pose(tl, 'idle', t, 0.3);
+        d.desk(tl, true, t);
+        d.pose(tl, 'type', t + 0.3, 0.35);
+        return t + 0.65;
       };
 
       if (i === 0) {
@@ -399,132 +365,178 @@ export default {
         tl.add(D.fadeIn([P.game.grp, P.game.lbl]), 0.5);
         P.dl = deadline();
         tl.add(D.fadeIn(P.dl.grp), 0.7);
-        P.dev = developer();
-        gsap.set(P.dev.g, { x: GAME.x + 14, y: ROW.game + BH / 2 });
-        cup(0);
-        tl.fromTo(P.dev.g, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.8);
-        // he types; the bar fills under his hands and he moves along with it
-        tl.call(() => typing(), null, 1.0);
-        tl.add(fillTo(P.game, GAME.block, 2.4), 1.0);
-        tl.to(P.dev.g, { x: GAME.x + GAME.w * GAME.block + 2, duration: 2.4, ease: 'power2.out' }, 1.0);
-        tl.call(() => stopTyping(), null, 3.4);
-        arms(tl, -20, 3.4);
-        P.th = think(tl, 'Trenger: 50 assets', 3.7);
+        P.port = portrait();
+        tl.add(D.fadeIn(P.port.grp), 0.8);
+        mood(tl, 0, 0.8);
+        P.dev = miniDev(svg, { idPrefix: 'sq-dev' });
+        const dd = P.dev;
+        gsap.set(dd.g, { x: GAME.x + 2, y: ROW.game + BH / 2 });
+        dd.cup(0);
+        breath = dd.breathe(); loops2.push(breath);
+        tl.fromTo(dd.g, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.8);
+        // eager: he cracks on, typing fast, nodding along; the bar fills under his hands
+        dd.pose(tl, 'type', 1.0, 0.35);
+        tl.call(() => startTyping(1.25), null, 1.2);
+        tl.add(fillTo(P.game, GAME.block, 2.4), 1.2);
+        tl.to(dd.g, { x: GAME.x + GAME.w * GAME.block + 2, duration: 2.4, ease: 'power2.out' }, 1.2);
+        // he stops, leans back, scratches his head: something is missing
+        tl.call(stopTyping, null, 3.6);
+        dd.pose(tl, 'scratch', 3.7, 0.4);
+        dd.face(tl, 'o', 3.8);
+        P.th = dd.think(tl, 'Trenger: 50 assets', 4.0);
       }
 
       if (i === 1) {
-        pop(tl, P.th, 0);
+        d.pop(tl, P.th, 0);
+        d.face(tl, 'flat', 0.1);
         P.asset = pipeline(ASSET, ROW.asset, 'var(--accent-2)', '3D asset pipeline');
         gsap.set(P.asset.track, { attr: { width: 0 } }); gsap.set(P.asset.lbl, { opacity: 0 });
-        const { t, d } = splitPush(P.game, GAME.block, 'gameBlock', AFTER1.gameRest, 0.3, 110, 4);
-        tl.to(P.dl.grp, { x: DEADLINE[1], duration: d, ease: 'power1.inOut' }, t);
-        tl.call(() => { P.dl.txt.textContent = `LANSERING: ${monthAt(DEADLINE[1]).toUpperCase()}`; P.dl.mult.textContent = '×2'; }, null, t + d);
-        tl.fromTo(P.dl.mult, { opacity: 0 }, { opacity: 1, duration: 0.4 }, t + d);
-        arms(tl, -20, t + d, 0.3);
-        const end = place(P.asset, ASSET.x, ROW.asset, t + d + 0.4, 6);
-        tl.call(() => cup(1), null, end);
+        const { t, end } = splitPush(P.game, GAME.block, 'gameBlock', AFTER1.gameRest, 0.3, { speed: 85 });
+        tl.to(P.dl.grp, { x: DEADLINE[1], duration: end - t, ease: 'none' }, t);
+        tl.call(() => { P.dl.txt.textContent = `LANSERING: ${monthAt(DEADLINE[1]).toUpperCase()}`; P.dl.mult.textContent = '×2'; }, null, end);
+        tl.fromTo(P.dl.mult, { opacity: 0 }, { opacity: 1, duration: 0.4 }, end);
+        // he straightens up and wipes his brow
+        d.pose(tl, 'wipe', end + 0.1, 0.35);
+        d.pose(tl, 'idle', end + 0.6, 0.35);
+        d.slump(tl, 4, end + 0.6);
+        mood(tl, 1, end);
+        const fin = place(P.asset, ASSET.x, ROW.asset, end + 1.1, { tired: false });
+        tl.call(() => startTyping(1.0), null, fin);
+        tl.call(() => d.cup(1), null, fin);
+        d.face(tl, 'flat', fin);
       }
 
       if (i === 2) {
-        tl.call(() => typing(), null, 0.1);
+        tl.call(() => startTyping(0.95), null, 0.1);
         tl.add(fillTo(P.asset, ASSET.block, 2.0), 0.1);
-        tl.to(P.dev.g, { x: ASSET.x + ASSET.w * ASSET.block + 2, duration: 2.0, ease: 'power2.out' }, 0.1);
-        tl.call(() => stopTyping(), null, 2.2);
-        arms(tl, -20, 2.2);
-        P.th = think(tl, 'Trenger: 20 teksturer', 2.5);
+        tl.to(d.g, { x: ASSET.x + ASSET.w * ASSET.block + 2, duration: 2.0, ease: 'power2.out' }, 0.1);
+        tl.call(stopTyping, null, 2.2);
+        // not again: a hand to the face
+        d.pose(tl, 'facepalm', 2.3, 0.4);
+        d.face(tl, 'frown', 2.3);
+        P.th = d.think(tl, 'Trenger: 20 teksturer', 2.7);
       }
 
       if (i === 3) {
-        pop(tl, P.th, 0);
+        d.pop(tl, P.th, 0);
         P.tex = pipeline(TEX, ROW.tex, 'var(--accent)', 'Texture pipeline');
         gsap.set(P.tex.track, { attr: { width: 0 } }); gsap.set(P.tex.lbl, { opacity: 0 });
-        const { t, d } = splitPush(P.asset, ASSET.block, 'assetBlock', AFTER3.assetRest, 0.3, 85, 9);
-        // the game's rest gets knocked along with it
-        tl.to(P.gameBlock.rem, { x: AFTER3.gameRest - P.gameBlock.x, duration: d, ease: 'power1.inOut' }, t + 0.2);
-        tl.to(P.dl.grp, { x: DEADLINE[2], duration: d, ease: 'power1.inOut' }, t + 0.2);
-        tl.call(() => { P.dl.txt.textContent = `LANSERING: ${monthAt(DEADLINE[2]).toUpperCase()}`; P.dl.mult.textContent = '×3'; }, null, t + d + 0.2);
-        arms(tl, -20, t + d, 0.3);
-        slump(tl, 10, t + d, 0.6);
-        think(tl, 'Pff.', t + d + 0.3, 1.2);
-        const end = place(P.tex, TEX.x, ROW.tex, t + d + 1.7, 10);
-        tl.call(() => cup(2), null, end);
+        const { t, end } = splitPush(P.asset, ASSET.block, 'assetBlock', AFTER3.assetRest, 0.3, { speed: 62, tired: true });
+        // the game's rest gets knocked along too
+        tl.to(P.gameBlock.rem, { x: AFTER3.gameRest - P.gameBlock.x, duration: end - t, ease: 'none' }, t + 0.15);
+        tl.to(P.dl.grp, { x: DEADLINE[2], duration: end - t, ease: 'none' }, t + 0.15);
+        tl.call(() => { P.dl.txt.textContent = `LANSERING: ${monthAt(DEADLINE[2]).toUpperCase()}`; P.dl.mult.textContent = '×3'; }, null, end + 0.15);
+        // he looks up at it, and sighs
+        d.pose(tl, 'idle', end + 0.1, 0.4);
+        d.pose(tl, 'lookL', end + 0.5, 0.35);
+        d.slump(tl, 10, end + 0.9);
+        const s1 = d.sigh(tl, end + 1.0);
+        d.think(tl, 'Pff.', end + 1.1, 1.4);
+        mood(tl, 2, end + 0.9);
+        const fin = place(P.tex, TEX.x, ROW.tex, s1 + 0.4, { tired: true });
+        tl.call(() => startTyping(0.8), null, fin);
+        tl.call(() => d.cup(2), null, fin);
+        d.face(tl, 'tired', fin);
       }
 
       if (i === 4) {
-        // textures: needed 20, made 3 000
-        tl.call(() => typing(), null, 0);
+        // textures: needed 20, made 500. A burst of the old energy.
+        tl.call(() => startTyping(1.6), null, 0);
+        d.face(tl, 'smile', 0.2);
         tl.add(fillTo(P.tex, 1, 2.4, 'power1.inOut'), 0);
-        tl.to(P.dev.g, { x: TEX.x + TEX.w + 12, duration: 2.4, ease: 'power1.inOut' }, 0);
-        tl.call(() => stopTyping(), null, 2.4);
-        counter(zTex, 3000, 2.8, 'power2.in', 0.3, tl);
+        tl.to(d.g, { x: TEX.x + TEX.w + 12, duration: 2.4, ease: 'power1.inOut' }, 0);
+        tl.call(stopTyping, null, 2.4);
+        d.pose(tl, 'idle', 2.5, 0.3);
+        counter(zTex, 500, 2.4, 'power2.in', 0.3, tl);
         if (!instant) tl.call(() => avalanche(), null, 0.4);
-        P.subT = D.text(svg, 120, ROW.tex + 40, '3 000 teksturer', 'mono', { style: 'font: 400 18px var(--font-mono); fill: var(--accent)' });
+        P.subT = D.text(svg, 120, ROW.tex + 40, '500 teksturer', 'mono', { style: 'font: 400 18px var(--font-mono); fill: var(--accent)' });
         tl.add(D.fadeIn(P.subT), 2.6);
       }
 
       if (i === 5) {
-        // assets resume: needed 50, made 5 000 000
+        // assets resume: needed 50, made 20 000+, published. He allows himself a fist pump.
         if (canvas) tl.to(canvas, { opacity: 0, duration: 0.6 }, 0);
         tl.to(zTex, { opacity: 0, duration: 0.3 }, 0);
         const rem = P.assetBlock;
-        cutTo(tl, AFTER3.assetRest + 2, ROW.asset, 0.1);           // the pushed rest starts here
-        tl.call(() => typing(), null, 0.7);
+        cutTo(tl, AFTER3.assetRest + 2, ROW.asset, 0.1);              // the pushed rest starts here
+        d.pose(tl, 'type', 0.5, 0.3);
+        tl.call(() => startTyping(1.3), null, 0.7);
         tl.to([rem.hatch, rem.zig], { opacity: 0, duration: 0.4 }, 0.3);
-        const s = { v: 0 };
-        tl.to(s, { v: 1, duration: 2.4, ease: 'power1.inOut', onUpdate: () => { rem.rfill.setAttribute('width', rem.w * s.v); setPct(P.asset, ASSET.block + (1 - ASSET.block) * s.v); } }, 0.7);
-        tl.to(P.dev.g, { x: AFTER3.assetRest + rem.w + 2, duration: 2.4, ease: 'power1.inOut' }, 0.7);
-        tl.call(() => stopTyping(), null, 3.1);
-        counter(zAsset, 5000000, 3, 'expo.in', 0.4, tl);
-        P.subA = D.text(svg, 120, ROW.asset + 40, '5 000 000 assets', 'mono', { style: 'font: 400 18px var(--font-mono); fill: var(--accent-2)' });
+        const sv = { v: 0 };
+        tl.to(sv, { v: 1, duration: 2.4, ease: 'power1.inOut', onUpdate: () => { rem.rfill.setAttribute('width', rem.w * sv.v); setPct(P.asset, ASSET.block + (1 - ASSET.block) * sv.v); } }, 0.7);
+        tl.to(d.g, { x: AFTER3.assetRest + rem.w + 2, duration: 2.4, ease: 'power1.inOut' }, 0.7);
+        tl.call(stopTyping, null, 3.1);
+        counter(zAsset, 20000, 3, 'expo.in', 0.4, tl, '+');
+        P.subA = D.text(svg, 120, ROW.asset + 40, '20 000+ assets', 'mono', { style: 'font: 400 18px var(--font-mono); fill: var(--accent-2)' });
         tl.add(D.fadeIn(P.subA), 2.8);
         P.stamp = D.stamp(svg, (ASSET.x + ASSET.w * ASSET.block + AFTER3.assetRest) / 2, ROW.asset, 'PUBLISERT', { size: 24, rotate: -6 });
         P.stamp.setAttribute('data-unit', '');
         tl.add(D.slam(P.stamp), 3.3);
-        tl.call(() => cup(3), null, 3.3);
+        d.pose(tl, 'fist', 3.45, 0.25, 'back.out(3)');
+        d.face(tl, 'smile', 3.45);
+        tl.to(d.g, { y: `-=6`, duration: 0.18, yoyo: true, repeat: 1, ease: 'power2.out' }, 3.5);
+        d.pose(tl, 'idle', 4.2, 0.5);
+        mood(tl, 4, 3.4);
+        tl.call(() => d.cup(3), null, 3.4);
       }
 
       if (i === 6) {
-        // back to the game: resumes to 80 % and stalls; he slumps over the laptop
-        stopTyping();
+        // back to the game: resumes to 80 % and stalls; he jabs at it, then sinks onto the laptop
+        tl.call(stopTyping, null, 0);
         tl.to(zAsset, { opacity: 0, duration: 0.3 }, 0);
         const rem = P.gameBlock;
         const gx = AFTER3.gameRest;                                 // the pushed rest starts here
         cutTo(tl, gx + 2, ROW.game, 0.1);
         tl.to([rem.hatch, rem.zig], { opacity: 0, duration: 0.4 }, 0.2);
         const target = (GAME.final - GAME.block) / (1 - GAME.block);
-        tl.call(() => typing(), null, 0.7);
-        const s = { v: 0 };
-        tl.to(s, { v: target, duration: 2, ease: 'power2.out', onUpdate: () => { rem.rfill.setAttribute('width', rem.w * s.v); setPct(P.game, GAME.block + (1 - GAME.block) * s.v); } }, 0.7);
-        tl.to(P.dev.g, { x: gx + rem.w * target + 2, duration: 2, ease: 'power2.out' }, 0.7);
-        tl.call(() => stopTyping(), null, 2.7);
-        arms(tl, -20, 2.7);
-        slump(tl, 32, 3.0, 1.4);                              // down onto the laptop, slowly
-        tl.call(() => cup(4), null, 3.0);
+        d.pose(tl, 'type', 0.5, 0.3);
+        d.face(tl, 'flat', 0.5);
+        tl.call(() => startTyping(1.0), null, 0.7);
+        const sv = { v: 0 };
+        tl.to(sv, { v: target, duration: 2, ease: 'power2.out', onUpdate: () => { rem.rfill.setAttribute('width', rem.w * sv.v); setPct(P.game, GAME.block + (1 - GAME.block) * sv.v); } }, 0.7);
+        tl.to(d.g, { x: gx + rem.w * target + 2, duration: 2, ease: 'power2.out' }, 0.7);
+        tl.call(stopTyping, null, 2.7);
+        d.face(tl, 'frown', 2.7);
+        d.pose(tl, 'chopDown', 2.9, 0.12, 'power4.in');               // jab, jab
+        d.pose(tl, 'type', 3.05, 0.15);
+        d.pose(tl, 'chopDown', 3.3, 0.12, 'power4.in');
+        d.pose(tl, 'type', 3.45, 0.15);
+        d.slump(tl, 30, 3.8, 1.6);
+        d.pose(tl, 'slumpDesk', 3.8, 1.6, 'sine.inOut');
+        d.face(tl, 'tired', 4.2);
+        mood(tl, 3, 3.6);
         // the bar keeps trying for 81 %
         const cs = { v: target };
         const nudge = target + 5 / rem.w;
         tl.call(() => loops.push(gsap.timeline({ repeat: -1, repeatDelay: 1.6 })
           .to(cs, { v: nudge, duration: 1.1, ease: 'sine.inOut', onUpdate: () => rem.rfill.setAttribute('width', rem.w * cs.v) })
-          .to(cs, { v: target, duration: 0.2, ease: 'power3.in', onUpdate: () => rem.rfill.setAttribute('width', rem.w * cs.v) })), null, instant ? 0 : 3.2);
+          .to(cs, { v: target, duration: 0.2, ease: 'power3.in', onUpdate: () => rem.rfill.setAttribute('width', rem.w * cs.v) })), null, instant ? 0 : 5.4);
       }
 
       if (i === 7) {
         // three pipelines, one developer: a spotlight hops between rows, and so does he
-        stopTyping();
+        tl.call(stopTyping, null, 0);
         const spot = D.el('rect', { x: 100, y: ROW.game - 40, width: 1430, height: 80, rx: 10, style: 'fill: var(--accent-2)', opacity: 0, 'data-bg': '' }, svg);
         svg.insertBefore(spot, svg.firstChild.nextSibling);
         tl.to(spot, { opacity: 0.08, duration: 0.4 }, 0);
-        slump(tl, 14, 0, 0.5);
+        d.slump(tl, 12, 0, 0.6);
+        d.pose(tl, 'idle', 0, 0.6);
+        d.desk(tl, false, 0.2);
         const gEnd = AFTER3.gameRest + P.gameBlock.w * ((GAME.final - GAME.block) / (1 - GAME.block));
         const at = { game: [gEnd + 2, ROW.game], asset: [AFTER3.assetRest + P.assetBlock.w + 2, ROW.asset], tex: [TEX.x + TEX.w + 12, ROW.tex] };
         const order = ['asset', 'tex', 'game', 'tex', 'asset', 'game'];
-        P.th = think(tl, 'Hvilken nå?', 0.6);
+        P.th = d.think(tl, 'Hvilken nå?', 0.6);
         const hop = gsap.timeline({ repeat: -1 });
         order.forEach((r, k) => {
-          hop.to(spot, { attr: { y: at[r][1] - 40 }, duration: 0.35, ease: 'power3.inOut' }, k * 0.9 + 0.4);
-          hop.to(P.dev.g, { opacity: 0, duration: 0.15 }, k * 0.9 + 0.4);
-          hop.set(P.dev.g, { x: at[r][0], y: at[r][1] + BH / 2 }, k * 0.9 + 0.55);
-          hop.to(P.dev.g, { opacity: 1, duration: 0.15 }, k * 0.9 + 0.6);
+          const t0 = k * 1.1 + 0.4;
+          hop.to(spot, { attr: { y: at[r][1] - 40 }, duration: 0.35, ease: 'power3.inOut' }, t0);
+          hop.to(d.g, { opacity: 0, duration: 0.15 }, t0);
+          hop.set(d.g, { x: at[r][0], y: at[r][1] + BH / 2 }, t0 + 0.15);
+          hop.to(d.g, { opacity: 1, duration: 0.15 }, t0 + 0.2);
+          // a look left, a look right: which one?
+          [['lookL', 0.45], ['lookR', 0.75]].forEach(([n, dt]) => {
+            const sub = gsap.timeline(); d.pose(sub, n, 0, 0.2); hop.add(sub, t0 + dt);
+          });
         });
         tl.call(() => loops.push(hop), null, 1.2);
         if (instant) hop.pause(0);
@@ -533,19 +545,21 @@ export default {
 
       if (i === 8) {
         // his answer to too many pipelines: another pipeline. Then the dive into his screen.
-        stopTyping();
+        tl.call(stopTyping, null, 0);
         tl.to([P.dl.grp, P.th], { opacity: 0, duration: 0.4 }, 0);
         const R4 = 652;
         tl.to(P.spot, { attr: { y: R4 - 40 }, duration: 0.5, ease: 'power3.inOut' }, 0.2);
         P.pick = pipeline({ x: TEX.x + TEX.w, w: 3 * MW }, R4, '#7fd0ff', 'Pipeline-velger');
         gsap.set(P.pick.track, { attr: { width: 0 } }); gsap.set(P.pick.lbl, { opacity: 0 });
-        slump(tl, 4, 0.3, 0.4);
-        let t = place(P.pick, TEX.x + TEX.w, R4, 0.4, 4);
-        tl.call(() => typing(), null, t);
+        // an idea: he straightens up
+        d.slump(tl, 2, 0.3, 0.5);
+        d.face(tl, 'o', 0.3);
+        const t = place(P.pick, TEX.x + TEX.w, R4, 0.5, { tired: false });
+        d.face(tl, 'smile', t);
+        tl.call(() => startTyping(1.4), null, t);
         tl.set(P.pick.pct, { opacity: 0 }, t); // 6 % is too short for a label, and he stands there
         tl.add(fillTo(P.pick, 0.06, 0.8), t);
-        P.th = think(tl, 'Løsningen: én pipeline til.', t + 0.4, 2.0); // gone before the dive, so the screen is clear
-        // the dive: the laptop screen holds this whole chart, which holds it again, and so on
+        P.th = d.think(tl, 'Løsningen: én pipeline til.', t + 0.4, 2.0); // gone before the dive
         tl.call(() => { if (!instant && !ctx.deck?.instant) dive(); }, null, t + 2.6);
       }
 
@@ -561,6 +575,6 @@ export default {
     };
 
     const s = D.stepper(ctx, { reset, play });
-    return { ...s, dispose() { loops.forEach((l) => l.kill()); zoomer?.kill(); canvas = null; } };
+    return { ...s, dispose() { loops.forEach((l) => l.kill()); loops2.forEach((l) => l.kill()); typer?.kill(); zoomer?.kill(); canvas = null; } };
   },
 };
