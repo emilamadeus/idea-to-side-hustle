@@ -46,6 +46,11 @@ export const HELP = {
     'Alle krav er krysset av, men det er ikke det du så for deg.',
     'Med et bilde treffer den nesten det du så for deg.',
   ],
+  commits: [
+    'Hvert ferdige steg blir et lagringspunkt.',
+    'En feil sving ødelegger det som virket.',
+    'Ett steg tilbake, i stedet for å rydde opp.',
+  ],
   'game-ref': [
     'Ekte referanser: hele huset, og detaljene hver for seg.',
     'Resultatet i spillet ligger tett på referansen.',

@@ -11,6 +11,7 @@ import mdFiles from './md-files.js';
 import goal from './goal.js';
 import visualRef from './visual-ref.js';
 import gameRef from './game-ref.js';
+import commits from './commits.js';
 import fullScope from './full-scope.js';
 import sideQuest from './side-quest.js';
 import alwaysWorking from './always-working.js';
@@ -42,7 +43,7 @@ import projects from './projects.js';
 const STAGED = [
   [validate],                                   // Idé
   [spec, fullScope, planning, mdFiles],         // Plan
-  [readyToBuild, prototypes, visualRef, goal],  // Bygg
+  [readyToBuild, prototypes, visualRef, goal, commits],  // Bygg
   [selfCheck, show, fails],                     // Kvalitet
   [projects, launch],                           // Lansering
 ];

@@ -52,6 +52,8 @@ Point: models check off text bullet points instead of reaching the actual target
   2. Result satisfies every bullet and is clearly wrong: one wall is entirely window, open plan includes the bathroom, a fireplace in every room. Every box ticked.
   3. A concept image slides in from the side. The build reshapes to match it. Same AI, different target.
 
+## Commit after every step [agreed] — built (src/slides/commits.js): the firewood subscription. "Commit etter hvert ferdige steg." turns Bydeler, Kunder, Abonnement into save points on a line with HEAD; tests green. "Lag pause-funksjonen." is committed but turns Abonnement and Leveringsdager red. "Gå tilbake ett steg." drops the bad commit, HEAD back on Abonnement, all green; then pause again without touching the delivery days, committed green.
+
 ## Give the full scope before starting [given]
 Point: scope changes the core implementation. Step-by-step on a big task means each step patches the last.
 - Storyboard [proposed]: drawing revisions (REV A, B, C …) in the title block.
@@ -268,7 +270,7 @@ Title: "Fra idé til startup, med AI".
 0. Cold open (src/slides/opening.js): "Jeg ville finne ut om AI kunne bidra til et hobbyprosjekt." The wish (a finish flag in a thought), then 15 projects as progress bars: one over the finish line, fourteen stopping just short. No mention of the game here.
 1. Idé: validate the idea (src/slides/validate.js: first the idea itself, drawn: a truck loaded with logs drives up to a city house and unloads them at the door, one by one; below, every 14 days all winter; then the everyday idea is run through four checks one card at a time: customer, willingness to pay, competition, can you build and deliver. The last one comes back yellow: winter only, so start small. Then the bigger picture: AI covers every link of the value chain with little capital, but everyone gets the same tools, so the market fills up; the openings are a niche or a product that reaches very many customers. Illustrative answers)
 2. Plan: living spec → full scope → batched planning → instruction files
-3. Bygg: ready to build (src/slides/ready-to-build.js: a checklist, all ticked: Hva vi skal lage, Hvem er kundene?, Kjernefunksjon, Levende kravspec, Instruksjonsarkitektur; stamped GODKJENT FOR BYGGING, then "Start.") → prototypes → visual references → describe the goal
+3. Bygg: ready to build (src/slides/ready-to-build.js: a checklist, all ticked: Hva vi skal lage, Hvem er kundene?, Kjernefunksjon, Levende kravspec, Instruksjonsarkitektur; stamped GODKJENT FOR BYGGING, then "Start.") → prototypes → visual references → describe the goal → commit after every step
 4. Kvalitet: self-check → show, don't describe → where it fails
 5. Lansering: live projects → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells)
 Part 2, Arbeidsflyt (divider "Del 2"): parallel sessions → helpers → watchdog → remote and cloud sessions → model and effort → follow the gateway team
