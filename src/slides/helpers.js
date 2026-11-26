@@ -9,7 +9,8 @@ import { codeApp } from '../engine/console.js';
     1. A research helper: a short Task block comes back in seconds, the lead uses the answer.
     2. A whole job to a helper, in the background. The lead carries on with its own work.
        The helper panel keeps showing it running, past two hours; it never reports back.
-    3. The lead has to break off its own work to check on the helper: done 40 minutes ago.
+    3. You ask the lead whether the helper is done yet; it has to break off its own work to
+       check: done 40 minutes ago.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–260
@@ -88,15 +89,16 @@ export default {
       }
 
       if (i === 3) {
-        // the lead breaks off its own work to go and check
         const t = P.t;
-        P.spin.end(tl, 0.3, '■ Avbrutt: eksport', 'dim');
-        t.fadeOld(tl, 0.6);
-        t.say(tl, 'Fakturamodulen har ikke svart. Sjekker.', 0.9);
-        t.tool(tl, 'TaskOutput', 'fakturamodul', 'Ferdig for 40 min siden. 12 filer.', 1.6, { tone: '#8fe3a2' });
-        P.h2.run(tl, 0, { from: 2 * 3600 + 14 * 60, to: 2 * 3600 + 16 * 60, dur: 2.0 });
-        P.h2.done(tl, 2.2, 'hentet');
-        t.say(tl, 'Tilbake til eksporten.', 3.0);
+        // you ask; the lead has to stop its own work to find out
+        t.fadeOld(tl, 0.1);
+        t.user(tl, 'Er ikke fakturamodulen ferdig ennå?', 0.3);
+        P.spin.end(tl, 1.0, '■ Avbrutt: eksport', 'dim');
+        t.say(tl, 'Vet ikke. Avbryter eksporten og sjekker.', 1.3);
+        t.tool(tl, 'TaskOutput', 'fakturamodul', 'Ferdig for 40 min siden. 12 filer.', 2.2, { tone: '#8fe3a2' });
+        P.h2.run(tl, 0, { from: 2 * 3600 + 14 * 60, to: 2 * 3600 + 16 * 60, dur: 2.4 });
+        P.h2.done(tl, 2.6, 'hentet');
+        t.say(tl, 'Tilbake til eksporten.', 3.4);
       }
       return tl;
     };
