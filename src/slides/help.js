@@ -37,7 +37,7 @@ export const HELP = {
   goal: [
     'Du dikterer hver tekniske beslutning.',
     'Den følger stegene dine, også når de er feil.',
-    'Beskriv kravet: den finner løsninger du ikke kjente til.',
+    'Beskriv kravet: den finner løsninger du ikke kjente til, eller tenkte på.',
   ],
   'visual-ref': [
     'Fire ord i prompten. Bildet i hodet ditt følger ikke med.',
