@@ -61,10 +61,11 @@ export function chapter(k) {
 }
 
 /*
-  Part divider for what comes after the journey (Arbeidsflyt, Bak kulissene): the name, and
-  the finished journey as a small line underneath, all stations filled.
+  Part divider for what comes after the journey (Arbeidsflyt, Bak kulissene, Ekte prosjekter):
+  the name, and the talk's parts as a small line underneath. Parts behind us are filled, this
+  one is lit, later ones wait. parts = every part's name, the journey first.
 */
-export function part(n, name) {
+export function part(n, name, parts = ['Reisen', name]) {
   return {
     id: `del-${n}`,
     title: `Del ${n} · ${name}`,
@@ -85,13 +86,16 @@ export function part(n, name) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(nm, { stagger: 0.03 }), 0);
-        // the journey behind us: small, all stations filled
-        const x0 = 560, x1 = 1040, y = 600, sxx = (j) => x0 + (j * (x1 - x0)) / (STAGES.length - 1);
+        // where we are in the talk: the parts as a small line
+        const cur = n - 1;
+        const x0 = 470, x1 = 1130, y = 600, sxx = (j) => x0 + (j * (x1 - x0)) / Math.max(1, parts.length - 1);
         const g = D.g(svg, { 'data-unit': '' });
-        D.p(g, `M${x0} ${y} H${x1}`, '', { style: 'fill: none; stroke: var(--muted)', 'stroke-width': 3, 'stroke-linecap': 'round', 'data-bg': '' });
-        STAGES.forEach((s2, j) => {
-          D.el('circle', { cx: sxx(j), cy: y, r: 8, style: 'fill: var(--muted); stroke: var(--muted)', 'stroke-width': 2 }, g);
-          D.text(g, sxx(j), y + 40, s2, 'pst', { 'text-anchor': 'middle', style: 'font: 600 17px var(--font-display); fill: #6b5a48' });
+        D.p(g, `M${x0} ${y} H${x1}`, '', { style: 'fill: none; stroke: #4a3c30', 'stroke-width': 3, 'stroke-linecap': 'round', 'data-bg': '' });
+        D.p(g, `M${x0} ${y} H${sxx(cur)}`, '', { style: 'fill: none; stroke: var(--muted)', 'stroke-width': 3, 'stroke-linecap': 'round', 'data-bg': '' });
+        parts.forEach((p2, j) => {
+          const now = j === cur, past = j < cur;
+          D.el('circle', { cx: sxx(j), cy: y, r: now ? 11 : 8, style: now ? 'fill: var(--accent); stroke: var(--accent)' : past ? 'fill: var(--muted); stroke: var(--muted)' : 'fill: var(--bg, #120905); stroke: #6b5a48', 'stroke-width': 2.5 }, g);
+          D.text(g, sxx(j), y + 42, p2, 'pst', { 'text-anchor': 'middle', style: `font: ${now ? 700 : 600} 17px var(--font-display); fill: ${now ? 'var(--accent)' : past ? 'var(--muted)' : '#6b5a48'}` });
         });
         tl.fromTo(g, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.4);
         return tl;

@@ -58,7 +58,7 @@ export const slides = [
   title,
   opening, // cold open: the idea, and where it ended up
   ...STAGED.flatMap((group, k) => [chapter(k), ...group.map((s) => Object.assign(s, { stage: k }))]),
-  ...PARTS.flatMap((p, k) => [part(k + 2, p.name), ...p.slides.map((s) => Object.assign(s, { part: p.name }))]),
+  ...PARTS.flatMap((p, k) => [part(k + 2, p.name, ['Reisen', ...PARTS.map((q) => q.name)]), ...p.slides.map((s) => Object.assign(s, { part: p.name }))]),
   takeaways, // closing: every standalone tip on one page
 ];
 
