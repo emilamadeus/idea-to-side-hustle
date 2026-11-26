@@ -10,6 +10,7 @@ import title from './00-title.js';
 import mdFiles from './md-files.js';
 import goal from './goal.js';
 import visualRef from './visual-ref.js';
+import gameRef from './game-ref.js';
 import fullScope from './full-scope.js';
 import sideQuest from './side-quest.js';
 import alwaysWorking from './always-working.js';
@@ -41,13 +42,13 @@ import projects from './projects.js';
 const STAGED = [
   [validate],                                   // Idé
   [spec, fullScope, planning, mdFiles],         // Plan
-  [readyToBuild, goal, prototypes, visualRef],  // Bygg
+  [readyToBuild, prototypes, visualRef, goal],  // Bygg
   [selfCheck, show, fails],                     // Kvalitet
   [projects, launch],                           // Lansering
 ];
 const PARTS = [
   { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, gateway] },
-  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, knowAGuy, alwaysWorking, htmlDeck] },
+  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, knowAGuy, alwaysWorking, htmlDeck] },
 ];
 export const slides = [
   title,
