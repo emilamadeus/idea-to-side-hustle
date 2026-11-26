@@ -162,10 +162,11 @@ export const HELP = {
     'AI gjør hele verdikjeden billig. Derfor blir det trangt.',
   ],
   'go-live': [
-    'Ferdig, men bare på min maskin.',
+    'Lanser før det er perfekt.',
     'Live. Ta frem telefonen.',
     'Bestillingene deres, mens vi ser på.',
     'Bilen kjører. Følg med på telefonen.',
+    'Fra idé til inntekt.',
   ],
   launch: [
     'Ferdig er ikke solgt. Butikksiden må lages.',

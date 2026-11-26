@@ -14,6 +14,8 @@ import { liveMap } from '../engine/livemap.js';
        to frame them all) and as a card in the feed. A small QR stays for latecomers.
     3. "Kjør": a route along real roads (OSRM, through the relay) through every address, drawn
        as the truck drives it. Phones get "Bilen er på vei", then "Levert" at their stop.
+    4. The income: tonight's revenue from the room's own orders counts up over the map.
+       From idea to income.
 
   Live data: a websocket to the relay (ved/src/worker.js) as the deck. URL and key come from
   .env.local (VITE_VED_WS, VITE_VED_KEY, VITE_VED_SITE); without them it stays offline.
@@ -44,18 +46,20 @@ const DEMO = [
   ['Nygata 1', 'Fredrikstad', 59.2181, 10.9298, 'Sander'], ['Storgata 1', 'Tromsø', 69.6492, 18.9553, 'Tiril'], ['Storgata 1', 'Kongsberg', 59.6682, 9.6497, 'Even'],
   ['Storgata 1', 'Bodø', 67.2804, 14.4049, 'Ida'], ['Storgata 1', 'Gjøvik', 60.7957, 10.6916, 'Mats'],
 ];
+const PRICE = 129; // kr per sack, as on the order page (ved/public/index.html)
 const sacks = (n) => `${n} ${n === 1 ? 'sekk' : 'sekker'}`;
 const short = (t, n) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
 
 export default {
   id: 'go-live',
   title: 'Gå live',
-  steps: 4,
+  steps: 5,
   notes: [
     'Siden er ferdig, men den ligger bare på min maskin.',
     'Live. Ta frem telefonen og bestill ved.',
     'Bestillingene kommer inn. Ekte, fra dere. (R spiller av opptak hvis nettet svikter.)',
     'Bilen kjører. Følg med på telefonen.',
+    'Kveldens omsetning, fra dere. Fra idé til inntekt.',
   ],
 
   create(ctx) {
@@ -111,7 +115,17 @@ export default {
     const reframe = () => { clearTimeout(frameTimer); frameTimer = setTimeout(() => P.lm?.frame(), 500); };
     let driving = null;
 
-    const reset = () => { svg.innerHTML = ''; P = {}; driving?.kill(); driving = null; lm?.clear(); gsap.set(mapEl, { opacity: 0 }); };
+    // the income: one big number over the map
+    const revEl = document.createElement('div');
+    revEl.style.cssText = 'position:absolute;left:calc(var(--u)*36.25);top:calc(var(--u)*8.75);width:calc(var(--u)*58.75);height:calc(var(--u)*40);border-radius:calc(var(--u)*1);display:grid;place-content:center;text-align:center;gap:calc(var(--u)*0.8);background:rgba(18,9,5,.78);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;';
+    revEl.innerHTML = `
+      <div style="font:700 calc(var(--u)*1.1)/1 var(--font-mono);letter-spacing:.2em;color:var(--accent)">KVELDENS OMSETNING</div>
+      <div class="rev-n" style="font:800 calc(var(--u)*9)/1 var(--font-display);letter-spacing:-.04em;color:var(--fg)">0 kr</div>
+      <div class="rev-sub" style="font:600 calc(var(--u)*1.6)/1.2 var(--font-display);color:#b8a48e"></div>`;
+    el.append(revEl);
+    const kr = (n) => `${Math.round(n).toLocaleString('nb-NO')} kr`;
+
+    const reset = () => { svg.innerHTML = ''; P = {}; driving?.kill(); driving = null; lm?.clear(); gsap.set([mapEl, revEl], { opacity: 0 }); };
 
     // ---- step 0–1: the browser and the button ----
     function browser() {
@@ -293,6 +307,21 @@ export default {
             }));
           });
         }, null, 0.1);
+      }
+
+      if (i === 4) {
+        // the income: what the room just bought, counted up
+        const total = orders.reduce((n, o) => n + o.sekker * PRICE, 0);
+        const bags = orders.reduce((n, o) => n + o.sekker, 0);
+        const num = revEl.querySelector('.rev-n');
+        revEl.querySelector('.rev-sub').textContent = orders.length
+          ? `${orders.length} ${orders.length === 1 ? 'bestilling' : 'bestillinger'} · ${sacks(bags)} ved · fra dere, i kveld`
+          : 'Ingen bestillinger ennå';
+        const c = { v: 0 };
+        num.textContent = kr(0);
+        tl.to(revEl, { opacity: 1, duration: 0.6 }, 0.1);
+        tl.to(c, { v: total, duration: 2.4, ease: 'power3.out', onUpdate: () => { num.textContent = kr(c.v); } }, 0.5);
+        tl.fromTo(num, { scale: 0.9 }, { scale: 1, duration: 0.5, ease: 'back.out(2)' }, 2.6);
       }
       return tl;
     };
