@@ -192,7 +192,7 @@ export default {
         P.chat.user(tl, 'Per levering.', t + 2.8);
         // ready: it decides the build order itself
         t = P.chat.think(tl, t + 3.4, 1.0);
-        P.chat.reply(tl, 'Da har jeg det jeg trenger. Rekkefølgen:', t);
+        P.chat.reply(tl, 'Da har jeg det jeg trenger.', t);
         P.tok.set(tl, 9, t, 0.6);
         [...P.sheets].sort((p, q) => FINAL.indexOf(p.n) - FINAL.indexOf(q.n)).forEach((sh, k) => {
           tl.fromTo(sh.badge, { opacity: 0, scale: 0.3, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(3)' }, t + 0.4 + k * 0.3);
@@ -208,7 +208,7 @@ export default {
         // the plan comes off the wall, then the whole set is built bottom-up in one pass
         tl.to([P.doc, ...P.sheets.map((sh) => sh.s)], { opacity: 0, duration: 0.4 }, 0.1);
         b.forEach((blk, k) => drop(tl, blk, k, 0.6 + k * 0.4));
-        P.chat.reply(tl, 'Ferdig. Alle seks.', 3.2);
+        P.chat.reply(tl, 'Ferdig.', 3.2);
         P.tok.set(tl, 17, 0.2, 1.6);
       }
       return tl;
