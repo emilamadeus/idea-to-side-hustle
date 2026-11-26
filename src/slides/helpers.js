@@ -8,7 +8,7 @@ import { codeApp } from '../engine/console.js';
     0. The lead works: Read, Edit, Bash, the context fills steadily.
     1. A research helper: a short Task block comes back in seconds, the lead uses the answer.
     2. A whole job to a helper, in the background. The lead carries on with its own work.
-       The background list shows the helper done; nobody tells the lead.
+       The helper panel keeps showing it running, past two hours; it never reports back.
     3. The lead has to break off its own work to check on the helper: done 40 minutes ago.
 
   Layout zones (svg units):
@@ -80,12 +80,11 @@ export default {
         t.agent(tl, 'Bygg fakturamodulen', 'kjører i bakgrunnen', 0.3);
         P.h2 = P.app.helper('Fakturamodul');
         tl.fromTo(P.h2.g, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.3 }, 0.3);
-        P.h2.run(tl, 0.3, { from: 0, to: 38 * 60, dur: 3.0 });
+        // it keeps showing as running: it never reports back
+        P.h2.run(tl, 0.3, { from: 0, to: 2 * 3600 + 14 * 60, dur: 4.6 });
         t.tool(tl, 'Edit', 'src/eksport.ts', '+20 −4', 1.0);
         P.spin = t.spin(tl, 'Lager eksport', 1.4, { from: 0, to: 41 * 60 + 12, dur: 3.6 });
         t.ctx(tl, 320, 1.4, 3.6);
-        // the helper finishes; nothing reaches the lead
-        P.h2.done(tl, 3.3);
       }
 
       if (i === 3) {
@@ -95,6 +94,7 @@ export default {
         t.fadeOld(tl, 0.6);
         t.say(tl, 'Fakturamodulen har ikke svart. Sjekker.', 0.9);
         t.tool(tl, 'TaskOutput', 'fakturamodul', 'Ferdig for 40 min siden. 12 filer.', 1.6, { tone: '#8fe3a2' });
+        P.h2.run(tl, 0, { from: 2 * 3600 + 14 * 60, to: 2 * 3600 + 16 * 60, dur: 2.0 });
         P.h2.done(tl, 2.2, 'hentet');
         t.say(tl, 'Tilbake til eksporten.', 3.0);
       }

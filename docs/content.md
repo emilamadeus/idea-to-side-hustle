@@ -83,7 +83,7 @@ Point: the lead (the active agent in each session) does the work itself. Helpers
 - Storyboard [agreed]: the Claude Code app, one session ("Eksport"); running helpers sit in a right-hand panel, each with its run time.
   1. The lead works itself: Read, Edit, Bash.
   2. A research helper: a "Hjelper · Finn DVR-innlogging" card returns in 12 s; the lead uses the answer.
-  3. A whole job to a helper in the background ("Bygg fakturamodulen"). The lead carries on with its own work; the helper panel shows it done after 38 min; nothing reaches the lead.
+  3. A whole job to a helper in the background ("Bygg fakturamodulen"). The lead carries on with its own work; the helper panel keeps showing it running, past two hours; it never reports back. Only when the lead checks does it turn out to have been done for 40 minutes.
   4. The lead breaks off its own work ("Avbrutt: eksport"), checks the helper: done 40 minutes ago, 12 files. Back to the export.
 
 ## Cross-model loop through a shared file [given]

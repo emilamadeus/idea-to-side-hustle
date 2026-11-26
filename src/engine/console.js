@@ -213,7 +213,11 @@ export function codeApp(parent, x, y, w, h, { sidebar = 250, size = 18, title = 
     path(root, `M${PXL} ${y + bar} V${y + h - 2}`, '', { style: 'fill: none; stroke: #33271d', 'stroke-width': 2 });
     text(root, PXL + 18, y + bar + 30, 'HJELPERE', 'hph', { style: `font: 700 13px var(--font-mono); letter-spacing: .16em; fill: ${C.muted}` });
   }
-  const fmtT = (v) => { v = Math.round(v); const m = Math.floor(v / 60); return m ? `${m}m ${String(v % 60).padStart(2, '0')}s` : `${v}s`; };
+  const fmtT = (v) => {
+    v = Math.round(v); const t = Math.floor(v / 3600), m = Math.floor((v % 3600) / 60);
+    if (t) return `${t}t ${String(m).padStart(2, '0')}m`;
+    return m ? `${m}m ${String(v % 60).padStart(2, '0')}s` : `${v}s`;
+  };
   function helper(name) {
     const hy = y + bar + 50 + helpers.length * 88;
     const g = group(root);
