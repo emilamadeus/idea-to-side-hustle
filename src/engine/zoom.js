@@ -67,7 +67,7 @@ export function createZoom(deck, stage) {
   const panels = defs.map((d, i) => {
     const holder = new THREE.Group();
     const mat = new THREE.MeshBasicMaterial({ color: 0xe6e6e6, transparent: true, opacity: 0, toneMapped: false });
-    loader.load(`/thumbs/${d.id}.jpg`, (t) => { t.colorSpace = THREE.SRGBColorSpace; mat.map = t; mat.needsUpdate = true; },
+    loader.load(`/thumbs/${d.id}.jpg`, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = stage.renderer.capabilities.getMaxAnisotropy(); mat.map = t; mat.needsUpdate = true; },
       undefined, () => { mat.map = fallback(d, i); mat.needsUpdate = true; });
     const mesh = new THREE.Mesh(geo, mat);
     mesh.userData.index = i;

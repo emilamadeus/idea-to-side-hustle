@@ -4,7 +4,7 @@
 //   npm run thumbs       (all slides)   ·   npm run thumbs -- spec validate   (only these)
 //
 // Each slide is shown in a preview window at its picture step (def.thumbStep, default step 0, where
-// a click in the zoom view lands), jumped to that step's end state, and captured at 480×270. Uses the installed Google Chrome.
+// a click in the zoom view lands), jumped to that step's end state, and captured at 1120×630 (sharp at the closest zoom). Uses the installed Google Chrome.
 import { chromium } from 'playwright-core';
 import { mkdir, writeFile } from 'node:fs/promises';
 
@@ -14,7 +14,7 @@ const only = process.argv.slice(2);
 
 await mkdir(OUT, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome' });
-const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 0.3 });
+const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 0.7 });
 await page.goto(DECK);
 await page.waitForFunction(() => window.deck?.defs?.length > 0);
 await page.waitForTimeout(1500);
@@ -33,7 +33,7 @@ for (const d of defs) {
     deck.instant = false;
   }, d);
   await page.waitForTimeout(2200); // entry fades, fonts, live iframes
-  const jpg = await page.screenshot({ type: 'jpeg', quality: 72 });
+  const jpg = await page.screenshot({ type: 'jpeg', quality: 86 });
   await writeFile(new URL(`${d.id}.jpg`, OUT), jpg);
   console.log(`${String(d.i + 1).padStart(2, '0')}  ${d.id}`);
 }
