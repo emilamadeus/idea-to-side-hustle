@@ -127,7 +127,7 @@ export const HELP = {
     'Spillet trenger noe som ikke finnes.',
     'Så det bygges, og spillet venter.',
     'Det nye prosjektet trenger også noe.',
-    'Tre prosjekter, én utvikler.',
+    'Sideprosjektet fikk sitt eget sideprosjekt.',
     'Hvert sideprosjekt blir større enn behovet.',
     'Sideprosjektet ble et produkt.',
     'Det opprinnelige prosjektet står på 80 %.',
