@@ -8,8 +8,9 @@ import { chatPhone, attempt, FILL } from '../engine/props.js';
     0. Without a skill: the same long prompt every time (style, angles, size, file name, folder).
        Four requests come back in four different looks, saved under four random names.
     1. Claude writes the skill once: concept-image-skill, the recipe on one card.
-    2. New session, one line: "concept-image-skill medieval castle furniture 50". Fifty sheets
-       in the same style land in medieval/castle/furniture/.
+    2. New session, one line: "concept-image-skill medieval castle furniture 50". Fifty different
+       pieces (chairs, tables, chests, beds, shelves …), all in the same style, land in
+       medieval/castle/furniture/.
     3. Nobody has to type it: ChatGPT reads the order in the shared file and runs the skill.
        (Sets up the Claude ↔ ChatGPT loop in Bak kulissene.)
 
@@ -40,6 +41,27 @@ function chair(g, x, y, w, h, st) {
   D.el('rect', { x: cx + 17 * s, y: cy + 6 * s, width: 7 * s, height: 30 * s, rx: 2 * s, ...ink }, g);
   D.el('rect', { x: cx - 26 * s, y: cy - 46 * s, width: 30 * s, height: 8 * s, rx: 2 * s, ...ink }, g);  // back rail
 }
+// fifty different pieces in one style: the same palette and line on every sheet, a new piece each time
+const PIECES = [
+  // [x, y, w, h] rects in a 100×100 box, bottom at y 80
+  [[18, 20, 10, 60], [18, 46, 50, 10], [18, 56, 7, 24], [61, 56, 7, 24], [18, 24, 34, 8]],         // chair
+  [[12, 40, 76, 10], [18, 50, 8, 30], [74, 50, 8, 30]],                                            // table
+  [[30, 46, 40, 9], [33, 55, 6, 25], [61, 55, 6, 25], [47, 55, 6, 25]],                            // stool
+  [[8, 50, 84, 9], [12, 59, 7, 21], [81, 59, 7, 21], [8, 38, 84, 6]],                              // bench
+  [[16, 40, 68, 40], [16, 34, 68, 10], [46, 46, 8, 10]],                                           // chest
+  [[24, 12, 52, 68], [49, 16, 2, 60], [40, 42, 6, 8], [54, 42, 6, 8]],                             // cabinet
+  [[8, 50, 84, 16], [8, 30, 10, 50], [82, 44, 10, 36], [20, 44, 22, 8]],                           // bed
+  [[20, 12, 60, 68], [24, 30, 52, 4], [24, 48, 52, 4], [24, 64, 52, 4]],                           // shelf
+  [[30, 24, 40, 56], [27, 34, 46, 5], [27, 66, 46, 5]],                                            // barrel
+  [[46, 22, 8, 50], [34, 72, 32, 8], [40, 14, 20, 8], [47, 4, 6, 10]],                             // candle stand
+];
+function piece(g, x, y, w, h, k, st) {
+  D.el('rect', { x, y, width: w, height: h, rx: 4, style: `fill: ${st.sheet}` }, g);
+  const parts = PIECES[k % PIECES.length];
+  const sc = Math.min(w, h) / 100 * (0.82 + ((k * 37) % 5) * 0.04); // a little variety in size
+  const ox = x + w / 2 - 50 * sc, oy = y + h * 0.5 - 46 * sc;
+  parts.forEach(([px, py, pw, ph]) => D.el('rect', { x: ox + px * sc, y: oy + py * sc, width: pw * sc, height: ph * sc, rx: 1.5, style: `fill: ${st.fill}; stroke: ${st.ink}`, 'stroke-width': 1.4 }, g));
+}
 // the house style the skill fixes
 const HOUSE = { sheet: '#efe4d2', fill: '#c9935a', ink: '#3a2416', sw: 3 };
 // what four free-hand requests came back as
@@ -57,7 +79,7 @@ export default {
   notes: [
     'Uten skill: samme lange prompt hver gang. Fire bestillinger, fire stiler, fire tilfeldige filnavn.',
     'Claude skriver oppskriften én gang: stil, vinkler, format, filnavn, mappe.',
-    'Nå er det én linje. Femti ark, samme stil, rett i riktig mappe.',
+    'Nå er det én linje. Femti forskjellige møbler, samme stil, rett i riktig mappe.',
     'Og ingen trenger å skrive den: ChatGPT leser bestillingen i den delte fila. Mer om den sløyfa senere.',
   ],
 
@@ -137,7 +159,7 @@ export default {
         const tiles = [];
         for (let r = 0; r < 5; r++) for (let q = 0; q < 10; q++) {
           const g = D.g(P.grid);
-          chair(g, 624 + q * 84, 200 + r * 66, 76, 58, HOUSE);
+          piece(g, 624 + q * 84, 200 + r * 66, 76, 58, r * 10 + q * 3 + r, HOUSE);
           tiles.push(g);
         }
         tl.fromTo(tiles, { opacity: 0, scale: 0.6, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.25, stagger: 0.03, ease: 'back.out(2)' }, t + 0.3);
