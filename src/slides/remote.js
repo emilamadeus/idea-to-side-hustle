@@ -10,19 +10,23 @@ import { codeApp } from '../engine/console.js';
        the wait runs to 2 h 40 min.
     1. Attempt 2 (new session), notifications: same question; the phone lights up, you open
        it there and answer "Ja"; the laptop session carries on.
-    2. You close the laptop. The session runs on in the cloud; the phone shows it finishing.
+    2. Cloud sessions when the machine isn't running: you start one from the phone; it runs in
+       the cloud (clone, edit, test) and delivers a pull request on GitHub; the phone shows it.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     phone      x 126–394, y 248–768 (screen inset 8; status bar y +24–40; home bar y PH-18)
     attempt    x 560–960, y 120–154
-    app        x 560–1480, y 170–760 (step 2: closed laptop y 712–742; cloud x 600–1420,
-               y 220–640, with the session inside x 760–1280, y 330–600)
+    app        x 560–1480, y 170–760
+    step 2     arrow x 404–486; cloud x 470–1170, y 240–650 with the session x 560–1060,
+               y 360–620; arrow x 1124–1176; GitHub card x 1186–1480, y 360–590
 */
 
 const AX = 560, AY = 170, AW = 920, AH = 590;
 const PX = 130, PY = 248, PW = 260, PH = 520;
 const OK = '#8fe3a2', WARN = '#ffd23f', FG = '#f3e9da', MUTED = '#9a8a78';
+const TIP0 = 'Remote sessions<br>med <em>notifikasjoner</em>.';
+const TIP2 = '<em>Cloud sessions</em> når<br>maskinen ikke kjører.';
 
 export default {
   id: 'remote',
@@ -31,19 +35,19 @@ export default {
   notes: [
     'Uten varsler: sessionen spør om noe og venter. Du er et annet sted. To timer og førti minutter.',
     'Med varsler: telefonen lyser opp, du svarer ja derfra, sessionen går videre.',
-    'Lukk laptopen. Den fortsetter i skyen, og du ser den bli ferdig på telefonen.',
+    'Maskinen er av? Start en cloud session fra telefonen. Den kloner, retter, tester og leverer en PR på GitHub.',
   ],
 
   create(ctx) {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Fjernstyring</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2)">Få beskjed når den<br><em>trenger deg</em>.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2)">${TIP0}</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
 
-    const reset = () => { svg.innerHTML = ''; P = {}; };
+    const reset = () => { svg.innerHTML = ''; P = {}; tip.innerHTML = TIP0; gsap.set(tip, { opacity: 1 }); };
     const mono = (wt, sz, c) => ({ style: `font: ${wt} ${sz}px var(--font-mono); fill: ${c}` });
 
     // your phone: lock screen, notifications, and the session opened remotely
@@ -172,41 +176,67 @@ export default {
       }
 
       if (i === 2) {
-        // close the laptop: the session moves to the cloud and finishes there
-        const r = P.L.app.root;
-        tl.to(r, { scaleY: 0.03, transformOrigin: '50% 100%', duration: 0.6, ease: 'power2.in' }, 0.3);
-        tl.to(r, { opacity: 0, duration: 0.3 }, 0.9);
-        // the closed laptop, and the session carrying on in the cloud
-        const lap = D.g(svg, { 'data-bg': '' });
-        D.p(lap, rr(860, 712, 320, 14, [4, 4, 2, 2]), '', { style: 'fill: #4b4f57; stroke: #1a120c', 'stroke-width': 2.5 });
-        D.p(lap, 'M840 726 H1200 L1186 742 H854 Z', '', { style: 'fill: #3a3d44; stroke: #1a120c', 'stroke-width': 2.5 });
-        tl.fromTo(lap, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.9);
-        const sky = D.g(svg, { 'data-bg': '' });
-        D.p(sky, 'M690 630 C610 630 600 520 680 500 C650 400 740 330 830 362 C850 250 1010 220 1060 300 C1110 220 1290 250 1290 350 C1380 350 1420 470 1350 515 C1420 560 1380 640 1300 630 Z', '', { style: 'fill: #121a20; stroke: #6fa8c8', 'stroke-width': 3 });
-        tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.1);
-        const C = codeApp(svg, 760, 330, 520, 270, { size: 16, sidebar: 150, title: 'Claude Code · sky' });
-        const ck = C.session('kamera', 'Kamera-API', 'work');
-        ck.ctx(tl, 160, 1.4, 0.1);
-        C.show(tl, 'kamera', 1.4);
-        tl.fromTo(C.root, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.4);
-        const cs = ck.spin(tl, 'npm test', 1.6, { from: 0, to: 9 * 60, dur: 1.6 });
-        cs.end(tl, 3.3, '✓ Ferdig. 41 bestått.', 'ok');
-        ck.state(tl, 'done', 3.3);
+        // cloud sessions: started from the phone, run in the cloud, delivered to GitHub
+        tl.to(tip, { opacity: 0, duration: 0.25 }, 0);
+        tl.call(() => { tip.innerHTML = TIP2; }, null, 0.25);
+        tl.to(tip, { opacity: 1, duration: 0.35 }, 0.3);
+        tl.to([P.L.app.root, P.att.g], { opacity: 0, duration: 0.4 }, 0);
+        // the phone: a new session, in the cloud
         const a = P.ph.app;
-        tl.to([...a.children].slice(5), { opacity: 0.3, duration: 0.3 }, 1.0);
-        const cloud = D.g(a);
-        D.p(cloud, rr(PX + 18, PY + 310, 110, 28, [14, 14, 14, 14]), '', { style: 'fill: #22303a; stroke: #6fa8c8', 'stroke-width': 2 });
-        D.text(cloud, PX + 73, PY + 329, 'i skyen', 'pc', { 'text-anchor': 'middle', ...mono(700, 14, '#9fd3ff') });
-        tl.fromTo(cloud, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.3);
-        const lines = D.g(a);
-        const sp = D.text(lines, PX + 26, PY + 370, '', 'ps', mono(700, 16, '#ff7a2f'));
-        const st = { v: 0 };
-        tl.fromTo(lines, { opacity: 0 }, { opacity: 1, duration: 0.2 }, 1.6);
-        tl.fromTo(st, { v: 0 }, { v: 9 * 60, duration: 1.6, ease: 'none', onUpdate: () => { sp.textContent = `✻ npm test … ${Math.floor(st.v / 60)}m`; } }, 1.6);
-        tl.call(() => { sp.textContent = '✓ Ferdig'; sp.setAttribute('style', `font: 700 16px var(--font-mono); fill: ${OK}`); }, null, 3.3);
-        const done = D.text(lines, PX + 26, PY + 396, '41 tester bestått.', 'pf', mono(400, 15, '#cfc3b2'));
-        tl.fromTo(done, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.3);
-        tl.to(P.ph.g, { x: 4, duration: 0.05, repeat: 7, yoyo: true }, 3.4);
+        tl.to([...a.children].slice(5), { opacity: 0, duration: 0.3 }, 0.3);
+        const ph = D.g(a);
+        const head = D.text(ph, PX + 26, PY + 100, 'Varsel-feil', 'ph2', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
+        D.p(ph, rr(PX + 18, PY + 130, 110, 28, [14, 14, 14, 14]), '', { style: 'fill: #22303a; stroke: #6fa8c8', 'stroke-width': 2 });
+        D.text(ph, PX + 73, PY + 149, 'i skyen', 'pc', { 'text-anchor': 'middle', ...mono(700, 14, '#9fd3ff') });
+        const bub = D.g(ph);
+        D.p(bub, rr(PX + 54, PY + 176, PW - 72, 60, [16, 16, 4, 16]), '', { style: 'fill: #3a2d22' });
+        ['Fiks varsel-feilen.', 'Lag en PR.'].forEach((l, k) => D.text(bub, PX + 68, PY + 200 + k * 22, l, 'pu2', { style: 'font: 400 16px var(--font-display); fill: #f3e9da' }));
+        tl.to(a.children[1], { opacity: 0, duration: 0.2 }, 0.3);
+        tl.fromTo([head, ...[...ph.children].slice(1, 3)], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.5);
+        tl.fromTo(bub, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3 }, 0.8);
+        // phone → cloud
+        const arrow = (x1, x2, y) => {
+          const g = D.g(svg, { 'data-bg': '' });
+          D.p(g, `M${x1} ${y} H${x2 - 12}`, '', { style: 'fill: none; stroke: #6fa8c8', 'stroke-width': 3, 'stroke-dasharray': '8 7' });
+          D.p(g, `M${x2 - 14} ${y - 8} L${x2} ${y} L${x2 - 14} ${y + 8} Z`, '', { style: 'fill: #6fa8c8' });
+          return g;
+        };
+        const a1 = arrow(PX + PW + 14, 486, 470);
+        tl.fromTo(a1, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.2);
+        // the cloud, working
+        const sky = D.g(svg, { 'data-bg': '' });
+        D.p(sky, 'M560 640 C480 640 470 540 540 520 C510 420 600 350 690 382 C700 270 860 240 900 320 C950 240 1090 270 1080 370 C1130 380 1140 470 1100 510 C1140 560 1120 650 1060 640 Z', '', { style: 'fill: #121a20; stroke: #6fa8c8', 'stroke-width': 3 });
+        tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.3);
+        const C = codeApp(svg, 560, 360, 500, 260, { size: 16, sidebar: 140, title: 'Claude Code · sky' });
+        const ck = C.session('varsel', 'Varsler', 'work');
+        ck.ctx(tl, 90, 1.6, 0.1);
+        C.show(tl, 'varsel', 1.6);
+        tl.fromTo(C.root, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.6);
+        ck.tool(tl, 'Bash', 'git clone', 'kamera-api', 2.0);
+        ck.tool(tl, 'Edit', 'varsler.ts', '+6 −2', 2.6);
+        ck.tool(tl, 'Bash', 'npm test', '41 bestått', 3.2);
+        ck.state(tl, 'done', 3.8);
+        // cloud → GitHub
+        const a2 = arrow(1140, 1180, 470);
+        tl.fromTo(a2, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.9);
+        const gh = D.g(svg, { 'data-unit': '' });
+        D.p(gh, rr(1186, 360, 294, 230, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--fg)', 'stroke-width': 2.5 });
+        D.text(gh, 1206, 396, 'GitHub', 'gh', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
+        D.text(gh, 1206, 420, 'kamera-api', 'gr', mono(400, 15, MUTED));
+        D.p(gh, `M1200 436 H1466`, '', { style: 'fill: none; stroke: #30363d', 'stroke-width': 2 });
+        D.p(gh, rr(1206, 452, 76, 26, [13, 13, 13, 13]), '', { style: 'fill: #238636' });
+        D.text(gh, 1244, 470, 'Open', 'go', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-display); fill: #fff' });
+        D.text(gh, 1292, 471, '#142', 'gn', mono(700, 16, MUTED));
+        D.text(gh, 1206, 508, 'Fiks varsel-feilen', 'gt', { style: 'font: 700 17px var(--font-display); fill: #f3e9da' });
+        D.text(gh, 1206, 540, '✓ 41 tester bestått', 'gc', mono(700, 15, OK));
+        D.text(gh, 1206, 566, '+6 −2 · 1 fil', 'gf', mono(400, 14, MUTED));
+        tl.fromTo(gh, { opacity: 0, x: 16 }, { opacity: 1, x: 0, duration: 0.4 }, 4.1);
+        // and back on the phone
+        const done = D.g(ph);
+        D.text(done, PX + 26, PY + 274, '✓ PR #142 klar', 'pd2', mono(700, 16, OK));
+        D.text(done, PX + 26, PY + 298, '41 tester bestått.', 'pd3', mono(400, 15, '#cfc3b2'));
+        tl.fromTo(done, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 4.6);
+        tl.to(P.ph.g, { x: 4, duration: 0.05, repeat: 7, yoyo: true }, 4.6);
       }
       return tl;
     };

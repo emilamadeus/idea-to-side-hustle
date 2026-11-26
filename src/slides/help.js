@@ -74,7 +74,7 @@ export const HELP = {
   remote: [
     'Uten varsel står jobben stille til du tilfeldigvis sjekker.',
     'Med varsel tar en beslutning sekunder, uansett hvor du er.',
-    'I skyen fortsetter den, selv med laptopen lukket.',
+    'Claude tilbyr cloud-jobbing direkte fra telefonen.',
   ],
   'always-working': [
     'Bivirkningen av sessions som alltid sier fra.',
