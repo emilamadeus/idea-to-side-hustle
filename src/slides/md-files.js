@@ -11,7 +11,8 @@ import { speech, chatPhone, meter, FILL } from '../engine/props.js';
                section nobody maintains decides what it does; you correct it.
     several  : a short CLAUDE.md points to a cabinet; opens three drawers; done.
                A new session continues from STATUS / HANDOFF.
-  Twist: STATUS is three days old; the new session starts on login, which is done.
+  Example: the firewood subscription (a new district). Twist: STATUS is three days old; the
+  new session starts on pause, which is done.
          "Du har helt rett!" The fix: updating STATUS is part of finishing a task.
 
   One case at a time: each case is drawn in its own column coordinates (below) and
@@ -42,10 +43,10 @@ export default {
   notes: [
     'Tre like AI-arbeidere, samme oppgave. Forskjellen er instruksjonsfilene.',
     'Ingen filer: den spør om alt. Du forklarer fire ganger. Den installerer med feil verktøy.',
-    'Én fil: den leser hele CLAUDE.md hver gang, også faktura og release. En gammel linje om sensorer styrer.',
+    'Én fil: den leser hele CLAUDE.md hver gang, også Vipps og release. En gammel linje om bydeler styrer.',
     'Flere filer: en kort CLAUDE.md peker videre. Den åpner bare skuffene den trenger.',
     'Nye sessions fortsetter der forrige slapp, fra STATUS og HANDOFF.',
-    'STATUS er tre dager gammel. Ny session starter på login, som er ferdig. «Du har helt rett!»',
+    'STATUS er tre dager gammel. Ny session starter på pause, som er ferdig. «Du har helt rett!»',
     'Derfor: oppdatering av filene er en del av oppgaven. Da stemmer de for neste session.',
   ],
 
@@ -111,7 +112,7 @@ export default {
         // the app flow: what Claude says while it works lives in this conversation
         const chat = chatPhone(svg, 80, 262, 440, 306, { app: 'Claude', compact: true, size: 18 });
         tl.fromTo(chat.root, { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.5, ease: 'back.out(2)' }, 0.3);
-        chat.user(tl, 'Legg til ny sensortype.', 0.7);
+        chat.user(tl, 'Legg til en ny bydel.', 0.7);
         P.chat = chat;
         // the case list
         P.tabs = CASES.map((c, k) => {
@@ -153,7 +154,7 @@ export default {
       if (i === 1) {
         // 0 files: asks everything; you explain again and again; wrong tool anyway
         const { g, agent, cx } = P.cols[0];
-        const qs = ['pnpm eller npm?', 'Hvor ligger testene?', 'Hvilket mønster?', 'Hvor ligger testene?'];
+        const qs = ['pnpm eller npm?', 'Hvor ligger testene?', 'Hvor ligger bydelene?', 'Hvor ligger testene?'];
         const tally = D.g(g, { 'data-unit': '', opacity: 0 });
         D.text(tally, 400, 456, 'FORKLART', 'cnl', { style: 'font: 700 14px var(--font-mono); letter-spacing: .14em; fill: var(--note)' });
         const counter = D.text(tally, 400, 506, '', 'cnt', { style: 'font: 800 48px var(--font-display); fill: var(--note)' });
@@ -191,7 +192,7 @@ export default {
         D.el('rect', { x: DX, y: DY, width: DW, height: DH, rx: 4, style: `fill: ${PAPER}` }, doc);
         D.el('rect', { x: DX, y: DY, width: DW, height: 24, rx: 4, style: 'fill: #c9ad92' }, doc);
         D.text(doc, DX + DW / 2, DY + 17, 'CLAUDE.md', 'dn', { 'text-anchor': 'middle', style: 'font: 700 13px var(--font-mono); fill: #1a120c' });
-        const SECTIONS = ['Faktura', 'Release', 'Design', 'Sensorer', 'Drift', 'Gamle notater'];
+        const SECTIONS = ['Vipps', 'Release', 'Design', 'Bydeler', 'Ruter', 'Gamle notater'];
         let lines = '';
         SECTIONS.forEach((h, k) => {
           const y = DY + 46 + k * 68;
@@ -199,7 +200,7 @@ export default {
           for (let r = 0; r < 4; r++) lines += `M${DX + 10} ${y + 12 + r * 11} H${DX + 70 + ((k * 31 + r * 17) % 45)} `;
         });
         D.p(doc, lines, '', { style: 'fill: none; stroke: #b9a88f', 'stroke-width': 3, 'stroke-linecap': 'round' });
-        // the outdated line in "Sensorer"
+        // the outdated line in "Bydeler"
         const stale = D.el('rect', { x: DX + 4, y: DY + 46 + 3 * 68 + 15, width: DW - 8, height: 14, rx: 3, style: 'fill: none; stroke: #c4405e', 'stroke-width': 3, opacity: 0 }, doc);
         tl.fromTo(doc, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0);
         // the reading highlight sweeps through every section; the tokens follow
@@ -213,13 +214,13 @@ export default {
         const c = P.chat;
         // each case is its own clean session with the same prompt
         c.clear(tl, 0);
-        c.user(tl, 'Legg til ny sensortype.', 0.15, { label: 'NY SESSION' });
+        c.user(tl, 'Legg til en ny bydel.', 0.15, { label: 'NY SESSION' });
         c.reply(tl, 'Leser hele CLAUDE.md.', 0.5);
         tl.to(stale, { opacity: 1, duration: 0.15, repeat: 3, yoyo: true }, 3.0);
         tl.set(stale, { opacity: 1 }, 3.6);
-        c.reply(tl, 'Følger CLAUDE.md: registrerer sensoren i sensors.json.', 3.2);
+        c.reply(tl, 'Følger CLAUDE.md: legger bydelen i bydeler.json.', 3.2);
         agent.expr(tl, { eyes: 'open', brows: 'neutral', mouth: 'smile' }, 3.2);
-        c.user(tl, 'Vi sluttet med sensors.json i mars.', 4.4);
+        c.user(tl, 'Vi sluttet med bydeler.json i mars.', 4.4);
         const t = c.think(tl, 5.0, 1.0);
         c.reply(tl, 'Du har helt rett. Den linjen er utdatert. Jeg gjør det om.', t);
         agent.expr(tl, { eyes: 'down', brows: 'raised', mouth: 'neutral' }, t);
@@ -232,7 +233,7 @@ export default {
         tl = gsap.timeline(); main.add(tl, 0.9);
         const { g, agent, cx } = P.cols[2];
         P.chat.clear(tl, 0);
-        P.chat.user(tl, 'Legg til ny sensortype.', 0.15, { label: 'NY SESSION' });
+        P.chat.user(tl, 'Legg til en ny bydel.', 0.15, { label: 'NY SESSION' });
         const card = D.g(g, { 'data-unit': '' });
         D.el('rect', { x: cx - 150, y: 588, width: 110, height: 44, rx: 3, style: `fill: ${PAPER}` }, card);
         D.text(card, cx - 142, 606, 'CLAUDE.md', 'cm', { style: 'font: 700 12px var(--font-mono); fill: #1a120c' });
@@ -265,7 +266,7 @@ export default {
         tl.fromTo(ok, { opacity: 0, scale: 0.4, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, 2.6);
         // it reads only the relevant files, and works from what they say
         P.chat.reply(tl, 'Leste ARCHITECTURE, GOTCHAS og TESTING.', 1.4);
-        P.chat.reply(tl, 'Legger sensortypen i sensor-registeret, med migrering og test, slik TESTING beskriver.', 2.4);
+        P.chat.reply(tl, 'Legger bydelen i sone-tabellen, med migrering og test, slik TESTING beskriver.', 2.4);
         verdict(tl, 2, true, 2.8);
         P.ok = ok;
       }
@@ -311,11 +312,11 @@ export default {
         c.clear(tl, 0.2);
         c.user(tl, 'Fortsett.', 0.6, { label: 'NY SESSION' });
         let t = c.think(tl, 1.0, 0.8);
-        c.reply(tl, 'STATUS sier «Jobber med login». Starter på login-flyten.', t);
+        c.reply(tl, 'STATUS sier «Jobber med pause». Starter på pause-funksjonen.', t);
         P.s1.expr(tl, { eyes: 'open', mouth: 'smile', brows: 'neutral' }, t);
-        c.user(tl, 'Login ble ferdig for tre dager siden.', t + 1.4);
+        c.user(tl, 'Pause ble ferdig for tre dager siden.', t + 1.4);
         t = c.think(tl, t + 2.0, 0.8);
-        c.reply(tl, 'Du har helt rett! Login ble fullført for tre dager siden. Jeg ruller tilbake det jeg startet og tar neste oppgave på listen: varsler.', t);
+        c.reply(tl, 'Du har helt rett! Pause ble fullført for tre dager siden. Jeg ruller tilbake det jeg startet og tar neste oppgave på listen: bestilling.', t);
         P.s1.expr(tl, { eyes: 'down', brows: 'raised', mouth: 'neutral' }, t);
         verdict(tl, 2, false, t + 0.4);
       }
@@ -327,7 +328,7 @@ export default {
         const c = P.chat;
         c.user(tl, 'Oppdater STATUS når du er ferdig med en oppgave.', 0.2);
         const t = c.think(tl, 0.8, 0.8);
-        c.reply(tl, 'Gjort. STATUS: login ferdig, neste er varsler.', t);
+        c.reply(tl, 'Gjort. STATUS: pause ferdig, neste er bestilling.', t);
         tl.to(dr.face, { attr: { style: 'fill: #7fd0ff; stroke: #1a120c' }, duration: 0.3 }, t + 0.2);
         tl.to(P.dust, { opacity: 0, duration: 0.3 }, t + 0.2);
         tl.call(() => { P.tag.textContent = 'STATUS · OPPDATERT I DAG'; P.tag.setAttribute('style', 'font: 700 14px var(--font-mono); letter-spacing: .06em; fill: #8fe3a2'); }, null, t + 0.3);
