@@ -1,7 +1,7 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { speech, paperCard, FILL } from '../engine/props.js';
-import { K, room, door, station, ticket, plate, serve, cookFor, robot, runner, guard, clipToKitchen, METAL } from '../engine/kitchen.js';
+import { K, room, door, station, ticket, plate, serve, cookFor, robot, runner, METAL } from '../engine/kitchen.js';
 
 /*
   Tip: do the work in the session itself; helpers (subagents) for research only.
@@ -10,7 +10,8 @@ import { K, room, door, station, ticket, plate, serve, cookFor, robot, runner, g
     2. Research errand: the runner (helper) checks the store room and is back at once.
     3. A whole dish handed to the runner: done, but it stands in the corridor holding
        the plate and never reports back. The chef waits; tickets pile up; the clock spins.
-    4. The night guard (watchdog) finds the runner and carries the plate to the pass.
+    4. The lead, which has already waited, has to go and look itself: it leaves its rock face,
+       takes the ore from the helper in the tunnel, and only then gets back to its own queue.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–260
@@ -32,7 +33,7 @@ export default {
     'Sessionen graver selv. Jevn flyt.',
     'Hjelper til research: henter og sjekker, tilbake med en gang.',
     'Hjelper som tar en hel ordre: ferdig, men sier aldri fra. Hovedsessionen venter.',
-    'Vakta finner den. Mer om vakta på neste.',
+    'Hovedsessionen har ventet, og må likevel selv gå og lete. Det løser vakta på neste.',
   ],
 
   create(ctx) {
@@ -191,35 +192,33 @@ export default {
       }
 
       if (i === 3) {
-        // the night guard checks the corridor
+        // the lead has already waited; now it has to go and look for the helper itself
         tl.to(P.note, { opacity: 0, duration: 0.3 }, 0);
-        P.guard = guard(clipToKitchen(D.g(P.R.mid)), 600);
-        tl.fromTo(P.guard.root, { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.2);
-        P.run.expr(tl, { eyes: 'wide', mouth: 'neutral', brows: 'raised' }, 1.0);
-        // takes the plate and walks it to the pass
-        const handX = 600 + 96, handY = K.floor - 252 * 0.72 - 42;
-        tl.to(P.plate, { x: handX, y: handY, duration: 0.4 }, 1.4);
-        tl.to(P.guard.beam, { opacity: 0, duration: 0.3 }, 1.4);
-        // he cuts to the pass with the plate (no walking through the runner and the cook)
-        tl.to([P.guard.root, P.plate], { opacity: 0, duration: 0.3 }, 1.9);
-        tl.set(P.guard.root, { x: 620 }, 2.2);
-        tl.set(P.plate, { x: handX + 620 }, 2.2);
-        tl.to([P.guard.root, P.plate], { opacity: 1, duration: 0.4 }, 2.3);
-        tl.to(P.plate, { y: K.pass - 2, duration: 0.3, ease: 'power2.in' }, 3.4);
-        tl.to(P.plate, { x: K.x1 + 10, duration: 0.8, ease: 'power2.in' }, 3.8);
-        tl.to(P.plate, { opacity: 0, duration: 0.2 }, 4.5);
-        tl.to(P.guard.root, { opacity: 0, duration: 0.5 }, 4.6);
-        // the session picks up again
-        P.st.cook.expr(tl, { brows: 'neutral', mouth: 'smile', eyes: 'open' }, 3.8);
-        tl.to(P.pile, { opacity: 0, duration: 0.3 }, 4.0);
-        P.run.expr(tl, { eyes: 'down', brows: 'tired', mouth: 'frown' }, 3.0);
+        // it leaves its rock face (a cut, not a walk past the rock) and turns up at the tunnel door
+        tl.to(P.st.cook.root, { opacity: 0, duration: 0.3 }, 0.3);
+        const ls = 0.72, LX = 820;
+        P.lead = robot(P.R.mid, { x: LX, y: K.floor - 252 * ls, s: ls, pose: 'stand', arms: 'point', metal: CHEF.metal, flip: true, brows: 'annoyed', mouth: 'frown' });
+        tl.fromTo(P.lead.root, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.7);
+        openDoor(tl, 0.9, 1.2);
+        P.run.expr(tl, { eyes: 'wide', mouth: 'neutral', brows: 'raised' }, 1.3);
+        // takes the ore out of the helper's hands
+        const handX = LX - 134 * ls, handY = K.floor - 252 * ls - 58 * ls + 30;
+        tl.to(P.plate, { x: handX, y: handY, duration: 0.4 }, 1.7);
+        P.run.expr(tl, { eyes: 'down', brows: 'tired', mouth: 'frown' }, 2.2);
+        // back to its own rock face; the ore goes out on the track
+        tl.to([P.lead.root, P.plate], { opacity: 0, duration: 0.3 }, 2.6);
+        tl.to(P.st.cook.root, { opacity: 1, duration: 0.4 }, 2.9);
+        serve(tl, P.R.top, SX, 3.1, { color: '#c4562a' });
+        tl.to(P.pile, { opacity: 0, duration: 0.3 }, 3.3);
+        P.st.cook.expr(tl, { brows: 'tired', mouth: 'neutral', eyes: 'open' }, 3.3);
+        // and only now gets back to its own queue
         tl.to(P.cur, { y: '-=40', opacity: 0, duration: 0.3 }, 4.2);
         serve(tl, P.R.top, SX, 4.2, { color: '#ffd23f' });
         const nx = P.rail.shift();
         hop(tl, nx, P.st.clip, 4.6);
         P.rail.forEach((t, k) => fly(tl, t, slot(k), 4.9, 0.4));
         cookFor(tl, P.st, 5.0, 1.2);
-        ctx.focus(tl, [P.guard.root, P.run.root, P.plate, P.st.g, P.R.corr], 0.2);
+        ctx.focus(tl, [P.lead.root, P.run.root, P.plate, P.st.g, P.R.corr], 0.2);
       }
       return tl;
     };

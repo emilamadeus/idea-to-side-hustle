@@ -78,7 +78,7 @@ Point: do the work in the lead session itself. Helpers (subagents spawned by a s
   1. The robot miner (session) digs itself. Carts go out steadily.
   2. Research errand: the small helper robot checks the store room (dynamite, lamps, rails) and is back at once. Good use.
   3. A whole work order handed to the helper: it finishes, then stands in the side tunnel holding the ore and never says so. The session waits; orders pile up; the clock spins. Pencil: ferdig for 40 min siden.
-  4. The overseer (watchdog, a robot with a whip and headlamp) finds the helper and puts the ore on the track.
+  4. The lead session, which has already waited, has to go and look itself: it leaves its rock face, takes the ore from the helper in the tunnel, and only then gets back to its own queue.
 
 ## Cross-model loop through a shared file [given]
 - Built: src/slides/asset-loop.js.
@@ -265,7 +265,7 @@ Title: "Fra idé til startup, med AI".
 4. Kvalitet: self-check → show, don't describe → where it fails → model and effort
 5. Lansering: live projects → side quest → Claude ↔ ChatGPT loop (Fab) → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells) → this deck is a web page (finale)
 Closing: takeaways (src/slides/takeaways.js), every standalone tip on one page.
-Callbacks that depend on order: full scope's "Alt fungerer." sets up "Fikset!"; helpers ends on the guard (watchdog next); always working reuses the watchdog's 03:12 message; the side quest's 80 % returns in the asset loop.
+Callbacks that depend on order: full scope's "Alt fungerer." sets up "Fikset!"; helpers ends with the lead fetching the helper's work itself (the watchdog, next, does that check); always working reuses the watchdog's 03:12 message; the side quest's 80 % returns in the asset loop.
 
 ## Tone
 No metrics as proof. Short memorable tip as title, memorable illustrated example, humor. Concise.

@@ -98,8 +98,8 @@ function bolts(f) {
   path(f.head, 'M-20 -34 H20', '', { style: 'fill: none; stroke: #4b4f57', 'stroke-width': 2 });
 }
 /** A robot miner (an AI session): metal skin, bolts, helmet. */
-export function robot(parent, { x, y, s = 0.85, pose = 'sit', arms = 'table', metal = METAL[0], helmet = '#ffd23f', flip = false, goggles = false } = {}) {
-  const f = figure(parent, { x, y, s, pose, arms, outfit: 'shirt', color: '#5f6772', hair: 'none', skin: metal, glasses: goggles, flip });
+export function robot(parent, { x, y, s = 0.85, pose = 'sit', arms = 'table', metal = METAL[0], helmet = '#ffd23f', flip = false, goggles = false, ...face } = {}) {
+  const f = figure(parent, { x, y, s, pose, arms, outfit: 'shirt', color: '#5f6772', hair: 'none', skin: metal, glasses: goggles, flip, ...face });
   bolts(f);
   toque(f, helmet);
   return f;
