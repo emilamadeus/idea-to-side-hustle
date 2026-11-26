@@ -160,7 +160,7 @@ export default {
         tl.to(P.dots, { opacity: 0, duration: 0.4 }, 0.4);
         tl.fromTo(pol, { opacity: 0, scale: 0.85, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.6)' }, 0.6);
         // the same request, now with the picture attached
-        const msg = P.chat.user(tl, 'Lag forsiden. Slik:', 1.0, { attach: miniPage });
+        const msg = P.chat.user(tl, 'Lag forsiden. Bruk bildet som referanse.', 1.0, { attach: miniPage });
         const c = msg.chip;
         const zoom = D.p(svg, `M${c.x + c.w} ${c.y + 8} L1200 170`, 'dash', { opacity: 0.6, 'data-bg': '' });
         tl.fromTo(zoom, { opacity: 0 }, { opacity: 0.6, duration: 0.4 }, 1.4);
