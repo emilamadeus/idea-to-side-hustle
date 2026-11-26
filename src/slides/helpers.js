@@ -30,17 +30,17 @@ export default {
   title: 'Hjelpere',
   steps: 4,
   notes: [
-    'Økten lager maten selv. Jevn flyt.',
+    'Sessionen lager maten selv. Jevn flyt.',
     'Hjelper til research: henter og sjekker, tilbake med en gang.',
-    'Hjelper som lager en hel rett: ferdig, men sier aldri fra. Hovedøkten venter.',
+    'Hjelper som lager en hel rett: ferdig, men sier aldri fra. Hovedsessionen venter.',
     'Vakta finner den. Mer om vakta på neste.',
   ],
 
   create(ctx) {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
-      <div class="pin-tl label">Økter</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2)">Gjør jobben<br>i økten selv.<br><em>Hjelpere</em> til research.</h2>`;
+      <div class="pin-tl label">Sessions</div>
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2)">Gjør jobben<br>i sessionen selv.<br><em>Hjelpere</em> til research.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
@@ -71,8 +71,8 @@ export default {
 
     function legend(g) {
       const rows = [
-        { y: 360, label: 'ØKT', sub: 'du startet den', make: (x, y) => { const f = figure(g, { x, y, s: 0.5, pose: 'sit', arms: 'table', outfit: 'shirt', color: '#e9e2d6', ...CHEF }); toque(f); } },
-        { y: 490, label: 'HJELPER', sub: 'økten startet den', make: (x, y) => { const f = figure(g, { x, y, s: 0.5, pose: 'sit', arms: 'down', outfit: 'hoodie', color: PALETTE.cloth.teal, hair: 'short', hairColor: PALETTE.hair.red, skin: PALETTE.skin[2] }); cap(f, '#ffd23f'); } },
+        { y: 360, label: 'SESSION', sub: 'du startet den', make: (x, y) => { const f = figure(g, { x, y, s: 0.5, pose: 'sit', arms: 'table', outfit: 'shirt', color: '#e9e2d6', ...CHEF }); toque(f); } },
+        { y: 490, label: 'HJELPER', sub: 'sessionen startet den', make: (x, y) => { const f = figure(g, { x, y, s: 0.5, pose: 'sit', arms: 'down', outfit: 'hoodie', color: PALETTE.cloth.teal, hair: 'short', hairColor: PALETTE.hair.red, skin: PALETTE.skin[2] }); cap(f, '#ffd23f'); } },
       ];
       rows.forEach((r) => {
         const fg = D.g(g, { 'data-bg': '' });

@@ -31,7 +31,7 @@ export default {
   notes: [
     'Du skal fra A til B. To måter å be om det på.',
     'Du dikterer hver sving. Rundkjøringen tre ganger. Veiarbeid.',
-    'Forsøk 2, ny økt. Du sier bare hvor du skal. Den finner en vei du ikke visste om.',
+    'Forsøk 2, ny session. Du sier bare hvor du skal. Den finner en vei du ikke visste om.',
   ],
 
   create(ctx) {
@@ -138,7 +138,7 @@ export default {
 
       if (i === 2) {
         // attempt 2 is a new session: the first route goes, the chat starts over
-        P.att.show(tl, 'FORSØK 2 · NY ØKT', 0);
+        P.att.show(tl, 'FORSØK 2 · NY SESSION', 0);
         tl.to(P.first, { opacity: 0, duration: 0.4 }, 0);
         tl.to(P.card1.rows, { attr: { style: 'font: 600 18px var(--font-display); fill: #1a120c' }, duration: 0.1 }, 0);
         P.chat.clear(tl, 0);

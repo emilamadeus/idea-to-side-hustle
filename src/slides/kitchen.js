@@ -28,19 +28,19 @@ const FOOD = ['#ff7a2f', '#ffd23f', '#c4562a'];
 
 export default {
   id: 'kitchen',
-  title: 'Parallelle økter',
+  title: 'Parallelle sessions',
   steps: 3,
   notes: [
-    'Én økt gjør alt i rekkefølge. Bongene hoper seg opp.',
-    'Én økt per oppgave. Hovedøkten har tavla: lager, venter på deg, ferdig.',
+    'Én session gjør alt i rekkefølge. Bongene hoper seg opp.',
+    'Én session per oppgave. Hovedsessionen har tavla: lager, venter på deg, ferdig.',
     'Du svarer på den ene. Alt går ut samtidig.',
   ],
 
   create(ctx) {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
-      <div class="pin-tl label">Økter</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2)">Én økt per oppgave.<br>Én <em>hovedøkt</em><br>som følger med.</h2>`;
+      <div class="pin-tl label">Sessions</div>
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*2.7)">Én session per oppgave.<br>Én <em>hovedsession</em><br>som følger med.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};

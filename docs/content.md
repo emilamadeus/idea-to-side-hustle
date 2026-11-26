@@ -125,7 +125,7 @@ Point: being this productive with AI means you are always working. Notifications
   1. 09:14 meeting: phone under the table while the presenter talks Q4. HER 40 %.
   2. 11:47 lunch: colleague mid-story, steaming coffee. HER 65 %.
   3. 18:30 dinner with the wife, three clicks: (a) cosy dinner, "Så fint med en kveld for oss to.", buzz, notification, reply. (b) She gets annoyed, arms crossed: "Gymbro spurte om jeg ville henge." Pause. He says "2 sek." without looking up; candles shrink. (c) She stands up smiling at her own phone and walks out; candles go out with smoke; he looks up, grins "Ferdig!" at the empty chair.
-  4. Night, three clicks, same wake-up each time (buzz, eyes open, phone up, answer, phone back, asleep): 03:12 "Watchdog: alt kjører. 3 økter jobber." → "Bra."; 04:37 "Økt 2 lurer på: Postgres eller SQLite?" → "Postgres." (partner wakes, gives a look); 05:58 "Alt ferdig. Starte neste batch?" → "Ja." (dawn in the window, partner stays awake, annoyed).
+  4. Night, three clicks, same wake-up each time (buzz, eyes open, phone up, answer, phone back, asleep): 03:12 "Watchdog: alt kjører. 3 sessions jobber." → "Bra."; 04:37 "Session 2 lurer på: Postgres eller SQLite?" → "Postgres." (partner wakes, gives a look); 05:58 "Alt ferdig. Starte neste batch?" → "Ja." (dawn in the window, partner stays awake, annoyed).
   5. Christmas Eve 19:42: tree lights blinking, presents being opened, "Se hva jeg fikk!".
   6. The week: calendar fills with "jobb (litt)".
 - Twists [built]:

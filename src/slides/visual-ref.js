@@ -81,7 +81,7 @@ export default {
   notes: [
     'En helt vanlig prompt. Og bildet du har i hodet.',
     'Alle fire krav er oppfylt. Det ligner bare ikke på det du så for deg.',
-    'Forsøk 2, ny økt. Bildet fra hodet ditt, laget i ChatGPT, sendt med. Nå treffer den.',
+    'Forsøk 2, ny session. Bildet fra hodet ditt, laget i ChatGPT, sendt med. Nå treffer den.',
     'Ekte eksempel fra spillet: konseptark og detaljer laget i ChatGPT.',
     'Og slik ble det i Unreal.',
   ],
@@ -202,7 +202,7 @@ export default {
 
       if (i === 2) {
         // attempt 2 is a new session: the thought becomes a real reference image
-        P.att.show(tl, 'FORSØK 2 · NY ØKT', 0);
+        P.att.show(tl, 'FORSØK 2 · NY SESSION', 0);
         tl.to(P.literal, { opacity: 0, y: 20, duration: 0.5, ease: 'power2.in' }, 0);
         P.chat.clear(tl, 0.1);
         const pol = D.g(svg, { 'data-unit': '' });

@@ -97,7 +97,7 @@ export default {
 
       if (i === 1) {
         // attempt 2: same request, a new session, dial at max
-        P.att.show(tl, 'FORSØK 2 · NY ØKT, MAKS', 0);
+        P.att.show(tl, 'FORSØK 2 · NY SESSION, MAKS', 0);
         tl.to(P.b1.b, { opacity: 0, duration: 0.3 }, 0);
         P.chat.clear(tl, 0.1);
         P.dial.set(tl, 3, 0.3);

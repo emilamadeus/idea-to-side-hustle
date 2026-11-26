@@ -31,7 +31,7 @@ export default {
     'Lapp 1: spør enheten hvert sekund. Fikset. Ikke fikset.',
     'Lapp 2: last hele modellen på nytt. Fikset. Ikke fikset.',
     'Lapp 3: snu statusen i UI-et. Stua stemmer. Nå er kjøkkenet feil. Fikset.',
-    'Ny økt: finn årsaken. To ID-er byttet om. Én linje. Alle lappene ut.',
+    'Ny session: finn årsaken. To ID-er byttet om. Én linje. Alle lappene ut.',
   ],
 
   create(ctx) {
@@ -82,7 +82,7 @@ export default {
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.att = attempt(svg, 560, 120);
-        P.att.show(tl, 'FORSØK 1 · SAMME ØKT', 0.3);
+        P.att.show(tl, 'FORSØK 1 · SAMME SESSION', 0.3);
         P.tok = tokenMeter(svg, 1180, 140, 280, { max: 60 });
         tl.fromTo(P.tok.grp, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.4);
         P.tok.set(tl, 8, 1.8);
@@ -146,7 +146,7 @@ export default {
 
       if (i === 4) {
         // attempt 2: a new session asked for the cause
-        P.att.show(tl, 'FORSØK 2 · NY ØKT', 0);
+        P.att.show(tl, 'FORSØK 2 · NY SESSION', 0);
         P.tok.reset(tl, 0.1);
         P.chat.clear(tl, 0.1);
         P.chat.user(tl, 'Finn årsaken. Ikke lapp symptomet.', 0.5);

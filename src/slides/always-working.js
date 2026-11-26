@@ -38,7 +38,7 @@ const SCENES = [
     msg: '2 av 40 tester feiler. Skal jeg fikse?', reply: 'Ja.',
     say: 'Så fint med en kveld for oss to.', note: null },
   { time: '03:12', min: 24 * 60 + 3 * 60 + 12, day: 'onsdag', here: 0.7, night: 0.55,
-    msg: 'Watchdog: alt kjører. 3 økter jobber.', reply: 'Bra.',
+    msg: 'Watchdog: alt kjører. 3 sessions jobber.', reply: 'Bra.',
     say: null, note: null },
   { time: '19:42', min: 24 * 60 * 14 + 19 * 60 + 42, day: '24. desember', here: 0.75, night: 0.3,
     msg: 'Trenger en produktbeslutning.', reply: 'Ja.',
@@ -48,7 +48,7 @@ const SCENES = [
 // The night scene repeats: two more interruptions after 03:12.
 const NIGHT = [
   { time: '04:37', min: 24 * 60 + 4 * 60 + 37, day: 'onsdag', here: 0.6, night: 0.5,
-    msg: 'Økt 2 lurer på: Postgres eller SQLite?', reply: 'Postgres.' },
+    msg: 'Session 2 lurer på: Postgres eller SQLite?', reply: 'Postgres.' },
   { time: '05:58', min: 24 * 60 + 5 * 60 + 58, day: 'onsdag', here: 0.5, night: 0.3,
     msg: 'Alt ferdig. Starte neste batch?', reply: 'Ja.' },
 ];

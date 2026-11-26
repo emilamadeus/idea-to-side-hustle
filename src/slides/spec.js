@@ -28,7 +28,7 @@ const ST = { ferdig: '#8fe3a2', aktiv: '#ff7a2f', todo: '#9b8f83', blokkert: '#f
 const HIDDEN = [
   '<!-- KUN FOR AGENTER',
   'Oppdater status når en oppgave endres.',
-  'Én logglinje per økt.',
+  'Én logglinje per session.',
   'Blokkert? Skriv hvorfor og hva den venter på.',
   'Ikke spør om det som står her.',
   '-->',

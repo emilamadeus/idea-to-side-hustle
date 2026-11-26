@@ -38,19 +38,19 @@ export default {
   title: 'Vakta',
   steps: 7,
   notes: [
-    'Bare be om det: sjekk alle økter hvert 10. minutt. Så går natta.',
-    'To økter venter på hverandre. Vakta bryter låsen.',
-    'En økt har sovnet. Vekkes.',
+    'Bare be om det: sjekk alle sessions hvert 10. minutt. Så går natta.',
+    'To sessions venter på hverandre. Vakta bryter låsen.',
+    'En session har sovnet. Vekkes.',
     'RAM-lås: ny jobb får ikke starte. Ferdige jobber holder fortsatt minnet. Vakta frigjør.',
-    'Context fylles. Auto-compact ved 400k i stedet for ny økt.',
-    'Gangen: hjelperen er ferdig, men har ikke sagt fra. Hovedøkten venter. Vakta leverer.',
+    'Context fylles. Auto-compact ved 400k i stedet for ny session.',
+    'Gangen: hjelperen er ferdig, men har ikke sagt fra. Hovedsessionen venter. Vakta leverer.',
     'Morgen. Alt er ferdig.',
   ],
 
   create(ctx) {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
-      <div class="pin-tl label">Økter</div>
+      <div class="pin-tl label">Sessions</div>
       <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2)">La en vakt gå runden<br>hvert <em>10. minutt</em>.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
@@ -92,7 +92,7 @@ export default {
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.chat = chatPhone(svg, 80, 262, 440, 168, { app: 'Claude', compact: true, size: 19 });
         tl.fromTo(P.chat.root, { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 0.5 }, 0.3);
-        P.chat.user(tl, 'Sjekk alle økter hvert 10. minutt.', 0.7);
+        P.chat.user(tl, 'Sjekk alle sessions hvert 10. minutt.', 0.7);
         const t = P.chat.think(tl, 1.3, 1.0);
         P.chat.reply(tl, 'Ok. Første runde 22:10.', t);
         // clock

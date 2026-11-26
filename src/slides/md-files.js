@@ -44,9 +44,9 @@ export default {
     'Ingen filer: den spør om alt. Du forklarer fire ganger. Den installerer med feil verktøy.',
     'Én fil: den leser hele CLAUDE.md hver gang, også faktura og release. En gammel linje om sensorer styrer.',
     'Flere filer: en kort CLAUDE.md peker videre. Den åpner bare skuffene den trenger.',
-    'Nye økter fortsetter der forrige slapp, fra STATUS og HANDOFF.',
-    'STATUS er tre dager gammel. Ny økt starter på login, som er ferdig. «Du har helt rett!»',
-    'Derfor: oppdatering av filene er en del av oppgaven. Da stemmer de for neste økt.',
+    'Nye sessions fortsetter der forrige slapp, fra STATUS og HANDOFF.',
+    'STATUS er tre dager gammel. Ny session starter på login, som er ferdig. «Du har helt rett!»',
+    'Derfor: oppdatering av filene er en del av oppgaven. Da stemmer de for neste session.',
   ],
 
   create(ctx) {
@@ -213,7 +213,7 @@ export default {
         const c = P.chat;
         // each case is its own clean session with the same prompt
         c.clear(tl, 0);
-        c.user(tl, 'Legg til ny sensortype.', 0.15, { label: 'NY ØKT' });
+        c.user(tl, 'Legg til ny sensortype.', 0.15, { label: 'NY SESSION' });
         c.reply(tl, 'Leser hele CLAUDE.md.', 0.5);
         tl.to(stale, { opacity: 1, duration: 0.15, repeat: 3, yoyo: true }, 3.0);
         tl.set(stale, { opacity: 1 }, 3.6);
@@ -232,7 +232,7 @@ export default {
         tl = gsap.timeline(); main.add(tl, 0.9);
         const { g, agent, cx } = P.cols[2];
         P.chat.clear(tl, 0);
-        P.chat.user(tl, 'Legg til ny sensortype.', 0.15, { label: 'NY ØKT' });
+        P.chat.user(tl, 'Legg til ny sensortype.', 0.15, { label: 'NY SESSION' });
         const card = D.g(g, { 'data-unit': '' });
         D.el('rect', { x: cx - 150, y: 588, width: 110, height: 44, rx: 3, style: `fill: ${PAPER}` }, card);
         D.text(card, cx - 142, 606, 'CLAUDE.md', 'cm', { style: 'font: 700 12px var(--font-mono); fill: #1a120c' });
@@ -290,9 +290,9 @@ export default {
         s2.expr(tl, { eyes: 'open', mouth: 'smile' }, 1.9);
         // the app flow: a new session, no explaining needed
         P.chat.clear(tl, 0.2);
-        P.chat.user(tl, 'Fortsett.', 0.6, { label: 'NY ØKT' });
+        P.chat.user(tl, 'Fortsett.', 0.6, { label: 'NY SESSION' });
         const t = P.chat.think(tl, 1.0, 0.8);
-        P.chat.reply(tl, 'Leser STATUS og HANDOFF. Fortsetter der forrige økt slapp.', t);
+        P.chat.reply(tl, 'Leser STATUS og HANDOFF. Fortsetter der forrige session slapp.', t);
         P.s1 = s1; P.s2 = s2;
       }
 
@@ -309,7 +309,7 @@ export default {
         tl.fromTo(P.tag, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.4);
         const c = P.chat;
         c.clear(tl, 0.2);
-        c.user(tl, 'Fortsett.', 0.6, { label: 'NY ØKT' });
+        c.user(tl, 'Fortsett.', 0.6, { label: 'NY SESSION' });
         let t = c.think(tl, 1.0, 0.8);
         c.reply(tl, 'STATUS sier «Jobber med login». Starter på login-flyten.', t);
         P.s1.expr(tl, { eyes: 'open', mouth: 'smile', brows: 'neutral' }, t);

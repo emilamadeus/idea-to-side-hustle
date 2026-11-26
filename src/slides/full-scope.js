@@ -321,7 +321,7 @@ export default {
         parts.tok = tokenMeter(svg, 1180, 150, 280, { max: 40 });
         tl.fromTo(parts.tok.grp, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.5);
       }
-      if (i === 4) { parts.att.show(tl, 'FORSØK 2 · NY ØKT', 0.1); parts.tok.reset(tl, 0.2); }
+      if (i === 4) { parts.att.show(tl, 'FORSØK 2 · NY SESSION', 0.1); parts.tok.reset(tl, 0.2); }
       const c = CHAT[i];
       let at = 0;
       if (c) {

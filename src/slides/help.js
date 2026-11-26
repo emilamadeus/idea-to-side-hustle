@@ -6,11 +6,11 @@
 export const HELP = {
   'md-files': [
     'Samme oppgave, tre oppsett av instruksjonsfiler.',
-    '0 filer: hver økt starter fra null. Du forklarer, den gjetter.',
+    '0 filer: hver session starter blankt. Den gjetter.',
     '1 fil: alt leses hver gang. Dyrt, og én utdatert linje styrer.',
     'Flere filer: den leser bare det oppgaven trenger.',
-    'Neste økt fortsetter fra STATUS og HANDOFF.',
-    'En utdatert STATUS sender økten tilbake til ferdig arbeid.',
+    'Neste session fortsetter fra STATUS og HANDOFF.',
+    'Utdatert STATUS sender sessionen tilbake til ferdig arbeid.',
     'Derfor er oppdatering av filene en del av oppgaven.',
   ],
   spec: [
@@ -52,22 +52,22 @@ export const HELP = {
     'Vanskelig å forklare? En fersk agent gjør bildet om til prompts.',
   ],
   kitchen: [
-    'Én økt gjør alt i rekkefølge. Køen vokser.',
-    'Én økt per oppgave. Hovedøkten vet hvem som venter på deg.',
+    'Én session gjør alt i rekkefølge. Køen vokser.',
+    'Én session per oppgave. Hovedsessionen vet hvem som venter.',
     'Du svarer der det trengs. Resten jobber parallelt.',
   ],
   helpers: [
-    'Hovedøkten gjør jobben selv. Den har hele konteksten.',
+    'Hovedsessionen gjør jobben selv. Den har hele konteksten.',
     'Hjelpere passer til research: kort oppdrag, raskt svar.',
     'Gir du den hele jobben, kan den bli ferdig uten å si fra.',
     'Da må noen gå og lete.',
   ],
   watchdog: [
-    'En sjekk hvert 10. minutt holder øktene i gang over natta.',
-    'Låst: to økter venter på hverandre.',
-    'Inaktiv: en økt har stoppet uten å si fra.',
+    'Sjekk hvert 10. minutt holder sessionene i gang over natta.',
+    'Låst: to sessions venter på hverandre.',
+    'Inaktiv: en session har stoppet uten å si fra.',
     'RAM-lås: ny jobb venter, ferdige jobber holder minnet.',
-    'Auto-compact ved 400k i stedet for en ny økt.',
+    'Auto-compact ved 400k i stedet for en ny session.',
     'Hjelperen er ferdig, men har ikke meldt fra.',
     'Om morgenen er jobben gjort.',
   ],
@@ -77,7 +77,7 @@ export const HELP = {
     'I skyen fortsetter den, selv med laptopen lukket.',
   ],
   'always-working': [
-    'Bivirkningen av økter som alltid sier fra.',
+    'Bivirkningen av sessions som alltid sier fra.',
     null, null, null, null, null, null,
     'Bestem selv når du svarer.',
   ],
@@ -86,11 +86,11 @@ export const HELP = {
     'Den tester selv. Du sjekker bare det den ikke kan bekrefte.',
   ],
   fails: [
-    'Lange økter lapper gjerne symptomer.',
+    'Lange sessions lapper gjerne symptomer.',
     '«Fikset!» uten at den har sjekket.',
-    'Hver lapp gjør økten lengre og konteksten tyngre.',
+    'Hver lapp gjør sessionen lengre og konteksten tyngre.',
     'Lappene skaper nye feil andre steder.',
-    'Ny økt, be om årsaken: én linje, og lappene kan fjernes.',
+    'Ny session, spør om årsaken: én linje, lappene kan fjernes.',
   ],
   effort: [
     'Medium: rask, stødig, ferdig.',

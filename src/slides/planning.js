@@ -44,7 +44,7 @@ export default {
   steps: 3,
   notes: [
     'Én oppgave om gangen: hver ny oppgave må under en gammel. Rives og bygges på nytt.',
-    'Ny økt i auto mode. Hele produktspecen går inn først: mål, brukere, alle funksjoner, krav, hva som ikke er med. «Kun planlegging.» Bare produktbeslutninger kommer til deg.',
+    'Ny session i auto mode. Hele produktspecen går inn først: mål, brukere, alle funksjoner, krav, hva som ikke er med. «Kun planlegging.» Bare produktbeslutninger kommer til deg.',
     'Så bygges alt i én runde.',
   ],
 
@@ -137,7 +137,7 @@ export default {
 
       if (i === 1) {
         // attempt 2: a new session that only plans
-        P.att.show(tl, 'FORSØK 2 · NY ØKT', 0);
+        P.att.show(tl, 'FORSØK 2 · NY SESSION', 0);
         P.tok.reset(tl, 0.1);
         tl.to(P.site, { opacity: 0, y: 30, duration: 0.4 }, 0);
         P.chat.clear(tl, 0.1);

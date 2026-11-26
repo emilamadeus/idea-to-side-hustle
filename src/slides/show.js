@@ -25,7 +25,7 @@ export default {
   steps: 3,
   notes: [
     'Beskrevet med ord. Den flytter feil knapp, og sier fikset.',
-    'Ny økt, med skjermbilde og en sirkel. Riktig knapp.',
+    'Ny session, med skjermbilde og en sirkel. Riktig knapp.',
     'Når du ikke klarer å forklare: skjermbilde til en fersk agent. Den lister problemene som prompts du kan lime inn.',
   ],
 
@@ -112,7 +112,7 @@ export default {
 
       if (i === 1) {
         // attempt 2: a new session, a screenshot with a circle
-        P.att.show(tl, 'FORSØK 2 · NY ØKT, SKJERMBILDE', 0);
+        P.att.show(tl, 'FORSØK 2 · NY SESSION, SKJERMBILDE', 0);
         tl.to([P.ui.w, P.bug], { opacity: 0, duration: 0.3 }, 0);
         P.chat.clear(tl, 0.1);
         P.ui2 = settings(svg);

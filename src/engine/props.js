@@ -240,8 +240,8 @@ export function chatPhone(parent, x, y, w, h, { app = 'Claude', compact = false,
 }
 
 /**
- * Attempt badge for slides that compare two tries: "FORSØK 1" → "FORSØK 2 · NY ØKT".
- *   const a = attempt(svg, x, y); a.show(tl, 'FORSØK 1', at); a.show(tl, 'FORSØK 2 · NY ØKT', at)
+ * Attempt badge for slides that compare two tries: "FORSØK 1" → "FORSØK 2 · NY SESSION".
+ *   const a = attempt(svg, x, y); a.show(tl, 'FORSØK 1', at); a.show(tl, 'FORSØK 2 · NY SESSION', at)
  * Sits at the top-left of the scene it labels; the old attempt is cleared before the new one starts.
  */
 export function attempt(parent, x, y) {
