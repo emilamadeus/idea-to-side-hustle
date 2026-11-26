@@ -70,21 +70,21 @@ Point: for bigger work, the AI keeps an HTML spec up to date as it works: titles
 ## Parallel sessions with a master session [given]
 - Built: src/slides/kitchen.js.
 Point: one session per task, plus one master session that talks to the others and keeps the overview.
-- Storyboard [agreed]: a mine. You are the boss with a whip; the AI sessions and helpers are robot miners (engine/kitchen.js keeps its old name).
-  1. One robot digs every work order in turn; orders pile up on the beam and fall to the floor.
-  2. One rock face per task (one session per task). You arrive with the whip; the master session's board shows digging, waiting for you, done. One row blinks "venter på deg".
-  3. You answer and crack the whip; carts of ore roll out in parallel; the beam empties.
+- Storyboard [agreed]: the Claude Code app (session list left, conversation right), src/engine/console.js.
+  1. One session ("Alt i én") gets all eight tasks: one ticked, the timer runs to 47 min, the context fills, your own "Hvor langt har du kommet?" and "Hallo?" pile up.
+  2. New window: Master, Innlogging (ferdig), Varsler, Kamera-API, Tester in the sidebar. The master follows them; Kamera-API stops on "Kjøre migreringen mot prod?" and its row turns "venter på deg".
+  3. You open Kamera-API and answer "Ja"; all finish; the master: "Alle fire ferdige."
 - The master session tracks the others: which are working, which are waiting for a response, which are done.
 
 ## The lead does the work, helpers rarely [given]
 - Built: src/slides/helpers.js.
 Point: the lead (the active agent in each session) does the work itself. Helpers (subagents spawned by a session) only occasionally, mostly for planning or research, almost never for implementation. With helpers implementing: poorer results, long waits, and wait locks where a helper never reports back as finished while the lead keeps waiting.
 - Terminology for the slide: "session" = a task you started; "helper" = a subagent a session starts by itself.
-- Storyboard [agreed]: same mine, with a side tunnel.
-  1. The robot miner (session) digs itself. Carts go out steadily.
-  2. Research errand: the small helper robot checks the store room (dynamite, lamps, rails) and is back at once. Good use.
-  3. A whole work order handed to the helper: it finishes, then stands in the side tunnel holding the ore and never says so. The session waits; orders pile up; the clock spins. Pencil: ferdig for 40 min siden.
-  4. The lead, which has already waited, has to go and look itself: it leaves its rock face, takes the ore from the helper in the tunnel, and only then gets back to its own queue.
+- Storyboard [agreed]: the Claude Code app, one session ("Eksport").
+  1. The lead works itself: Read, Edit, Bash.
+  2. A research helper: a "Hjelper · Finn ut hvordan DVR-API-et logger inn" card returns in 12 s; the lead uses the answer.
+  3. A whole job to a helper in the background ("Bygg hele fakturamodulen"). The lead carries on with its own work; the background list shows the helper done 04:32; nothing reaches the lead.
+  4. The lead breaks off its own work ("Avbrutt: eksport"), checks the helper: done 40 minutes ago, 12 files. Back to the export.
 
 ## Cross-model loop through a shared file [given]
 - Built: src/slides/asset-loop.js.
@@ -104,16 +104,16 @@ Point: Claude and ChatGPT cooperate through one shared file. Example: 3D asset p
   Wood splits along the grain, metal bends, cloth tears, glass shatters.
 
 ## Watchdog [given]
-- Built: src/slides/watchdog.js (same mine at night; the watchdog is a robot overseer with a whip and headlamp who cracks it at every problem; set up by a plain chat request).
+- Built: src/slides/watchdog.js (the Claude Code app at night: the master session runs the check every 10 minutes, the sidebar shows each session's state, a clock on the left; set up by a plain request in the master session).
 Point: a scheduled check every ~10 min looks at all running jobs: RAM lock, agents waiting on each other, idle agents, and helpers that finished but never reported back to the lead. Keeps work going overnight.
-- Storyboard [proposed]: night shift.
-  1. Lights dim, the clock runs from 22:00 to 06:00. A night guard with a flashlight does a round every 10 minutes.
-  2. Round 1: two sessions each waiting for the other (arrows pointing at each other). The guard breaks the tie.
-  3. Round 2: one session asleep at its desk. Pencil: idle since 02:14. Woken up.
-  4. Round 3: RAM lock. A new job can't start because finished jobs still hold their RAM. The guard frees it; the job starts.
-  5. Round 4: a session's context fills; auto-compact is set to 400k, so it compacts and keeps going instead of starting a new session.
-  6. Round 5: the guard checks the corridor too: a helper sits with a finished result it never handed in; the lead is still waiting. The guard delivers it.
-  7. Morning: all work done.
+- Storyboard [agreed]: the Claude Code app at night; the master session runs the check, the sidebar shows Master, Varsler, Kamera-API, Tester.
+  1. "Sjekk alle sessions hvert 10. minutt." → "Ok. Første runde 22:10." Clock from 22:00.
+  2. 23:40: Varsler and Kamera-API wait for each other → "Varsler: ta migreringen først."
+  3. 02:20: Tester quiet since 02:14 → "Tester: fortsett."
+  4. 03:30: RAM lock. Kamera-API can't run its tests; two dev servers from finished sessions hold 6.1 GB → killed.
+  5. 04:20: Varsler opened: context reaches the 400k mark, "Compacting conversation", 400k → 60k, carries on.
+  6. 05:10: a helper of Kamera-API finished 04:32 without saying so → "Kamera-API: hent resultatet."
+  7. 06:00: all done.
 - Set up by plain request ("run this check every 10 minutes"); no special commands. In Claude Code that becomes a recurring loop in the session.
 
 ## Remote sessions and notifications [given]
@@ -271,7 +271,7 @@ Title: "Fra idé til startup, med AI".
 4. Kvalitet: self-check → show, don't describe → where it fails → model and effort
 5. Lansering: live projects → side quest → Claude ↔ ChatGPT loop (Fab) → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells) → this deck is a web page (finale)
 Closing: takeaways (src/slides/takeaways.js), every standalone tip on one page.
-Callbacks that depend on order: full scope's "Alt fungerer." sets up "Fikset!"; helpers ends with the lead fetching the helper's work itself (the watchdog, next, does that check); always working reuses the watchdog's 03:12 message; the side quest's 80 % returns in the asset loop.
+Callbacks that depend on order: full scope's "Alt fungerer." sets up "Fikset!"; helpers ends with the lead breaking off to check on its helper (the watchdog, next, does that check); always working reuses the watchdog's 03:12 message; the side quest's 80 % returns in the asset loop.
 
 ## Tone
 No metrics as proof. Short memorable tip as title, memorable illustrated example, humor. Concise.

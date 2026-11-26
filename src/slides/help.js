@@ -66,7 +66,7 @@ export const HELP = {
     'Sjekk hvert 10. minutt holder sessionene i gang over natta.',
     'Låst: to sessions venter på hverandre.',
     'Inaktiv: en session har stoppet uten å si fra.',
-    'RAM-lås: ny jobb venter, ferdige jobber holder minnet.',
+    'RAM-lås: testene venter, ferdige sessions holder minnet.',
     'Auto-compact ved 400k i stedet for en ny session.',
     'Hjelperen er ferdig, men har ikke meldt fra.',
     'Om morgenen er jobben gjort.',

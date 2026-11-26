@@ -1,39 +1,34 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
-import { speech, paperCard, FILL } from '../engine/props.js';
-import { K, room, door, station, ticket, plate, serve, cookFor, robot, runner, METAL } from '../engine/kitchen.js';
+import { codeApp, STATE } from '../engine/console.js';
 
 /*
-  Tip: do the work in the session itself; helpers (subagents) for research only.
-  Same mine, now with a side tunnel.
-    1. The robot miner (session) digs; carts go out steadily.
-    2. Research errand: the runner (helper) checks the store room and is back at once.
-    3. A whole dish handed to the runner: done, but it stands in the corridor holding
-       the plate and never reports back. The chef waits; tickets pile up; the clock spins.
-    4. The lead, which has already waited, has to go and look itself: it leaves its rock face,
-       takes the ore from the helper in the tunnel, and only then gets back to its own queue.
+  Tip: the lead (the agent in a session) does the work itself; helpers (subagents) for
+  research. Shown in the Claude Code app.
+    0. The lead works: Read, Edit, Bash, the context fills steadily.
+    1. A research helper: a short Task block comes back in seconds, the lead uses the answer.
+    2. A whole job to a helper, in the background. The lead carries on with its own work.
+       The background list shows the helper done; nobody tells the lead.
+    3. The lead has to break off its own work to check on the helper: done 40 minutes ago.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–260
-    legend     x 80–520, y 300–520
-    corridor   x 560–730 (pencil note y 280–340), runner x ~670
-    kitchen    x 740–1480: station x 1100, rail slots RX, clock (1430, 380)
+    background x 80–520, y 330–520 (steps 2–3)
+    app        x 560–1480, y 150–760
 */
 
-const RX = [790, 935, 1080, 1225];
-const SX = 1100, HOME = 830, CORR = 670;
-const CHEF = { metal: METAL[0] };
-const RUN_NECK = K.floor - 252 * 0.6;
+const AX = 560, AY = 150, AW = 920, AH = 610;
+const BX = 80, BY = 330, BW = 440;
 
 export default {
   id: 'helpers',
   title: 'Hjelpere',
   steps: 4,
   notes: [
-    'Sessionen graver selv. Jevn flyt.',
-    'Hjelper til research: henter og sjekker, tilbake med en gang.',
-    'Hjelper som tar en hel ordre: ferdig, men sier aldri fra. Leaden venter.',
-    'Leaden har ventet, og må likevel selv gå og lete. Det løser vakta på neste.',
+    'Leaden gjør jobben selv. Den har hele konteksten.',
+    'Hjelper til research: kort oppdrag, svar på sekunder.',
+    'Hjelper med en hel jobb i bakgrunnen: ferdig, men sier aldri fra.',
+    'Leaden må avbryte sitt eget arbeid for å sjekke. Det løser vakta på neste.',
   ],
 
   create(ctx) {
@@ -44,186 +39,83 @@ export default {
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
-    let loops = [];
 
-    const reset = () => { loops.forEach((l) => l.kill()); loops = []; svg.innerHTML = ''; P = {}; };
-    const slot = (k) => ({ x: RX[k], y: K.rail + 6 });
-    const arrive = (tl, label, k, at) => {
-      const t = ticket(P.R.top, label);
-      gsap.set(t, { x: RX[k], y: K.rail + 6 });
-      tl.fromTo(t, { y: K.rail - 90, opacity: 0 }, { y: K.rail + 6, opacity: 1, duration: 0.45, ease: 'bounce.out' }, at);
-      return t;
-    };
-    const fly = (tl, t, pos, at, d = 0.5) => tl.to(t, { x: pos.x, y: pos.y, duration: d, ease: 'power2.inOut' }, at);
-    // a ticket going to a station lifts off the rail and drops in there: it never travels
-    // through the other tickets
-    const hop = (tl, t, pos, at) => {
-      tl.to(t, { opacity: 0, y: '-=24', duration: 0.2, ease: 'power2.in' }, at);
-      tl.set(t, { x: pos.x, y: pos.y - 24 }, at + 0.2);
-      tl.to(t, { opacity: 1, y: pos.y, duration: 0.3, ease: 'bounce.out' }, at + 0.25);
-    };
-    const openDoor = (tl, at, hold = 0.6) => {
-      tl.to(P.door.leaf, { scaleX: 0.15, transformOrigin: '0% 50%', duration: 0.2 }, at);
-      tl.to(P.door.leaf, { scaleX: 1, duration: 0.2 }, at + hold);
-    };
-    // runner x is an offset from HOME
-    const walk = (tl, x, at, d = 0.6) => tl.to(P.run.root, { x: x - HOME, duration: d, ease: 'power1.inOut' }, at);
+    const reset = () => { svg.innerHTML = ''; P = {}; };
 
-    function legend(g) {
-      const rows = [
-        { y: 360, label: 'LEAD', sub: 'agenten i sessionen', make: (x, y) => robot(g, { x, y, s: 0.5, metal: CHEF.metal }) },
-        { y: 490, label: 'HJELPER', sub: 'leaden startet den', make: (x, y) => robot(g, { x, y, s: 0.5, arms: 'down', metal: METAL[2], helmet: '#2f8a4a' }) },
-      ];
-      rows.forEach((r) => {
-        const fg = D.g(g, { 'data-bg': '' });
-        r.make.call(null, 0, 0);
-        const made = g.lastChild; fg.appendChild(made); made.setAttribute('transform', `translate(130 ${r.y})`);
-        D.text(g, 200, r.y - 18, r.label, 'lg', { style: 'font: 800 28px var(--font-display); fill: var(--accent-2)' });
-        D.text(g, 200, r.y + 14, r.sub, 'ls', { style: 'font: 400 19px var(--font-mono); fill: var(--muted)' });
-      });
+    // background jobs, as listed by the session
+    function bgList() {
+      const g = D.g(svg, { 'data-unit': '' });
+      D.el('rect', { x: BX, y: BY, width: BW, height: 190, rx: 12, style: 'fill: #0d0907; stroke: var(--fg)', 'stroke-width': 2.5 }, g);
+      D.text(g, BX + 22, BY + 38, 'BAKGRUNNSJOBBER', 'bh', { style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
+      D.p(g, `M${BX + 20} ${BY + 54} H${BX + BW - 20}`, '', { style: 'fill: none; stroke: #33271d', 'stroke-width': 2 });
+      const dot = D.el('circle', { cx: BX + 32, cy: BY + 92, r: 8, style: `fill: ${STATE.work[0]}` }, g);
+      D.text(g, BX + 52, BY + 98, 'fakturamodul', 'bn', { style: 'font: 700 20px var(--font-mono); fill: #f3e9da' });
+      const st = D.text(g, BX + BW - 22, BY + 98, 'jobber', 'bs', { 'text-anchor': 'end', style: `font: 700 17px var(--font-mono); fill: ${STATE.work[0]}` });
+      const sub = D.text(g, BX + 52, BY + 132, 'hjelper · startet 03:52', 'bb', { style: 'font: 400 16px var(--font-mono); fill: var(--muted)' });
+      const set = (tl, s, label, subStr, at) => tl.call(() => {
+        const c = STATE[s][0];
+        dot.setAttribute('style', `fill: ${c}`);
+        st.textContent = label; st.setAttribute('style', `font: 700 17px var(--font-mono); fill: ${c}`);
+        if (subStr) sub.textContent = subStr;
+      }, null, at);
+      return { g, set };
     }
 
-    function clock(parent, cx, cy) {
-      const g = D.g(parent, { 'data-bg': '' });
-      D.el('circle', { cx, cy, r: 44, ...FILL('#fff3e3', 3) }, g);
-      for (let k = 0; k < 12; k++) {
-        const a = (k / 12) * Math.PI * 2;
-        D.p(g, `M${cx + Math.cos(a) * 34} ${cy + Math.sin(a) * 34} L${cx + Math.cos(a) * 40} ${cy + Math.sin(a) * 40}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 3 });
-      }
-      const hour = D.p(g, `M${cx} ${cy} L${cx + 18} ${cy - 14}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 5, 'stroke-linecap': 'round' });
-      const min = D.p(g, `M${cx} ${cy} L${cx} ${cy - 32}`, '', { style: 'fill: none; stroke: #ff5a1f', 'stroke-width': 4, 'stroke-linecap': 'round' });
-      return { g, hour, min, cx, cy };
-    }
-
-    const play = (i, instant) => {
+    const play = (i) => {
       const tl = gsap.timeline();
       if (i === 0) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
-        const lg = D.g(svg);
-        legend(lg);
-        tl.fromTo(lg, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.6 }, 0.4);
-        P.R = room(svg, { corridor: true });
-        P.door = door(P.R.back);
-        tl.fromTo([P.R.back, P.R.front], { opacity: 0 }, { opacity: 1, duration: 0.6 }, 0.1);
-        P.clock = clock(P.R.back, 1430, 380);
-        P.st = station(P.R.mid, SX, CHEF);
-        P.run = runner(P.R.mid, HOME, { arms: 'phone' });
-        tl.fromTo([P.st.g, P.run.root], { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.3);
-        // the session cooks; a steady flow
-        P.cur = ticket(P.R.top, 'Innlogging'); gsap.set(P.cur, { x: P.st.clip.x, y: P.st.clip.y });
-        P.rail = [ticket(P.R.top, 'Varsler'), ticket(P.R.top, 'Kamera-API')];
-        P.rail.forEach((t, k) => gsap.set(t, slot(k)));
-        tl.fromTo([P.cur, ...P.rail], { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.4);
-        const cycle = (at, label) => {
-          cookFor(tl, P.st, at, 1.2);
-          serve(tl, P.R.top, SX, at + 1.2, { color: '#ffd23f' });
-          tl.to(P.cur, { y: '-=40', opacity: 0, duration: 0.3 }, at + 1.3);
-          P.cur = P.rail.shift();
-          hop(tl, P.cur, P.st.clip, at + 1.7);
-          P.rail.forEach((t, k) => fly(tl, t, slot(k), at + 2.0, 0.4));
-          P.rail.push(arrive(tl, label, P.rail.length, at + 2.3));
-        };
-        cycle(0.4, 'Tester');
-        cycle(3.0, 'Eksport');
-        cookFor(tl, P.st, 5.6, 1.0);
+        const app = codeApp(svg, AX, AY, AW, AH, { size: 18 });
+        tl.fromTo(app.root, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 0.2);
+        const t = app.session('eksport', 'Eksport', 'work');
+        app.show(tl, 'eksport', 0.2);
+        t.user(tl, 'Lag eksport til CSV.', 0.6);
+        t.tool(tl, 'Read', 'src/rapport.ts', '212 linjer', 1.1);
+        t.tool(tl, 'Edit', 'src/eksport.ts', '+48 −3', 1.8);
+        t.tool(tl, 'Bash', 'npm test', '24 bestått', 2.5);
+        t.ctx(tl, 180, 0.6, 2.4);
+        P.t = t;
       }
 
       if (i === 1) {
-        // research errand: quick and useful
-        P.say = speech(P.R.top, 800, 300, 'Sjekk lageret.', [1040, 420], { size: 20 });
-        tl.fromTo(P.say, { opacity: 0, scale: 0.8, transformOrigin: '100% 100%' }, { opacity: 1, scale: 1, duration: 0.3 }, 0);
-        tl.to(P.say, { opacity: 0, duration: 0.25 }, 1.2);
-        P.run.expr(tl, { brows: 'raised', mouth: 'smile' }, 0.4);
-        walk(tl, CORR, 0.6);
-        openDoor(tl, 0.7);
-        tl.to(P.run.root, { x: 500 - HOME, opacity: 0, duration: 0.4 }, 1.2);
-        // back with the answer
-        tl.to(P.run.root, { x: CORR - HOME, opacity: 1, duration: 0.4 }, 2.0);
-        openDoor(tl, 2.3);
-        walk(tl, HOME, 2.4);
-        P.list = paperCard(P.R.top, 1166, 300, 210, 'LAGER', ['dynamitt  12', 'lykter  2', 'skinner  40 m'], { size: 19 });
-        tl.fromTo(P.list, { opacity: 0, x: -400, y: 260, scale: 0.4, transformOrigin: '0% 0%' }, { opacity: 1, x: 0, y: 0, scale: 1, duration: 0.6, ease: 'power2.out' }, 3.1);
-        P.ok = D.p(P.R.top, 'M1334 318 l10 12 l22 -26', '', { style: 'fill: none; stroke: #1f9d63', 'stroke-width': 6, 'stroke-linecap': 'round', opacity: 0 });
-        tl.to(P.ok, { opacity: 1, duration: 0.2 }, 3.8);
-        P.st.cook.expr(tl, { mouth: 'smile' }, 3.8);
-        cookFor(tl, P.st, 3.8, 1.0);
-        ctx.focus(tl, [P.run.root, P.say, P.list, P.ok, P.st.g, P.cur], 0.2);
+        // a research helper: short errand, quick answer
+        const t = P.t;
+        t.fadeOld(tl, 0);
+        P.a1 = t.agent(tl, 'Finn ut hvordan DVR-API-et logger inn', '3 verktøykall · 12s', 0.3, { result: 'Token i header, fornyes hver time.' });
+        t.tool(tl, 'Edit', 'src/dvr.ts', '+12 −2', 1.8);
+        t.ctx(tl, 210, 1.8, 0.6);
       }
 
       if (i === 2) {
-        // a whole dish handed to the helper
-        tl.to([P.list, P.ok], { opacity: 0, duration: 0.3 }, 0);
-        P.st.cook.expr(tl, { mouth: 'neutral' }, 0);
-        P.say2 = speech(P.R.top, 800, 300, 'Grav ut denne.', [1040, 420], { size: 20 });
-        tl.fromTo(P.say2, { opacity: 0, scale: 0.8, transformOrigin: '100% 100%' }, { opacity: 1, scale: 1, duration: 0.3 }, 0.1);
-        tl.to(P.say2, { opacity: 0, duration: 0.25 }, 1.3);
-        const job = P.rail.shift();
-        job.setAttribute('data-overlap-ok', ''); // handed to the helper: contact by design
-        hop(tl, job, { x: HOME - 60, y: 560 }, 0.5); // into the runner's hands, below the chef's bubble
-        P.rail.forEach((t, k) => fly(tl, t, slot(k), 0.9, 0.4));
-        // the ticket goes with the runner into the corridor
-        walk(tl, CORR, 1.2, 0.7);
-        tl.to(job, { x: CORR - 60, duration: 0.7, ease: 'power1.inOut' }, 1.2);
-        openDoor(tl, 1.3);
-        tl.to(job, { opacity: 0, duration: 0.3 }, 2.0);
-        // done: plate in hand, standing in the corridor, never says so
-        P.plate = plate(P.R.top, '#c4562a');
-        gsap.set(P.plate, { x: CORR, y: RUN_NECK + 26, opacity: 0 });
-        tl.to(P.plate, { opacity: 1, duration: 0.3 }, 2.4);
-        P.run.expr(tl, { mouth: 'smile', brows: 'neutral' }, 2.4);
-        // the session waits: tickets pile up, the clock spins
-        P.st.cook.expr(tl, { brows: 'annoyed', mouth: 'frown', eyes: 'down' }, 2.6);
-        tl.to(P.clock.min, { rotation: 1080, svgOrigin: `${P.clock.cx} ${P.clock.cy}`, duration: 3.2, ease: 'power1.inOut' }, 2.6);
-        tl.to(P.clock.hour, { rotation: 90, svgOrigin: `${P.clock.cx} ${P.clock.cy}`, duration: 3.2, ease: 'power1.inOut' }, 2.6);
-        ['Mørk modus', 'Fakturaer'].forEach((label, k) => P.rail.push(arrive(tl, label, P.rail.length, 3.0 + k * 0.6)));
-        P.pile = [0, 1, 2].map((k) => {
-          const t = ticket(P.R.top, '', { blank: true });
-          gsap.set(t, { x: 1300 + k * 20, y: 600 - k * 4, rotation: -26 + k * 24, transformOrigin: '50% 50%' });
-          tl.fromTo(t, { y: K.rail - 80, opacity: 0, rotation: 0 }, { y: 600 - k * 4, rotation: -26 + k * 24, opacity: 1, duration: 0.7, ease: 'bounce.out' }, 4.4 + k * 0.4);
-          return t;
-        });
-        P.note = D.g(P.R.top, { transform: 'rotate(-5 574 300)' });
-        D.pencil(P.note, 574, 296, 'ferdig for', { size: 30, rotate: 0 });
-        D.pencil(P.note, 574, 352, '40 min siden', { size: 30, rotate: 0 });
-        tl.fromTo(P.note, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 5.6);
-        ctx.focus(tl, [P.run.root, P.plate, P.note, P.st.g, P.clock.g, P.cur, ...P.rail, ...P.pile, P.R.corr], 2.4);
+        // a whole job to a helper, in the background; the lead carries on
+        const t = P.t;
+        t.fadeOld(tl, 0);
+        t.agent(tl, 'Bygg hele fakturamodulen', 'kjører i bakgrunnen', 0.3);
+        P.bg = bgList();
+        tl.fromTo(P.bg.g, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.8);
+        t.tool(tl, 'Edit', 'src/eksport.ts', '+20 −4', 1.4);
+        P.spin = t.spin(tl, 'Lager eksport', 2.0, { from: 0, to: 41 * 60 + 12, dur: 4.0 });
+        t.ctx(tl, 320, 2.0, 4.0);
+        // the helper finishes; nothing reaches the lead
+        P.bg.set(tl, 'done', 'ferdig', 'hjelper · ferdig 04:32', 3.0);
+        tl.fromTo(P.bg.g, { scale: 1.04, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.4, immediateRender: false }, 3.0);
       }
 
       if (i === 3) {
-        // the lead has already waited; now it has to go and look for the helper itself
-        tl.to(P.note, { opacity: 0, duration: 0.3 }, 0);
-        // it leaves its rock face (a cut, not a walk past the rock) and turns up at the tunnel door
-        tl.to(P.st.cook.root, { opacity: 0, duration: 0.3 }, 0.3);
-        const ls = 0.72, LX = 820;
-        P.lead = robot(P.R.mid, { x: LX, y: K.floor - 252 * ls, s: ls, pose: 'stand', arms: 'point', metal: CHEF.metal, flip: true, brows: 'annoyed', mouth: 'frown' });
-        tl.fromTo(P.lead.root, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.7);
-        openDoor(tl, 0.9, 1.2);
-        P.run.expr(tl, { eyes: 'wide', mouth: 'neutral', brows: 'raised' }, 1.3);
-        // takes the ore out of the helper's hands
-        const handX = LX - 134 * ls, handY = K.floor - 252 * ls - 58 * ls + 30;
-        tl.to(P.plate, { x: handX, y: handY, duration: 0.4 }, 1.7);
-        P.run.expr(tl, { eyes: 'down', brows: 'tired', mouth: 'frown' }, 2.2);
-        // back to its own rock face; the ore goes out on the track
-        tl.to([P.lead.root, P.plate], { opacity: 0, duration: 0.3 }, 2.6);
-        tl.to(P.st.cook.root, { opacity: 1, duration: 0.4 }, 2.9);
-        serve(tl, P.R.top, SX, 3.1, { color: '#c4562a' });
-        tl.to(P.pile, { opacity: 0, duration: 0.3 }, 3.3);
-        P.st.cook.expr(tl, { brows: 'tired', mouth: 'neutral', eyes: 'open' }, 3.3);
-        // and only now gets back to its own queue
-        tl.to(P.cur, { y: '-=40', opacity: 0, duration: 0.3 }, 4.2);
-        serve(tl, P.R.top, SX, 4.2, { color: '#ffd23f' });
-        const nx = P.rail.shift();
-        hop(tl, nx, P.st.clip, 4.6);
-        P.rail.forEach((t, k) => fly(tl, t, slot(k), 4.9, 0.4));
-        cookFor(tl, P.st, 5.0, 1.2);
-        ctx.focus(tl, [P.lead.root, P.run.root, P.plate, P.st.g, P.R.corr], 0.2);
+        // the lead breaks off its own work to go and check
+        const t = P.t;
+        P.spin.end(tl, 0.3, '■ Avbrutt: eksport', 'dim');
+        t.fadeOld(tl, 0.6);
+        t.say(tl, 'Fakturamodulen har ikke svart. Sjekker.', 0.9);
+        t.tool(tl, 'TaskOutput', 'fakturamodul', 'Ferdig for 40 min siden. 12 filer.', 1.6, { tone: '#8fe3a2' });
+        P.bg.set(tl, 'done', 'hentet', null, 2.2);
+        t.say(tl, 'Tilbake til eksporten.', 3.0);
       }
       return tl;
     };
 
-    const s = D.stepper(ctx, { reset, play });
-    return { ...s, dispose() { loops.forEach((l) => l.kill()); } };
+    return D.stepper(ctx, { reset, play });
   },
 };
