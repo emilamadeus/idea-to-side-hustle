@@ -147,7 +147,7 @@ export const HELP = {
   ],
   'html-deck': [
     'Et vanlig lysbilde kan vise bilder av ting.',
-    'En nettside kan kjøre tingen.',
+    'En nettside er bare begrenset av fantasien',
     'Alt er tekst, så AI-en kan skrive og endre alt.',
     'Prisen: alt må bygges selv.',
   ],
