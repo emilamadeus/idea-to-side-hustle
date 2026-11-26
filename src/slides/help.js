@@ -15,7 +15,7 @@ export const HELP = {
   ],
   spec: [
     'En HTML-spec som AI-en oppdaterer selv mens den jobber.',
-    'Hver oppgave sier hvorfor den står, og hva den venter på.',
+    'Hver oppgave sier hvorfor den er blokkert, og hva den venter på.',
     'Et skjult lag med regler som bare agentene leser.',
     'Status til andre er ett klikk unna.',
     'Denne presentasjonen har sin egen.',
