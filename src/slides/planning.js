@@ -10,7 +10,7 @@ import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
        so the stack comes apart and is rebuilt. Twice.
     1. Attempt 2 (new session): the whole product spec goes in with the prompt (goal, users,
        all six features, requirements, what is left out), "kun planlegging" in auto mode. The
-       spec opens beside the wall; six sheets go up from it. The one product decision comes
+       spec opens; the plan is written into it as a second column, six numbered sections. The one product decision comes
        to you as a question.
     2. The whole set is built in one pass.
 
@@ -19,7 +19,8 @@ import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
     chat       x 80–520, y 262–782
     attempt    x 560–960, y 120–154
     site       x 600–1480, y 170–760 (stack base y 740)
-    step 1     spec document x 600–900, y 190–530; sheets 2×3, x 950–1460, y 190–530
+    step 1     spec document x 600–1460, y 190–530: spec fields x 624–900, plan column x 940–1436
+               (six numbered sections, 2×3, y 246–502)
 */
 
 const BASE = 740, BW = 220, BH = 64, BX = 1040 - BW / 2;
@@ -152,7 +153,10 @@ export default {
         // the whole product goes in first, as a spec, before any work
         const msg = P.chat.user(tl, ['Her er hele produktet.', 'Kun planlegging. Spør', 'meg bare om produktvalg.'], 0.6, { attach: specChip });
         const doc = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: 600, y: 190, width: 300, height: 340, rx: 6, style: 'fill: #fff3e3; stroke: #1a120c', 'stroke-width': 2.5, 'data-bg': '' }, doc);
+        D.el('rect', { x: 600, y: 190, width: 860, height: 340, rx: 6, style: 'fill: #fff3e3; stroke: #1a120c', 'stroke-width': 2.5, 'data-bg': '' }, doc);
+        // the plan is written into the spec itself, as its second column
+        D.p(doc, 'M916 214 V506', '', { style: 'fill: none; stroke: #d8c8b2', 'stroke-width': 2, 'data-bg': '' });
+        P.planHead = D.text(doc, 940, 228, 'PLAN · I REKKEFØLGE', 'ph', { style: 'font: 700 16px var(--font-mono); letter-spacing: .14em; fill: #1a120c', opacity: 0 });
         D.text(doc, 624, 228, 'PRODUKTSPEC', 'dt', { style: 'font: 700 16px var(--font-mono); letter-spacing: .14em; fill: #1a120c' });
         SPEC.forEach(([k, v], j) => {
           D.text(doc, 624, 272 + j * 54, k, 'dk', { style: 'font: 700 13px var(--font-mono); letter-spacing: .12em; fill: #8a6a4a' });
@@ -164,16 +168,18 @@ export default {
         tl.fromTo(zoom, { opacity: 0 }, { opacity: 0.6, duration: 0.4 }, 1.1);
         const t = P.chat.think(tl, 1.8, 1.2);
         P.tok.set(tl, 8, t, 1.2);
-        // the plan: one sheet per feature, from the spec
+        // the plan: one section per feature, written into the spec, numbered in build order
+        tl.fromTo(P.planHead, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t);
         P.wall = D.g(svg);
         P.sheets = FINAL.map((n, k) => {
           const s = D.g(P.wall, { 'data-unit': '' });
-          const x = 950 + (k % 2) * 260, y = 190 + Math.floor(k / 2) * 120;
-          D.el('rect', { x, y, width: 240, height: 100, rx: 3, style: 'fill: #fff3e3', 'data-bg': '' }, s);
-          D.el('circle', { cx: x + 120, cy: y + 10, r: 7, style: 'fill: #ff5a1f' }, s);
-          D.text(s, x + 18, y + 46, n, 'sn', { style: 'font: 800 24px var(--font-display); fill: #1a120c' });
-          D.p(s, `M${x + 18} ${y + 70} h${120 + (k * 37) % 60} M${x + 18} ${y + 86} h${80 + (k * 23) % 50}`, '', { style: 'fill: none; stroke: #b9a88f', 'stroke-width': 4, 'stroke-linecap': 'round' });
-          tl.fromTo(s, { opacity: 0, y: -20, rotation: -4 + k * 2, transformOrigin: '50% 0%' }, { opacity: 1, y: 0, rotation: 0, duration: 0.35, ease: 'back.out(2)' }, t + k * 0.25);
+          const x = 940 + (k % 2) * 256, y = 246 + Math.floor(k / 2) * 90;
+          D.el('rect', { x, y, width: 240, height: 76, rx: 6, style: 'fill: #f3e4cc; stroke: #d8c8b2', 'stroke-width': 2, 'data-bg': '' }, s);
+          D.el('circle', { cx: x + 24, cy: y + 26, r: 13, style: 'fill: #ff5a1f' }, s);
+          D.text(s, x + 24, y + 32, String(k + 1), 'sk', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-mono); fill: #fff3e3' });
+          D.text(s, x + 48, y + 34, n, 'sn', { style: 'font: 800 22px var(--font-display); fill: #1a120c' });
+          D.p(s, `M${x + 48} ${y + 56} h${110 + (k * 37) % 60}`, '', { style: 'fill: none; stroke: #b9a88f', 'stroke-width': 4, 'stroke-linecap': 'round' });
+          tl.fromTo(s, { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.3 }, t + 0.2 + k * 0.22);
           return { s, x, y };
         });
         // the one product decision comes to you as a question
@@ -188,7 +194,7 @@ export default {
         tl.to(P.zoom, { opacity: 0, duration: 0.2 }, 0);
         const b = FINAL.map((n) => block(svg, n));
         // the plan comes off the wall, then the whole set is built bottom-up in one pass
-        tl.to(P.sheets.map((sh) => sh.s), { opacity: 0, y: -10, duration: 0.3, stagger: 0.05 }, 0.1);
+        tl.to([P.doc, ...P.sheets.map((sh) => sh.s)], { opacity: 0, duration: 0.4 }, 0.1);
         b.forEach((blk, k) => drop(tl, blk, k, 0.6 + k * 0.4));
         P.chat.reply(tl, 'Ferdig. Alle seks.', 3.2);
         P.tok.set(tl, 17, 0.2, 1.6);
