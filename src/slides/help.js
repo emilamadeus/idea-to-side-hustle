@@ -78,7 +78,7 @@ export const HELP = {
   ],
   'always-working': [
     'Bivirkningen av sessions som alltid sier fra.',
-    null, null, null, null, null, null,
+    null, null, null, null,
     'Bestem selv når du svarer.',
   ],
   'self-check': [

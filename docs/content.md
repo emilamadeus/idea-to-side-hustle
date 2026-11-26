@@ -127,17 +127,14 @@ Point: a big win. The AI always sends a notification when it is done or needs a 
 
 ## Always working (humor) [given]
 Point: being this productive with AI means you are always working. Notifications arrive at odd times and you start the next task.
-- Storyboard [built]: one main character across five scenes. Clock spins to each moment; attention ring shows HER vs JOBB.
+- Storyboard [built]: one main character across three scenes (lunch and Christmas Eve were cut). Clock spins to each moment; attention ring shows HER vs JOBB.
   In every scene the phone buzzes (vibration arcs), lights up the face, the head turns, the notification pops out of the phone, a one-word reply, "→ neste oppgave startet", while the others keep talking.
   1. 09:14 meeting: phone under the table while the presenter talks Q4. HER 40 %.
-  2. 11:47 lunch: colleague mid-story, steaming coffee. HER 65 %.
-  3. 18:30 dinner with the wife, three clicks: (a) cosy dinner, "Så fint med en kveld for oss to.", buzz, notification, reply. (b) She gets annoyed, arms crossed: "Gymbro spurte om jeg ville henge." Pause. He says "2 sek." without looking up; candles shrink. (c) She stands up smiling at her own phone and walks out; candles go out with smoke; he looks up, grins "Ferdig!" at the empty chair.
-  4. Night, three clicks, same wake-up each time (buzz, eyes open, phone up, answer, phone back, asleep): 03:12 "Watchdog: alt kjører. 3 sessions jobber." → "Bra."; 04:37 "Session 2 lurer på: Postgres eller SQLite?" → "Postgres." (partner wakes, gives a look); 05:58 "Alt ferdig. Starte neste batch?" → "Ja." (dawn in the window, partner stays awake, annoyed).
-  5. Christmas Eve 19:42: tree lights blinking, presents being opened, "Se hva jeg fikk!".
-  6. The week: calendar fills with "jobb (litt)".
+  2. 18:30 dinner with the wife, three clicks: (a) cosy dinner, "Så fint med en kveld for oss to.", buzz, notification, reply. (b) She gets annoyed, arms crossed: "Gymbro spurte om jeg ville henge." Pause. He says "2 sek." without looking up; candles shrink. (c) She stands up smiling at her own phone and walks out; candles go out with smoke; he looks up, grins "Ferdig!" at the empty chair.
+  3. Night, three clicks, same wake-up each time (buzz, eyes open, phone up, answer, phone back, asleep): 03:12 "Watchdog: alt kjører. 3 sessions jobber." → "Bra."; 04:37 "Session 2 lurer på: Postgres eller SQLite?" → "Postgres." (partner wakes, gives a look); 05:58 "Alt ferdig. Starte neste batch?" → "Ja." (dawn in the window, partner stays awake, annoyed).
+  4. The week: calendar fills with "jobb (litt)".
 - Twists [built]:
   - Meeting: after his reply the lights dim and every phone in the room glows: both colleagues under the table, the presenter's in her blazer pocket. Rubber duck and stickered laptop on the table.
-  - Lunch: the colleague's story is "… så sa jeg: legg vekk telefonen!"
   - Dinner, last click: she stands up with her phone; her screen zooms in: she is asking Claude "Hvordan får jeg kjæresten til å legge vekk telefonen?" (Claude typing). Then she leaves.
   - Night: an energy can appears on the floor per wake-up; at 06:00, two minutes after the last "Ja.", the alarm clock rings.
   - Calendar: one green FERIE block on Sunday appears last, then flips to "jobb (litt)".

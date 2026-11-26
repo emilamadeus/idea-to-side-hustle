@@ -6,7 +6,7 @@ import { figure, lyingHead, PALETTE } from '../engine/characters.js';
 /*
   Humor: with AI sessions that notify you, you are always (a little) at work.
 
-  Five scenes around one main character (glasses, hoodie). In each: the phone
+  Three scenes (meeting, dinner, night) around one main character (glasses, hoodie). In each: the phone
   buzzes and lights up their face, they look down at it, the notification pops out
   of the phone, a one-word reply, the next task starts, while the people around
   them keep talking to someone who isn't really there. An attention ring (HER /
@@ -69,11 +69,12 @@ const WOOD = '#4a3020', WOOD_DARK = '#2e1d13', CLOTH = '#e7dccb', CREAM = '#efe4
 const F = (fill) => ({ style: `fill: ${fill}; stroke: ${D.inkFor(fill)}`, 'stroke-width': 2.6, 'stroke-linejoin': 'round' }); // dark ink, like a render
 
 // Build steps: each scene is one step, the dinner gets two extra beats.
+// (Scenes 1, lunch, and 4, Christmas Eve, are kept in SCENES but no longer played.)
 const STEPS = [
-  { scene: 0, beat: 0 }, { scene: 1, beat: 0 },
+  { scene: 0, beat: 0 },
   { scene: 2, beat: 0 }, { scene: 2, beat: 1 }, { scene: 2, beat: 2 },
   { scene: 3, beat: 0 },
-  { scene: 4, beat: 0 }, { calendar: true },
+  { calendar: true },
 ];
 
 export default {
@@ -82,12 +83,10 @@ export default {
   steps: STEPS.length,
   notes: [
     'Møte. Telefonen under bordet.',
-    'Lunsj.',
     'Middag med kona. Så kommer varselet.',
     '«Gymbro spurte om jeg ville henge.» «2 sek.»',
     'Hun går. «Ferdig!»',
     'Natten: 03:12, 04:37, 05:58. Vekket, svarer, sover videre. Hun våkner også. 06:00: vekkerklokka. Spilles av uten klikk.',
-    'Julaften.',
     'Uka.',
   ],
 
