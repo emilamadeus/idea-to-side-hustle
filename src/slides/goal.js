@@ -50,6 +50,8 @@ export default {
       const c = D.g(g);
       D.el('rect', { x: -18, y: -11, width: 36, height: 22, rx: 6, ...FILL(color, 2) }, c);
       D.el('rect', { x: 0, y: -8, width: 12, height: 16, rx: 3, style: 'fill: #1b2330' }, c);
+      // a load of logs on the back (seen from above)
+      [-8, -2.5, 3].forEach((y) => D.el('rect', { x: -17, y, width: 15, height: 5, rx: 2.5, style: 'fill: #c9935a; stroke: #5a3a22', 'stroke-width': 1 }, c));
       return c;
     }
     // Move a car along a path: progress 0..1, rotate with the road.
