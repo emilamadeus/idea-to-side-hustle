@@ -208,7 +208,9 @@ export default {
         // the plan comes off the wall, then the whole set is built bottom-up in one pass
         tl.to([P.doc, ...P.sheets.map((sh) => sh.s)], { opacity: 0, duration: 0.4 }, 0.1);
         b.forEach((blk, k) => drop(tl, blk, k, 0.6 + k * 0.4));
-        P.chat.reply(tl, 'Ferdig.', 3.2);
+        // Claude at work while the blocks go up
+        const w = P.chat.think(tl, 0.4, 2.8, { label: 'Jobber' });
+        P.chat.reply(tl, 'Ferdig.', w);
         P.tok.set(tl, 17, 0.2, 1.6);
       }
       return tl;

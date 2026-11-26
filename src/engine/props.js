@@ -122,7 +122,7 @@ export function promptBox(parent, x, y, w, str, { attach = null, size = 20, labe
  * Chat phone: a prompt conversation with Claude or ChatGPT on a phone screen.
  *   const chat = chatPhone(svg, x, y, w, h, { app: 'Claude' | 'ChatGPT', compact })
  *   chat.user(tl, text | [lines], at, { attach, label })   your message (right)
- *   chat.think(tl, at, dur)                                  "Tenker" animation, returns end time
+ *   chat.think(tl, at, dur, { label })                       "Tenker" animation (or another label), returns end time
  *   chat.reply(tl, text, at, { list })                       the answer (left); list → checkbox rows, returns .ticks
  *   chat.clear(tl, at)                                       start a new conversation
  * Messages scroll up when the screen fills. Positions are computed at build time.
@@ -187,15 +187,15 @@ export function chatPhone(parent, x, y, w, h, { app = 'Claude', compact = false,
       g.chip = chip && { ...chip, y: chip.y - scroll };
       return g;
     },
-    think(tl, at, dur = 1.3) {
+    think(tl, at, dur = 1.3, { label = 'Tenker' } = {}) {
       const g = group(content, { opacity: 0, class: 'chat-think' });
       const cx = sx + pad + 12, cy = cursor + 16;
       const spark = path(g, Array.from({ length: 8 }, (_, k) => {
         const a = (k / 8) * Math.PI * 2;
         return `M${cx} ${cy} L${cx + Math.cos(a) * 11} ${cy + Math.sin(a) * 11}`;
       }).join(' '), '', { style: `fill: none; stroke: ${accent}`, 'stroke-width': 3.5, 'stroke-linecap': 'round' });
-      text(g, cx + 22, cy + 6, 'Tenker', 'th', { style: 'font: 600 16px var(--font-mono); fill: var(--muted)' });
-      const dots = [0, 1, 2].map((k) => el('circle', { cx: cx + 92 + k * 12, cy: cy + 1, r: 3.5, style: 'fill: var(--muted)' }, g));
+      text(g, cx + 22, cy + 6, label, 'th', { style: 'font: 600 16px var(--font-mono); fill: var(--muted)' });
+      const dots = [0, 1, 2].map((k) => el('circle', { cx: cx + 32 + label.length * 10 + k * 12, cy: cy + 1, r: 3.5, style: 'fill: var(--muted)' }, g));
       ensure(tl, at, cursor + 40);
       tl.to(g, { opacity: 1, duration: 0.2 }, at);
       tl.to(spark, { rotation: 360 * Math.max(1, Math.round(dur)), svgOrigin: `${cx} ${cy}`, duration: dur, ease: 'none' }, at);
