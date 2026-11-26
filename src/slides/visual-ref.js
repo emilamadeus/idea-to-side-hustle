@@ -3,7 +3,7 @@ import * as D from '../engine/draw.js';
 import { chatPhone, attempt } from '../engine/props.js';
 
 /*
-  Tip: give it a picture, not a list. The firewood subscription's front page, right after
+  Tip: a picture beats a description ("Et bilde slår en beskrivelse."). The firewood subscription's front page, right after
   "Varm peis" was picked on the prototypes slide.
     0. The prompt, and what you actually have in mind (a thought cloud: the Varm peis page).
     1. Attempt 1: a good, full description becomes a checklist and every box is ticked, but
@@ -71,7 +71,7 @@ export default {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Visuelle referanser</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.6)">Gi den et <em>bilde</em>,<br>ikke en liste.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.6)">Et <em>bilde</em> slår<br>en beskrivelse.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
