@@ -107,11 +107,11 @@ export const HELP = {
     'Mer effort tviler på det som var bra, og bruker mer tokens.',
   ],
   gateway: [
-    'Et annet team leverer. Hva betyr det for deg?',
-    'AI-en leser hver build og sier hva som kan bygges nå.',
+    'Pro-tip: Oppdater din live spec-fil med det den finner',
+    'AI-en leser nåværende status og sier hva som kan bygges nå',
     'Ingenting relevant? Da slipper du å lese den.',
-    'Du leser tavla, ikke changelogene.',
-    'AI-en sjekket gateway-koden før vi bygde mot designet.',
+    'Du leser din egen spec-fil for status',
+    'Uten kontakt med det ansvarlige teamet får du svar på hva som eksisterer',
   ],
   'know-a-guy': [
     'Jobben lærer deg én del av kartet.',
