@@ -7,7 +7,7 @@ export const HELP = {
   'md-files': [
     'Samme oppgave, tre oppsett av instruksjonsfiler.',
     '0 filer: hver session starter blankt. Den gjetter.',
-    '1 fil: bedre, men dyrt: alt leses hver gang og legges til i kontekst.',
+    '1 fil: bedre, men dyrt: alt leses hver gang og bruker kontekst.',
     'Flere filer: den leser bare det oppgaven trenger.',
     'Neste session fortsetter fra STATUS og HANDOFF.',
     'Utdatert STATUS sender sessionen tilbake til ferdig arbeid.',
