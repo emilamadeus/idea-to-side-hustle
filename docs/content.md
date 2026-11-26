@@ -104,9 +104,10 @@ Point: a scheduled check every ~10 min looks at all running jobs: RAM lock, agen
   1. Lights dim, the clock runs from 22:00 to 06:00. A night guard with a flashlight does a round every 10 minutes.
   2. Round 1: two sessions each waiting for the other (arrows pointing at each other). The guard breaks the tie.
   3. Round 2: one session asleep at its desk. Pencil: idle since 02:14. Woken up.
-  4. Round 3: one session swelling with memory. Restarted with a handoff.
-  5. Round 4: the guard checks the corridor too: a helper sits with a finished result it never handed in; the lead is still waiting. The guard delivers it.
-  6. Morning: all work done.
+  4. Round 3: RAM lock. A new job can't start because finished jobs still hold their RAM. The guard frees it; the job starts.
+  5. Round 4: a session's context fills; auto-compact is set to 400k, so it compacts and keeps going instead of starting a new session.
+  6. Round 5: the guard checks the corridor too: a helper sits with a finished result it never handed in; the lead is still waiting. The guard delivers it.
+  7. Morning: all work done.
 - Set up by plain request ("run this check every 10 minutes"); no special commands. In Claude Code that becomes a recurring loop in the session.
 
 ## Remote sessions and notifications [given]
