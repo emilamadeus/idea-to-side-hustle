@@ -74,6 +74,7 @@ export default {
         // a site that refuses to be framed gets a big button instead
         if (site.noFrame) frame.removeAttribute('src'); else frame.setAttribute('src', `https://${site.url}`);
         link.setAttribute('href', `https://${site.url}`);
+        big.setAttribute('href', `https://${site.url}`);
       }, null, 0.3);
       tl.to(frame, { opacity: site.noFrame ? 0 : 1, duration: 0.5 }, 0.6);
       tl.to(big, { opacity: site.noFrame ? 1 : 0, pointerEvents: site.noFrame ? 'auto' : 'none', duration: 0.3 }, 0.6);
