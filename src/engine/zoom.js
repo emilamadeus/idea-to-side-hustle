@@ -6,6 +6,8 @@ import gsap from 'gsap';
   streams of light particles that run from edge to edge through the gaps, never across a panel.
     level 1  the current section (e.g. Plan) in a gently curved row
     level 2  the whole talk: one column per section, in talk order, joined into one chain
+  The wheel zooms smoothly toward the pointer inside a level; scrolling on past the limit goes to
+  the next level (in: the section under the pointer, then the slide; out: the section, the talk).
   The current slide starts as a full-size panel exactly over the 16:9 frame, so the slide
   seems to shrink into its place. Hover lifts a panel and shows its title; click flies into it
   and opens it. Pictures come from public/thumbs/<id>.jpg (npm run thumbs); a missing picture
@@ -200,10 +202,13 @@ export function createZoom(deck, stage) {
   }
   function layoutAll() {
     const C = groups.length, rows = Math.max(...groups.map((g) => g.items.length));
-    const cam = { pos: [0, -0.6, 18], look: [0, -0.6, -8] }, zP = -8, d = 18 - zP;
-    const s = Math.min((0.92 * viewW(d)) / (C * 1.3 * W0), (0.74 * viewH(d)) / (rows * 1.3 * H0));
-    const colStep = 1.3 * W0 * s, rowStep = 1.3 * H0 * s;
-    const top = ((rows - 1) / 2) * rowStep - 0.6;
+    const zP = -8, d = 18 - zP;
+    const s = Math.min((0.94 * viewW(d)) / (C * 1.3 * W0), (0.86 * viewH(d)) / ((rows - 1) * 1.62 * H0 + H0 + 1.1 * 1.62 * H0));
+    const colStep = 1.3 * W0 * s, rowStep = 1.62 * H0 * s; // tall gaps, so the streams down a column read
+    const top = ((rows - 1) / 2) * rowStep;
+    // centre the whole thing, labels included, in the view
+    const cy = (top + rowStep * 0.72 + 0.25 + top - (rows - 1) * rowStep - (H0 * s) / 2) / 2;
+    const cam = { pos: [0, cy, 18], look: [0, cy, zP] };
     const pos = {}, order = [], lab = [];
     // a snake: down one column, up the next, so every link is short and crosses nothing
     let end = -1, down = true;
@@ -226,6 +231,7 @@ export function createZoom(deck, stage) {
 
   // ── state ──
   let level = 0, layout = null, sel = deck.index, hover = -1, busy = false;
+  let view = null; // wheel zoom within a level: centre, depth of the panels, base distance, factor
   const tip = document.createElement('div');
   tip.className = 'zoom-tip';
   document.body.appendChild(tip);
@@ -259,6 +265,7 @@ export function createZoom(deck, stage) {
       gsap.to(m.material, { opacity: 0.95, duration: 0.6, delay: dur * 0.5 });
     });
     stage.fly({ pos: L.cam.pos, look: L.cam.look, duration: dur, ease: 'power3.inOut' });
+    view = { cx: L.cam.look[0], cy: L.cam.look[1], zP: L.cam.look[2], d: L.cam.pos[2] - L.cam.look[2], f: 1 };
     paintEdges();
   }
 
@@ -275,7 +282,7 @@ export function createZoom(deck, stage) {
     } else tip.classList.remove('on');
   }
 
-  function enter(n) {
+  function enter(n, focus = null) {
     if (busy) return;
     const from = level === 0 ? { i: deck.index } : null;
     if (level === 0) {
@@ -286,8 +293,9 @@ export function createZoom(deck, stage) {
       gsap.to(rig, { parallax: 3, duration: 1 });
       sel = deck.index;
     }
+    if (focus != null) sel = focus;
     level = n;
-    apply(n === 1 ? layoutSection(groupOf(deck.index)) : layoutAll(), { from });
+    apply(n === 1 ? layoutSection(groupOf(focus ?? deck.index)) : layoutAll(), { from });
     deck.sync?.send({ type: 'zoom', level });
   }
 
@@ -337,6 +345,65 @@ export function createZoom(deck, stage) {
     if (i >= 0) close(i, 0);
   });
 
+  // ── wheel: smooth zoom toward the pointer; past the limits, the next level ──
+  const FMIN = 0.32, FMAX = 1.3, PUSH = 240;
+  let acc = 0, lock = 0;
+  const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+  const hit = new THREE.Vector3();
+  function underPointer() {
+    plane.constant = -view.zP;
+    ndc.set(pointer.x, -pointer.y);
+    ray.setFromCamera(ndc, camera);
+    return ray.ray.intersectPlane(plane, hit) ? { x: hit.x, y: hit.y } : { x: view.cx, y: view.cy };
+  }
+  function bounds() {
+    const ps = Object.values(layout.pos);
+    const xs = ps.map((p) => p.x), ys = ps.map((p) => p.y);
+    return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+  }
+  function setView(dur = 0.5) {
+    const b = bounds();
+    view.cx = Math.max(b.x0, Math.min(b.x1, view.cx));
+    view.cy = Math.max(b.y0, Math.min(b.y1, view.cy));
+    const z = view.zP + view.d * view.f;
+    gsap.to(rig.pos, { x: view.cx, y: view.cy, z, duration: dur, ease: 'power2.out', overwrite: 'auto' });
+    gsap.to(rig.look, { x: view.cx, y: view.cy, z: view.zP, duration: dur, ease: 'power2.out', overwrite: 'auto' });
+  }
+  window.addEventListener('wheel', (e) => {
+    const now = performance.now();
+    const dy = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+    if (!level) {
+      // on a slide: scrolling out lifts you into the section
+      if (busy || now < lock || dy <= 0) { acc = 0; return; }
+      acc += dy;
+      if (acc > 140) { acc = 0; lock = now + 1100; enter(1); }
+      return;
+    }
+    e.preventDefault();
+    if (busy || now < lock || !view) return;
+    const nf = view.f * Math.exp(dy * 0.0016);
+    if (nf < FMIN) {
+      view.f = FMIN; acc += -dy;
+      if (acc > PUSH) {
+        acc = 0; lock = now + 1200;
+        const i = pick();
+        if (level === 2) enter(1, i >= 0 ? i : sel);
+        else close(i >= 0 ? i : sel);
+        return;
+      }
+    } else if (nf > FMAX) {
+      view.f = FMAX; acc += dy;
+      if (acc > PUSH && level === 1) { acc = 0; lock = now + 1200; enter(2); return; }
+    } else {
+      acc = 0;
+      const p = underPointer(), r = nf / view.f;
+      view.cx = p.x + (view.cx - p.x) * r;
+      view.cy = p.y + (view.cy - p.y) * r;
+      view.f = nf;
+    }
+    setView();
+  }, { passive: false });
+
   // ── per frame: float, lift, hover ──
   stage.tick((t) => {
     if (!world.visible) return;
@@ -369,6 +436,7 @@ export function createZoom(deck, stage) {
 
   return {
     get level() { return level; },
+    get view() { return view && { ...view }; },
     out() { if (level < 2) enter(level + 1); },
     in() { if (level === 2) enter(1); else if (level === 1) close(); },
     toggle(n = 2) { if (level === n) close(); else enter(n); },

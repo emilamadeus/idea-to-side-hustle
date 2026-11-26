@@ -55,7 +55,7 @@ All talk content, the speaker's points and proposed visuals live in `docs/conten
 ## Running
 - `npm run dev` → http://localhost:5180 (audience). Press **P** to open the presenter console (Chrome places it on the other screen after a one-time window-management permission). Spec: /docs/spec.html.
 - Step progress: the title block's STEG dots show how far the current build step has played (filling ring, then a solid pulsing dot = time to click); the console shows the same as a bar and KLAR. Slides built on `D.stepper` report this automatically.
-- Keys: →/Space/PageDown next · ←/PageUp back · digits+Enter jump · Z zoom out (the section, then the whole talk) · Shift+Z zoom in · O the whole talk · Esc back to the slide · B or . blackout · F fullscreen · H hide progress bar. T in console toggles timer; the console has Seksjon/Hele buttons.
+- Keys: →/Space/PageDown next · ←/PageUp back · digits+Enter jump · Z zoom out (the section, then the whole talk) · Shift+Z zoom in · O the whole talk · Esc back to the slide · scroll wheel zooms smoothly inside a level, and past the limit to the next level (out from a slide; in to a section, then a slide) · B or . blackout · F fullscreen · H hide progress bar. T in console toggles timer; the console has Seksjon/Hele buttons.
 - Zoom-out (`src/engine/zoom.js`): the slides float as panels in the particle space, joined as a chain; click one to fly in. Pictures in `public/thumbs/` come from `npm run thumbs` (dev server running; uses the installed Chrome via playwright-core). Re-run it after changing a slide (`npm run thumbs -- <id>` for one). A slide can set `thumbStep` to choose which step its picture shows (default: the last).
 
 ## Layout check (required after any slide change)
