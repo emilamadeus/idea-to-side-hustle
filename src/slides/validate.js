@@ -5,18 +5,21 @@ import { chatPhone, FILL } from '../engine/props.js';
 /*
   Check the idea before starting. One everyday idea (firewood delivered to the door, as a
   subscription) run through four checks, one card at a time, each answered in the chat.
-    0. The idea and the four questions; the cards are empty.
-    1. Kunde: city people with a fireplace and no car.
-    2. Betalingsvilje: they already pay extra for small sacks at the petrol station.
-    3. Konkurranse: plenty sell firewood, almost nobody delivers on a schedule.
-    4. Levere: the ordering and routes can be built; summer earns nothing. Verdict: start small.
-    5. The bigger picture (cards cleared): AI gives you every link of the value chain without
+    0. The idea, drawn: a van brings firewood to a city door, every 14 days all winter.
+    1. The four questions in the chat; the cards are empty.
+    2. Kunde: city people with a fireplace and no car.
+    3. Betalingsvilje: they already pay extra for small sacks at the petrol station.
+    4. Konkurranse: plenty sell firewood, almost nobody delivers on a schedule.
+    5. Levere: the ordering and routes can be built; summer earns nothing. Verdict: start small.
+    6. The bigger picture (cards cleared): AI gives you every link of the value chain without
        much capital. The catch is that everyone else gets it too, so the market fills up. The
        openings: a niche nobody covers, or a product that reaches very many customers.
   The answers are illustrative.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
+    step 0     headline centred y 300; house x 1060–1400, y 330–620; van x 560–800, y 520–620;
+               ground y 620; delivery calendar x 300–1300, y 660–740
     chat       x 80–520, y 262–782
     cards      2×2, x 600–1480, y 170–740 (each 420×270): label y+38, question y+72,
                drawing y+92–202, answer y+244, status badge top right
@@ -43,9 +46,10 @@ const MUTED = { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 2.5, 'stro
 export default {
   id: 'validate',
   title: 'Sjekk ideen først',
-  steps: 6,
+  steps: 7,
   notes: [
-    'Et hverdagseksempel: ved levert på døra, som abonnement. Fire spørsmål før jeg starter.',
+    'Et hverdagseksempel: ved levert på døra i byen, som abonnement. Hver 14. dag, hele vinteren.',
+    'Fire spørsmål før jeg starter.',
     'Hvem er kunden?',
     'Vil de betale? De gjør det allerede, bare dyrere og tyngre.',
     'Konkurransen: mange selger ved, nesten ingen leverer fast.',
@@ -148,12 +152,69 @@ export default {
       return t;
     };
 
+    // the idea, drawn: firewood to a city door, on a schedule
+    function idea() {
+      const g = D.g(svg);
+      const head = D.g(g, { 'data-unit': '' });
+      D.text(head, 800, 252, 'IDEEN', 'il', { 'text-anchor': 'middle', style: 'font: 700 16px var(--font-mono); letter-spacing: .2em; fill: var(--muted)' });
+      D.text(head, 800, 304, 'Ved levert på døra, som abonnement.', 'ih', { 'text-anchor': 'middle', style: 'font: 800 40px var(--font-display); fill: var(--fg)' });
+      const ground = D.g(g, { 'data-bg': '' });
+      D.p(ground, 'M160 620 H1440', '', { style: 'fill: none; stroke: #4a3c30', 'stroke-width': 3 });
+      // a city house: lit window with a fire, chimney, door
+      const house = D.g(g, { 'data-bg': '' });
+      D.p(house, 'M1060 380 L1230 330 L1400 380 Z', '', FILL('#6b3a2a', 2.5));
+      D.el('rect', { x: 1320, y: 330, width: 30, height: 40, ...FILL('#5a4a3c', 2.5) }, house);
+      D.el('rect', { x: 1070, y: 380, width: 320, height: 240, ...FILL('#5a4a3c', 2.5) }, house);
+      D.el('rect', { x: 1092, y: 414, width: 76, height: 64, rx: 3, style: 'fill: #ffb04a; stroke: #1a120c', 'stroke-width': 2.5 }, house);
+      D.p(house, 'M1112 474 q8 -22 18 -8 q6 -20 16 -2 q8 -14 10 10 Z', '', FILL('#ff5a1f', 2));
+      D.el('rect', { x: 1250, y: 488, width: 76, height: 132, rx: 3, ...FILL('#3a2416', 2.5) }, house);
+      D.el('circle', { cx: 1314, cy: 556, r: 4, style: 'fill: #ffd23f' }, house);
+      D.text(house, 1288, 476, '14B', 'hn', { 'text-anchor': 'middle', style: 'font: 700 15px var(--font-mono); fill: #e6d8c6' });
+      const smoke = D.p(g, 'M1335 322 q-12 -16 0 -30 q12 -14 0 -30', '', { style: 'fill: none; stroke: #9a8a78', 'stroke-width': 4, 'stroke-linecap': 'round', opacity: 0, 'data-bg': '' });
+      // the delivery van with firewood in the back
+      const van = D.g(g, { 'data-unit': '' });
+      D.p(van, 'M560 610 V520 H740 L790 560 V610 Z', '', FILL('#ff5a1f', 2.5));
+      D.el('rect', { x: 744, y: 528, width: 30, height: 26, rx: 3, style: 'fill: #a9c6d6; stroke: #1a120c', 'stroke-width': 2 }, van);
+      D.text(van, 650, 574, 'VED', 'vt', { 'text-anchor': 'middle', style: 'font: 800 26px var(--font-display); fill: #1a120c' });
+      [600, 740].forEach((cx) => D.el('circle', { cx, cy: 612, r: 16, ...FILL('#2a1d14', 2.5) }, van));
+      // two sacks left at the door
+      const sacks = D.g(g, { 'data-bg': '' });
+      sack(sacks, 1150, 620, 0.62); sack(sacks, 1206, 620, 0.62);
+      // the schedule: every 14 days, all winter
+      const cal = D.g(g, { 'data-unit': '' });
+      D.text(cal, 300, 690, 'HVER 14. DAG', 'cal', { style: 'font: 700 16px var(--font-mono); letter-spacing: .12em; fill: var(--muted)' });
+      const cells = [];
+      for (let k = 0; k < 10; k++) {
+        const x = 470 + k * 82;
+        const c = D.g(cal);
+        D.el('rect', { x, y: 662, width: 70, height: 54, rx: 6, style: `fill: ${k % 2 ? '#1d1510' : '#2a1d12'}; stroke: ${k % 2 ? '#3a2f26' : '#ff5a1f'}`, 'stroke-width': 2 }, c);
+        D.text(c, x + 35, 680, `uke ${k + 45 > 52 ? k - 7 : k + 45}`, 'cw', { 'text-anchor': 'middle', style: 'font: 400 12px var(--font-mono); fill: var(--muted)' });
+        if (k % 2 === 0) sack(c, x + 35, 712, 0.28);
+        cells.push(c);
+      }
+      return { g, head, house, ground, smoke, van, sacks, cal, cells };
+    }
+
     const play = (i) => {
       const tl = gsap.timeline();
       if (i === 0) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
+        const I = idea();
+        tl.fromTo(I.head, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5 }, 0.4);
+        tl.fromTo([I.ground, I.house], { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.8);
+        tl.fromTo(I.van, { opacity: 0, x: -440 }, { opacity: 1, x: 0, duration: 1.6, ease: 'power2.out' }, 1.2);
+        tl.fromTo(I.sacks, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.4, ease: 'back.out(2)' }, 2.9);
+        tl.fromTo(I.smoke, { opacity: 0 }, { opacity: 0.8, duration: 0.6 }, 3.1);
+        tl.fromTo(I.cal.firstChild, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.3);
+        tl.fromTo(I.cells, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.3, stagger: 0.08 }, 3.4);
+        P.idea = I.g;
+        return tl;
+      }
+      const j = i - 1; // the original steps, one later
+      if (j === 0) {
+        tl.to(P.idea, { opacity: 0, duration: 0.4 }, 0);
         P.chat = chatPhone(svg, 80, 262, 440, 520, { app: 'Claude', size: 18 });
         tl.fromTo(P.chat.root, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
         P.chat.user(tl, 'Idé: ved levert på døra, som abonnement. Hvem kjøper, vil de betale, hvem gjør det i dag, og kan jeg levere?', 0.8);
@@ -170,13 +231,13 @@ export default {
         });
       }
 
-      if (i >= 1 && i <= 4) {
-        const t = answer(i - 1, tl);
-        if (i === 4) P.chat.user(tl, 'Da starter vi med vinter, i én bydel.', t + 1.8);
-        ctx.focus(tl, [P.cards[i - 1].g, P.chat.root], 0.1);
+      if (j >= 1 && j <= 4) {
+        const t = answer(j - 1, tl);
+        if (j === 4) P.chat.user(tl, 'Da starter vi med vinter, i én bydel.', t + 1.8);
+        ctx.focus(tl, [P.cards[j - 1].g, P.chat.root], 0.1);
       }
 
-      if (i === 5) {
+      if (j === 5) {
         // one example at a time: the firewood cards leave before the bigger picture
         tl.to([...P.cards.map((c) => c.g), P.chat.root], { opacity: 0, duration: 0.4 }, 0);
         // the value chain, every link with AI, little capital

@@ -143,6 +143,7 @@ export const HELP = {
   ],
   takeaways: [null],
   validate: [
+    'Start med én konkret idé du kan forklare på ett ark.',
     'Fire spørsmål før du bruker en time på å bygge.',
     'Uten en konkret kunde finnes det ingen idé.',
     'Betaler de allerede for noe lignende, er det et godt tegn.',
