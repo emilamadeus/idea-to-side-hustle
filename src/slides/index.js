@@ -52,8 +52,8 @@ const STAGED = [
 ];
 const PARTS = [
   { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, skills, gateway] },
-  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, knowAGuy, alwaysWorking] },
-  { name: 'Ekte prosjekter', slides: [projects, launch, htmlDeck] },
+  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, alwaysWorking] },
+  { name: 'Ekte prosjekter', slides: [projects, knowAGuy, launch, htmlDeck] },
 ];
 export const slides = [
   title,
