@@ -6,8 +6,8 @@ import gsap from 'gsap';
   streams of light particles that run from edge to edge through the gaps, never across a panel.
     level 1  the current section (e.g. Plan) in a gently curved row
     level 2  the whole talk: one column per section, in talk order, joined into one chain
-  The wheel zooms smoothly toward the pointer inside a level; scrolling on past the limit goes to
-  the next level (in: the section under the pointer, then the slide; out: the section, the talk).
+  The wheel zooms smoothly toward the pointer; scrolling on past the closest zoom opens the slide
+  under the pointer, and scrolling out on a slide lifts you into the view.
   The current slide starts as a full-size panel exactly over the 16:9 frame, so the slide
   seems to shrink into its place. Hover lifts a panel and shows its title; click flies into it
   and opens it. Pictures come from public/thumbs/<id>.jpg (npm run thumbs); a missing picture
@@ -187,19 +187,6 @@ export function createZoom(deck, stage) {
 
   // ── layouts ──
   const viewW = (dist) => W0 * dist / 14, viewH = (dist) => H0 * dist / 14;
-  function layoutSection(gi) {
-    const items = groups[gi].items, n = items.length;
-    const cam = { pos: [0, 0, 16], look: [0, 0, -4] }, zP = -4, d = 16 - zP;
-    const s = Math.min(0.28, (0.9 * viewW(d)) / (n * 1.42 * W0));
-    const step = 1.42 * W0 * s;
-    const pos = {};
-    items.forEach((i, k) => {
-      const x = (k - (n - 1) / 2) * step;
-      pos[i] = { x, y: -0.4, z: zP - x * x * 0.012, s };
-    });
-    const lab = [{ gi, x: 0, y: -0.4 + (H0 * s) / 2 + 1.1, z: zP, size: 1.1 }];
-    return { cam, pos, order: items, lab, r: 0.05 };
-  }
   function layoutAll() {
     const C = groups.length, rows = Math.max(...groups.map((g) => g.items.length));
     const zP = -8, d = 18 - zP;
@@ -210,20 +197,15 @@ export function createZoom(deck, stage) {
     const cy = (top + rowStep * 0.72 + 0.25 + top - (rows - 1) * rowStep - (H0 * s) / 2) / 2;
     const cam = { pos: [0, cy, 18], look: [0, cy, zP] };
     const pos = {}, order = [], lab = [];
-    // a snake: down one column, up the next, so every link is short and crosses nothing
-    let end = -1, down = true;
+    // every section starts at the top of its column; the link to the next column leaves the
+    // bottom slide sideways, runs up through the gap between the columns, and enters the next
+    // column's first slide from the side (see route), so it never crosses a slide
     groups.forEach((g, c) => {
-      const x = (c - (C - 1) / 2) * colStep, n = g.items.length;
-      let start;
-      if (down) start = Math.min(Math.max(0, end), rows - n);
-      else start = Math.max(Math.min(rows - 1, end), n - 1);
-      g.items.forEach((i, k) => {
-        const r = down ? start + k : start - k;
+      const x = (c - (C - 1) / 2) * colStep;
+      g.items.forEach((i, r) => {
         pos[i] = { x, y: top - r * rowStep, z: zP + Math.sin(c * 0.9) * 0.6, s };
         order.push(i);
       });
-      end = down ? start + n - 1 : start - n + 1;
-      down = !down;
       lab.push({ gi: c, x, y: top + rowStep * 0.72, z: zP, size: 0.42 });
     });
     return { cam, pos, order, lab, r: 0.035 };
@@ -295,7 +277,7 @@ export function createZoom(deck, stage) {
     }
     if (focus != null) sel = focus;
     level = n;
-    apply(n === 1 ? layoutSection(groupOf(focus ?? deck.index)) : layoutAll(), { from });
+    apply(layoutAll(), { from });
     deck.sync?.send({ type: 'zoom', level });
   }
 
@@ -376,7 +358,7 @@ export function createZoom(deck, stage) {
       // on a slide: scrolling out lifts you into the section
       if (busy || now < lock || dy <= 0) { acc = 0; return; }
       acc += dy;
-      if (acc > 140) { acc = 0; lock = now + 1100; enter(1); }
+      if (acc > 140) { acc = 0; lock = now + 1100; enter(2); }
       return;
     }
     e.preventDefault();
@@ -387,13 +369,12 @@ export function createZoom(deck, stage) {
       if (acc > PUSH) {
         acc = 0; lock = now + 1200;
         const i = pick();
-        if (level === 2) enter(1, i >= 0 ? i : sel);
-        else close(i >= 0 ? i : sel);
+        close(i >= 0 ? i : sel);
         return;
       }
     } else if (nf > FMAX) {
       view.f = FMAX; acc += dy;
-      if (acc > PUSH && level === 1) { acc = 0; lock = now + 1200; enter(2); return; }
+      acc = 0;
     } else {
       acc = 0;
       const p = underPointer(), r = nf / view.f;
@@ -437,8 +418,8 @@ export function createZoom(deck, stage) {
   return {
     get level() { return level; },
     get view() { return view && { ...view }; },
-    out() { if (level < 2) enter(level + 1); },
-    in() { if (level === 2) enter(1); else if (level === 1) close(); },
+    out() { if (!level) enter(2); },
+    in() { if (level) close(); },
     toggle(n = 2) { if (level === n) close(); else enter(n); },
     close: () => close(),
     /** Fly into a slide from the zoomed-out view (or just go there when not zoomed). */

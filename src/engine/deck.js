@@ -88,7 +88,7 @@ export async function start(defs, role, theme) {
     if (m.action === 'overview') z.toggle(2);
     if (m.action === 'zoom-out') z.out();
     if (m.action === 'zoom-in') z.in();
-    if (m.action === 'zoom-section') z.toggle(1);
+    if (m.action === 'zoom-section') z.toggle(2);
     if (m.action === 'zoom-close') z.close();
   });
 }
@@ -358,8 +358,8 @@ function bindKeys(deck, app) {
         e.preventDefault(); deck.prev(); break;
       case 'Home': deck.go(0, 0); break;
       case 'End': deck.go(deck.defs.length - 1, 0); break;
-      case 'z': deck.zoom.out(); break;      // zoom out: section, then the whole talk
-      case 'Z': deck.zoom.in(); break;       // Shift+Z: back in one level
+      case 'z': deck.zoom.out(); break;      // zoom out to the whole talk
+      case 'Z': deck.zoom.in(); break;       // Shift+Z: back to the slide
       case 'o': case 'O': deck.zoom.toggle(2); break;
       case 'Escape': deck.zoom.close(); toggleOverview(deck, false); break;
       case 'b': case 'B': case '.': deck.toggleBlack(); break;
