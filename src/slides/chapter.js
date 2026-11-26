@@ -26,7 +26,7 @@ export function chapter(k) {
     create(ctx) {
       const { el, stage, shapes, fx } = ctx;
       el.innerHTML = `
-        <div class="ch-num label" style="position:absolute;left:0;right:0;top:calc(var(--u)*15);text-align:center;font-size:calc(var(--u)*1.4)">DEL ${k + 1} AV ${STAGES.length}</div>
+        <div class="ch-num label" style="position:absolute;left:0;right:0;top:calc(var(--u)*15);text-align:center;font-size:calc(var(--u)*1.4)">REISEN · ${k + 1} AV ${STAGES.length}</div>
         <h1 class="ch-name" style="position:absolute;left:0;right:0;top:calc(var(--u)*19);text-align:center;margin:0;
           font-family:var(--font-display);font-weight:var(--display-weight);letter-spacing:var(--display-tracking);
           font-size:calc(var(--u)*11);line-height:1;color:var(--fg)">${STAGES[k]}</h1>`;
@@ -55,6 +55,47 @@ export function chapter(k) {
         return tl;
       };
 
+      return D.stepper(ctx, { reset: () => { svg.innerHTML = ''; }, play });
+    },
+  };
+}
+
+/*
+  Part divider for what comes after the journey (Arbeidsflyt, Bak kulissene): the name, and
+  the finished journey as a small line underneath, all stations filled.
+*/
+export function part(n, name) {
+  return {
+    id: `del-${n}`,
+    title: `Del ${n} · ${name}`,
+    steps: 1,
+    notes: [`Del ${n}: ${name}.`],
+
+    create(ctx) {
+      const { el, stage, shapes, fx } = ctx;
+      el.innerHTML = `
+        <div class="ch-num label" style="position:absolute;left:0;right:0;top:calc(var(--u)*15);text-align:center;font-size:calc(var(--u)*1.4)">DEL ${n}</div>
+        <h1 class="ch-name" style="position:absolute;left:0;right:0;top:calc(var(--u)*19);text-align:center;margin:0;
+          font-family:var(--font-display);font-weight:var(--display-weight);letter-spacing:var(--display-tracking);
+          font-size:calc(var(--u)*10);line-height:1;color:var(--fg)">${name}</h1>`;
+      const svg = D.stage(el);
+      const nm = ctx.$('.ch-name');
+      const play = () => {
+        const tl = gsap.timeline();
+        stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
+        stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
+        tl.add(fx.rise(nm, { stagger: 0.03 }), 0);
+        // the journey behind us: small, all stations filled
+        const x0 = 560, x1 = 1040, y = 600, sxx = (j) => x0 + (j * (x1 - x0)) / (STAGES.length - 1);
+        const g = D.g(svg, { 'data-unit': '' });
+        D.p(g, `M${x0} ${y} H${x1}`, '', { style: 'fill: none; stroke: var(--muted)', 'stroke-width': 3, 'stroke-linecap': 'round', 'data-bg': '' });
+        STAGES.forEach((s2, j) => {
+          D.el('circle', { cx: sxx(j), cy: y, r: 8, style: 'fill: var(--muted); stroke: var(--muted)', 'stroke-width': 2 }, g);
+          D.text(g, sxx(j), y + 40, s2, 'pst', { 'text-anchor': 'middle', style: 'font: 600 17px var(--font-display); fill: #6b5a48' });
+        });
+        tl.fromTo(g, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.4);
+        return tl;
+      };
       return D.stepper(ctx, { reset: () => { svg.innerHTML = ''; }, play });
     },
   };

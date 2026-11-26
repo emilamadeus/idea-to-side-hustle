@@ -265,9 +265,12 @@ Title: "Fra idé til startup, med AI".
 0. Cold open (src/slides/opening.js): "Jeg ville finne ut om AI kunne bidra til et hobbyprosjekt." The wish (a finish flag in a thought), then 15 projects as progress bars: one over the finish line, fourteen stopping just short. No mention of the game here.
 1. Idé: validate the idea (src/slides/validate.js: an everyday idea, firewood delivered to the door as a subscription, run through four checks one card at a time: customer, willingness to pay, competition, can you build and deliver. The last one comes back yellow: winter only, so start small. Then the bigger picture: AI covers every link of the value chain with little capital, but everyone gets the same tools, so the market fills up; the openings are a niche or a product that reaches very many customers. Illustrative answers)
 2. Plan: living spec → full scope → batched planning → instruction files
-3. Bygg: ready to build (src/slides/ready-to-build.js: a checklist, all ticked: Hva vi skal lage, Hvem er kundene?, Kjernefunksjon, Levende kravspec, Instruksjonsarkitektur; stamped GODKJENT FOR BYGGING, then "Start.") → describe the goal → prototypes → visual references → parallel sessions → helpers → watchdog → notifications → always working → gateway → I know a guy
-4. Kvalitet: self-check → show, don't describe → where it fails → model and effort
-5. Lansering: live projects → side quest → Claude ↔ ChatGPT loop (Fab) → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells) → this deck is a web page (finale)
+3. Bygg: ready to build (src/slides/ready-to-build.js: a checklist, all ticked: Hva vi skal lage, Hvem er kundene?, Kjernefunksjon, Levende kravspec, Instruksjonsarkitektur; stamped GODKJENT FOR BYGGING, then "Start.") → describe the goal → prototypes → visual references
+4. Kvalitet: self-check → show, don't describe → where it fails
+5. Lansering: live projects → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells)
+Part 2, Arbeidsflyt (divider "Del 2"): parallel sessions → helpers → watchdog → remote and cloud sessions → model and effort → follow the gateway team
+Part 3, Bak kulissene (divider "Del 3"): side quest → Claude ↔ ChatGPT loop (Fab) → I know a guy → always working → this deck is a web page (finale)
+The journey (part 1) only holds slides that move the product forward; how you run the AI and the side effects live in parts 2 and 3. The corner marker shows the five stages in part 1 and the part's name in parts 2 and 3.
 Closing: takeaways (src/slides/takeaways.js), every standalone tip on one page.
 Callbacks that depend on order: full scope's "Alt fungerer." sets up "Fikset!"; helpers ends with the lead breaking off to check on its helper (the watchdog, next, does that check); always working reuses the watchdog's 03:12 message; the side quest's 80 % returns in the asset loop.
 

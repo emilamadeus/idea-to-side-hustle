@@ -174,6 +174,12 @@ class Deck {
       j.innerHTML = ['Idé', 'Plan', 'Bygg', 'Kvalitet', 'Lansering']
         .map((n, k) => `<span class="${k < def.stage ? 'past' : k === def.stage ? 'cur' : ''}">${n}</span>`).join('<i></i>');
       el.appendChild(j);
+    } else if (def.part) {
+      // after the journey: the part's own name
+      const j = document.createElement('div');
+      j.className = 'journey';
+      j.innerHTML = `<span class="cur">${def.part}</span>`;
+      el.appendChild(j);
     }
     this.current = { def, inst, el, ctx, help };
     this.index = index;

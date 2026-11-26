@@ -1,6 +1,6 @@
 // To add a slide: copy _template.js, then import it here.
 import { HELP } from './help.js';
-import { chapter } from './chapter.js';
+import { chapter, part } from './chapter.js';
 import takeaways from './takeaways.js';
 import readyToBuild from './ready-to-build.js';
 import opening from './opening.js';
@@ -30,22 +30,30 @@ import remote from './remote.js';
 import htmlDeck from './html-deck.js';
 import projects from './projects.js';
 
-// Story order (spec C3): a journey from idea to launch, in five stages. Each stage opens
-// with a divider (chapter(k)); every slide in a stage gets `stage` so the corner marker can
-// show where we are. Reordering is just moving lines. Callbacks that depend on order:
-//   full-scope "Alt fungerer." → fails "Fikset!"; helpers ends on the guard → watchdog;
-//   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop.
+// Story order: two parts and a closing.
+//   1. The journey from idea to launch, five stages; each opens with chapter(k) and its slides get
+//      `stage` so the corner marker shows where we are. Only slides that move the product forward.
+//   2. Arbeidsflyt: how you run the AI day to day (sessions, helpers, watchdog, remote, effort, work).
+//   3. Bak kulissene: side effects and the meta finale.
+// Slides in parts 2 and 3 get `part`, which the corner marker shows instead of the journey.
+// Callbacks that depend on order: full-scope "Alt fungerer." → fails "Fikset!"; helpers → watchdog;
+//   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop (right after it).
 const STAGED = [
-  [validate],                                                           // 1. Idé
-  [spec, fullScope, planning, mdFiles],                           // 2. Plan
-  [readyToBuild, goal, prototypes, visualRef, kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
-  [selfCheck, show, fails, effort],                                     // 4. Kvalitet
-  [projects, sideQuest, assetLoop, launch, htmlDeck],                   // 5. Lansering
+  [validate],                                   // Idé
+  [spec, fullScope, planning, mdFiles],         // Plan
+  [readyToBuild, goal, prototypes, visualRef],  // Bygg
+  [selfCheck, show, fails],                     // Kvalitet
+  [projects, launch],                           // Lansering
+];
+const PARTS = [
+  { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, gateway] },
+  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, knowAGuy, alwaysWorking, htmlDeck] },
 ];
 export const slides = [
   title,
   opening, // cold open: the idea, and where it ended up
   ...STAGED.flatMap((group, k) => [chapter(k), ...group.map((s) => Object.assign(s, { stage: k }))]),
+  ...PARTS.flatMap((p, k) => [part(k + 2, p.name), ...p.slides.map((s) => Object.assign(s, { part: p.name }))]),
   takeaways, // closing: every standalone tip on one page
 ];
 

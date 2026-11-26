@@ -5,14 +5,15 @@ import gsap from 'gsap';
   photograph. The second half of the subtitle ("ta med deg grepene til jobb i morgen").
   The stages light up one column at a time; on the last step everything is lit.
 
-  Layout: four columns under the heading, x 80–1520, y 300–760 (DOM grid).
+  Layout: five columns (the four build stages with tips, and Arbeidsflyt) under the heading, x 80–1520, y 300–760 (DOM grid).
 */
 
 const GROUPS = [
   { stage: 'Idé', tips: ['Sjekk ideen før du starter'] },
   { stage: 'Plan', tips: ['La AI-en føre en levende spec', 'Gi hele omfanget før du starter', 'Planlegg bunken i auto mode', 'Del opp instruksjonsfilene'] },
-  { stage: 'Bygg', tips: ['Beskriv målet, ikke veien', 'Lag fire versjoner, velg én', 'Gi den et bilde, ikke en liste', 'Én session per oppgave, én master session', 'Hjelpere til research', 'En vakt hvert 10. minutt', 'Få varsel når den trenger deg'] },
-  { stage: 'Kvalitet', tips: ['La den sjekke sitt eget arbeid', 'Vis med skjermbilde', 'Ny session når den lapper symptomer', 'Medium effort er nok'] },
+  { stage: 'Bygg', tips: ['Beskriv målet, ikke veien', 'Lag fire versjoner, velg én', 'Gi den et bilde, ikke en liste'] },
+  { stage: 'Kvalitet', tips: ['La den sjekke sitt eget arbeid', 'Vis med skjermbilde', 'Ny session når den lapper symptomer'] },
+  { stage: 'Arbeidsflyt', tips: ['Én session per oppgave, én master session', 'Hjelpere til research', 'En vakt hvert 10. minutt', 'Få varsel når den trenger deg', 'Medium effort er nok'] },
 ];
 
 export default {
@@ -32,13 +33,13 @@ export default {
     el.innerHTML = `
       <style>
         .slide-takeaways .tk-grid { position: absolute; left: var(--pad); right: var(--pad); top: calc(var(--u) * 17);
-          display: grid; grid-template-columns: repeat(4, 1fr); gap: calc(var(--u) * 2.4); }
+          display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(var(--u) * 2); }
         .slide-takeaways h3 { margin: 0 0 calc(var(--u) * 1.4); padding-bottom: calc(var(--u) * .8);
           border-bottom: 2px solid var(--accent); font: 700 calc(var(--u) * 1.3) var(--font-mono);
           letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
         .slide-takeaways ol { list-style: none; margin: 0; padding: 0; display: grid; gap: calc(var(--u) * 1.1); }
         .slide-takeaways li { display: grid; grid-template-columns: calc(var(--u) * 3) 1fr; align-items: baseline;
-          font: 600 calc(var(--u) * 1.7)/1.25 var(--font-display); color: var(--fg); }
+          font: 600 calc(var(--u) * 1.55)/1.25 var(--font-display); color: var(--fg); }
         .slide-takeaways .tk-n { font: 700 calc(var(--u) * 1.05) var(--font-mono); color: var(--muted); }
       </style>
       <div class="pin-tl label">Ta med deg</div>
