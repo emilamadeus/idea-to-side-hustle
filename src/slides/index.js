@@ -37,8 +37,8 @@ import projects from './projects.js';
 //   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop.
 const STAGED = [
   [validate],                                                           // 1. Idé
-  [spec, fullScope, planning, goal, mdFiles],                           // 2. Plan
-  [readyToBuild, prototypes, visualRef, kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
+  [spec, fullScope, planning, mdFiles],                           // 2. Plan
+  [readyToBuild, goal, prototypes, visualRef, kitchen, helpers, watchdog, remote, alwaysWorking, gateway, knowAGuy], // 3. Bygg
   [selfCheck, show, fails, effort],                                     // 4. Kvalitet
   [projects, sideQuest, assetLoop, launch, htmlDeck],                   // 5. Lansering
 ];

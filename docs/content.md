@@ -259,8 +259,8 @@ Each stage opens with a divider slide (src/slides/chapter.js); every slide shows
 Title: "Fra idé til startup, med AI".
 0. Cold open (src/slides/opening.js): "Jeg ville finne ut om AI kunne bidra til et hobbyprosjekt." The wish (a finish flag in a thought), then 15 projects as progress bars: one over the finish line, fourteen stopping just short. No mention of the game here.
 1. Idé: validate the idea (src/slides/validate.js: an everyday idea, firewood delivered to the door as a subscription, run through four checks one card at a time: customer, willingness to pay, competition, can you build and deliver. The last one comes back yellow: winter only, so start small. Then the bigger picture: AI covers every link of the value chain with little capital, but everyone gets the same tools, so the market fills up; the openings are a niche or a product that reaches very many customers. Illustrative answers)
-2. Plan: living spec → full scope → batched planning → describe the goal → instruction files
-3. Bygg: ready to build (src/slides/ready-to-build.js: the plan as a drawing sheet, every Plan item ticked, then stamped GODKJENT FOR BYGGING and the first prompt "Start.") → prototypes → visual references → parallel sessions → helpers → watchdog → notifications → always working → gateway → I know a guy
+2. Plan: living spec → full scope → batched planning → instruction files
+3. Bygg: ready to build (src/slides/ready-to-build.js: a generic finished plan, six tasks in build order, stamped GODKJENT FOR BYGGING; "Start." and the first task goes I GANG) → describe the goal → prototypes → visual references → parallel sessions → helpers → watchdog → notifications → always working → gateway → I know a guy
 4. Kvalitet: self-check → show, don't describe → where it fails → model and effort
 5. Lansering: live projects → side quest → Claude ↔ ChatGPT loop (Fab) → launch and sell (src/slides/launch.js: AI wrote the listing, made the images, set the price from comparable packs, packaged docs and FBX/GLB/Blender; published; it sells) → this deck is a web page (finale)
 Closing: takeaways (src/slides/takeaways.js), every standalone tip on one page.
