@@ -161,7 +161,12 @@ export const HELP = {
     'Kan du levere, og lønner det seg hele året?',
     'AI gjør hele verdikjeden billig. Derfor blir det trangt.',
   ],
-  'go-live': ['Vedabonnementet går live. Kommer.'],
+  'go-live': [
+    'Ferdig, men bare på min maskin.',
+    'Live. Ta frem telefonen.',
+    'Bestillingene deres, mens vi ser på.',
+    'Bilen kjører. Følg med på telefonen.',
+  ],
   launch: [
     'Ferdig er ikke solgt. Butikksiden må lages.',
     'Teksten skrives fra det som faktisk er i pakken.',
