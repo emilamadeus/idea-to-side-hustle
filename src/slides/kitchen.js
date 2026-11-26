@@ -28,7 +28,7 @@ export default {
   steps: 3,
   notes: [
     'Én session graver alt i rekkefølge. Ordrene hoper seg opp.',
-    'Én session per oppgave. Hovedsessionen har tavla: lager, venter på deg, ferdig.',
+    'Én session per oppgave. Lead-sessionen har tavla: lager, venter på deg, ferdig.',
     'Du svarer på den ene, og svinger pisken. Alt går ut samtidig.',
   ],
 
@@ -36,7 +36,7 @@ export default {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Sessions</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*2.7)">Én session per oppgave.<br>Én <em>hovedsession</em><br>som følger med.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*2.7)">Én session per oppgave.<br>Én <em>lead session</em><br>som følger med.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};

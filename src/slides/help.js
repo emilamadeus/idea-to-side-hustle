@@ -53,11 +53,11 @@ export const HELP = {
   ],
   kitchen: [
     'Én session gjør alt i rekkefølge. Køen vokser.',
-    'Én session per oppgave. Hovedsessionen vet hvem som venter.',
+    'Én session per oppgave. Lead-sessionen vet hvem som venter.',
     'Du svarer der det trengs. Resten jobber parallelt.',
   ],
   helpers: [
-    'Hovedsessionen gjør jobben selv. Den har hele konteksten.',
+    'Lead-sessionen gjør jobben selv. Den har hele konteksten.',
     'Hjelpere passer til research: kort oppdrag, raskt svar.',
     'Gir du den hele jobben, kan den bli ferdig uten å si fra.',
     'Leaden må avbryte sitt arbeid for å sjekke status på hjelperens jobb.',

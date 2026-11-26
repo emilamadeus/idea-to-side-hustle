@@ -32,8 +32,8 @@ export default {
   notes: [
     'Sessionen graver selv. Jevn flyt.',
     'Hjelper til research: henter og sjekker, tilbake med en gang.',
-    'Hjelper som tar en hel ordre: ferdig, men sier aldri fra. Hovedsessionen venter.',
-    'Hovedsessionen har ventet, og må likevel selv gå og lete. Det løser vakta på neste.',
+    'Hjelper som tar en hel ordre: ferdig, men sier aldri fra. Lead-sessionen venter.',
+    'Lead-sessionen har ventet, og må likevel selv gå og lete. Det løser vakta på neste.',
   ],
 
   create(ctx) {

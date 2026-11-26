@@ -210,7 +210,7 @@ export const STATUS = {
   wait: ['venter på deg', '#ffd23f'],
   done: ['ferdig', '#8fe3a2'],
 };
-export function board(parent, x, y, w, rows, { title = 'HOVEDSESSION' } = {}) {
+export function board(parent, x, y, w, rows, { title = 'LEAD SESSION' } = {}) {
   const g = group(parent, { 'data-unit': '' });
   const h = 74 + rows.length * 46;
   el('rect', { x, y, width: w, height: h, rx: 10, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 2.5 }, g);

@@ -39,7 +39,7 @@ export default {
     'En session har sovnet. Vekkes.',
     'RAM-lås: ny jobb får ikke starte. Ferdige jobber holder fortsatt minnet. Vakta frigjør.',
     'Context fylles. Auto-compact ved 400k i stedet for ny session.',
-    'Gangen: hjelperen er ferdig, men har ikke sagt fra. Hovedsessionen venter. Vakta leverer.',
+    'Gangen: hjelperen er ferdig, men har ikke sagt fra. Lead-sessionen venter. Vakta leverer.',
     'Morgen. Alt er ferdig.',
   ],
 
