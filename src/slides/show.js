@@ -3,7 +3,7 @@ import * as D from '../engine/draw.js';
 import { chatPhone, attempt, FILL } from '../engine/props.js';
 
 /*
-  Tip: show it, don't describe it.
+  Tip: show it, don't describe it. The firewood order page on a narrow phone screen.
     0. Attempt 1: the bug described in words. "Fikset!" The wrong button moved.
     1. Attempt 2 (new session): a screenshot with a circle. The right button moves.
     2. Hard to explain at all: the screenshot goes to a fresh agent: "what is wrong here,
@@ -13,7 +13,7 @@ import { chatPhone, attempt, FILL } from '../engine/props.js';
     tip        x 80–540, y 110–240
     chat       x 80–520, y 262–782
     attempt    x 560–1000, y 120–154
-    app window x 940–1300, y 190–720 (a narrow window)
+    phone      x 940–1300, y 190–720 (the order page on mobile)
 */
 
 const WX = 940, WY = 190, WW = 360, WH = 530;
@@ -32,7 +32,7 @@ export default {
   create(ctx) {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
-      <div class="pin-tl label">Skjermbilder</div>
+      <div class="pin-tl label">Kvalitet</div>
       <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.4)">Vis det,<br>ikke <em>beskriv</em> det.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
@@ -48,24 +48,24 @@ export default {
     function win(g, title) {
       const w = D.g(g);
       const bg = D.g(w, { 'data-bg': '' });
-      D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 12, style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 2.5 }, bg);
-      D.el('rect', { x: WX, y: WY, width: WW, height: 40, rx: 12, style: 'fill: #2f241b' }, bg);
-      [0, 1, 2].forEach((k) => D.el('circle', { cx: WX + 22 + k * 20, cy: WY + 20, r: 6, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, bg));
+      D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 30, style: 'fill: #1a0d07; stroke: var(--fg)', 'stroke-width': 3 }, bg);
+      D.el('rect', { x: WX + WW / 2 - 36, y: WY + 14, width: 72, height: 14, rx: 7, style: 'fill: #0f0a07' }, bg);
+      D.text(bg, WX + 28, WY + 46, 'Ved.', 'wb', { style: 'font: 800 18px var(--font-display); fill: #ff8a3d' });
       D.text(w, WX + 28, WY + 92, title, 'wt', { style: 'font: 800 28px var(--font-display); fill: var(--fg)' });
       return { w, bg };
     }
     function settings(g) {
-      const { w, bg } = win(g, 'Varsler');
+      const { w, bg } = win(g, 'Bestill ved');
       D.p(bg, `M${WX + 28} ${WY + 130} H${WX + 300} M${WX + 28} ${WY + 158} H${WX + 260}`, '', BAR);
       [0, 1, 2].forEach((k) => {
         const y = WY + 210 + k * 60;
         D.p(bg, `M${WX + 28} ${y} H${WX + 180}`, '', BAR);
-        D.el('rect', { x: WX + 270, y: y - 14, width: 56, height: 28, rx: 14, style: `fill: ${k === 1 ? '#4a3c30' : '#8fe3a2'}` }, bg);
-        D.el('circle', { cx: k === 1 ? WX + 284 : WX + 312, cy: y, r: 11, style: 'fill: #fff3e3' }, bg);
+        D.el('circle', { cx: WX + 296, cy: y, r: 13, style: `fill: ${k === 0 ? '#ff8a3d' : 'none'}; stroke: #d9c6b0`, 'stroke-width': 2.5 }, bg);
+        D.el('circle', { cx: WX + 220, cy: y, r: 11, ...FILL('#c9935a', 2) }, bg);
       });
       const text = D.p(bg, `M${WX + 28} ${WY + 420} H${WX + 320} M${WX + 28} ${WY + 446} H${WX + 280}`, '', BAR);
-      const del = button(w, WX + 24, WY + 460, 150, 'Slett konto', false);
-      const save = button(w, WX + 226, WY + 404, 110, 'Lagre', true);
+      const del = button(w, WX + 24, WY + 460, 150, 'Se priser', false);
+      const save = button(w, WX + 226, WY + 404, 110, 'Bestill', true);
       return { w, text, del, save };
     }
     // tiny screenshot for the attachment chip
@@ -100,7 +100,7 @@ export default {
         // the bug pulses
         P.bug = D.el('rect', { x: WX + 214, y: WY + 396, width: 134, height: 60, rx: 10, style: 'fill: none; stroke: #ff6f9c', 'stroke-width': 3, opacity: 0, 'data-bg': '' }, svg);
         tl.to(P.bug, { opacity: 1, duration: 0.25, repeat: 3, yoyo: true }, 1.0);
-        P.chat.user(tl, 'Knappen nede til høyre overlapper teksten når vinduet er smalt.', 2.2);
+        P.chat.user(tl, 'Knappen nede til høyre overlapper teksten på mobil.', 2.2);
         const t = P.chat.think(tl, 2.9, 1.3);
         // the wrong button moves, confidently
         tl.to(P.ui.del, { x: 150, duration: 0.6, ease: 'power2.inOut' }, t);
@@ -119,7 +119,7 @@ export default {
         tl.fromTo(P.ui2.w, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.4);
         P.chat.user(tl, 'Denne.', 0.8, { attach: shot(true) });
         const t = P.chat.think(tl, 1.6, 1.3);
-        P.chat.reply(tl, 'Lagre ligger over teksten på smale skjermer. Flyttet den under.', t);
+        P.chat.reply(tl, 'Bestill ligger over teksten på mobil. Flyttet den under.', t);
         tl.to(P.ui2.save, { y: 56, duration: 0.6, ease: 'power2.inOut' }, t + 0.2);
         const ok = D.g(svg, { 'data-bg': '' });
         D.el('circle', { cx: WX + WW - 30, cy: WY + 90, r: 20, style: 'fill: #1f9d63; stroke: #1a120c', 'stroke-width': 2 }, ok);
@@ -134,21 +134,21 @@ export default {
         P.att.show(tl, 'VANSKELIG Å FORKLARE · FERSK AGENT', 0);
         tl.to([P.ui2.w, P.ok], { opacity: 0, duration: 0.3 }, 0);
         P.chat.clear(tl, 0.1);
-        const { w, bg } = win(svg, 'Kamerainnstillin');
+        const { w, bg } = win(svg, 'Ved på døra, hele vi');
         // three quiet problems: icons off the line, a clipped title, grey on grey
         [0, 1, 2].forEach((k) => {
           const y = WY + 160 + k * 66;
-          D.el('rect', { x: WX + 28, y: y - 18 + (k === 1 ? 9 : 0), width: 26, height: 26, rx: 6, style: 'fill: #7fd0ff' }, bg);
+          D.el('circle', { cx: WX + 41, cy: y - 5 + (k === 1 ? 9 : 0), r: 13, ...FILL('#c9935a', 2) }, bg);
           D.p(bg, `M${WX + 72} ${y} H${WX + 250}`, '', BAR);
         });
         D.p(bg, `M${WX + 28} ${WY + 400} H${WX + 300} M${WX + 28} ${WY + 428} H${WX + 260} M${WX + 28} ${WY + 456} H${WX + 280}`, '', { style: 'fill: none; stroke: #3a2e25', 'stroke-width': 10, 'stroke-linecap': 'round' });
         tl.fromTo(w, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.4);
         P.chat.user(tl, 'Hva er galt her? Skriv hvert problem som en prompt.', 0.8, { attach: shot(false) });
         const t = P.chat.think(tl, 1.7, 1.4);
-        P.chat.reply(tl, '', t, { list: ['1. Ikon nr. 2 står lavere enn teksten.', '2. Tittelen kuttes på smal skjerm.', '3. Mørk tekst på mørk bakgrunn.'] });
+        P.chat.reply(tl, '', t, { list: ['1. Ikon nr. 2 står lavere enn teksten.', '2. Overskriften kuttes på mobil.', '3. Mørk tekst på mørk bakgrunn.'] });
         const rings = [
           ring(svg, WX + 41, WY + 236, 30, 26, 1),
-          ring(svg, WX + 160, WY + 84, 140, 30, 2),
+          ring(svg, WX + 170, WY + 82, 150, 34, 2),
           ring(svg, WX + 170, WY + 428, 160, 52, 3),
         ];
         rings.forEach((r, k) => tl.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t + 0.3 + k * 0.4));

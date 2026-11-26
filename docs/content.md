@@ -193,12 +193,10 @@ Game with full destruction → no good destructible assets → build a destructi
 ---
 
 ## Let the AI verify its own work [given]
-- Built: src/slides/self-check.js.
-Point: the AI checks the result before the speaker does. The speaker only confirms what an AI can't near-certainly confirm visually itself.
-- Storyboard [proposed]: ping-pong.
-  1. Without: build → ball to you → "nei" → back → build → you … The rally gets long; your clock runs.
-  2. With: the AI hits the ball against its own wall (screenshot, test, fix) many times, fast. You receive the ball once, finished.
-  3. Rule as a pencil note: you only check what it can't confirm itself.
+- Built: src/slides/self-check.js. The firewood subscription.
+Point: the AI checks the result before you do. Every "Ferdig!" that isn't finished costs you an interruption.
+- Attempt 1: you are out delivering firewood (four stops: Majorstua, Frogner, Grünerløkka, Sagene) while the AI builds the order page. At each stop the phone buzzes "Ferdig!", you open the page and it's broken (Bestill cut off on mobil, price 0 kr, delivery on a Sunday); "Nei, …". The last stop comes after dark, the customer waiting in the doorway.
+- Attempt 2 (new session): "Sjekk den selv på mobil og kjør bestillingstesten før du sier ferdig." The truck drives the whole route; a background panel shows the AI catching the same three faults itself. One notification at the end, the page is right. "Ja."
 
 ## Batched planning [given]
 - Built: src/slides/planning.js.
@@ -212,12 +210,11 @@ Point: scope up a batch of tasks before any implementation. Always run in auto m
 Point: used rarely, only for very specific, very repetitive workflows (e.g. the ChatGPT skill in the asset pipeline). Not a section of its own; mention where it appears.
 
 ## Show, don't describe [given]
-- Built: src/slides/show.js.
-Point: screenshots and visual examples beat explaining. When an issue is hard to show and explain: paste the image into a fresh session with another agent, ask what is wrong, and have it list the issues as prompts for an AI model. Then feed those prompts back.
-- Storyboard [proposed]: broken telephone.
-  1. You describe a UI bug in words. The sentence passes along a chain and arrives garbled; the AI moves the wrong button.
-  2. The screenshot travels the same chain and arrives intact.
-  3. The screenshot goes into a fresh agent: pencil circles appear on each problem, and a numbered list of prompts comes out, ready to paste.
+- Built: src/slides/show.js. The firewood order page on a phone.
+Point: screenshots beat explaining. When an issue is hard to explain: paste the image into a fresh agent, ask what is wrong as prompts, feed those back.
+- Attempt 1: "Knappen nede til høyre overlapper teksten på mobil." The AI moves "Se priser" instead, "Fikset!".
+- Attempt 2 (new session): a circled screenshot, "Denne." Bestill moves below the text.
+- Hard to explain: "Ved på døra, hele vi…" page goes to a fresh agent; it circles three problems (log icon off the line, headline cut on mobile, dark text on dark) and returns them as numbered prompts.
 
 ## One session per task [given]
 Point: one session per bigger task or task group. Merge candidate with "Parallel sessions with a master session".
@@ -238,18 +235,13 @@ Point: build several versions and pick, instead of debating one.
 - Storyboard [built]: asked in the chat for four proposals; they flip past one at a time; side by side for the pick, three go in the bin, the chosen one grows back and is stamped VALGT.
 
 ## Where it fails [given]
-- Built: src/slides/fails.js.
-Point: confident, repeatedly wrong answers. And iterative patching: fixing symptoms one by one instead of finding the systemic cause that created them. Typical in long sessions.
-- Illustrative story (not a real incident), smart home 3D model:
-  Bug: the living-room lamp shows as off in the 3D model while it is on.
-  Patch 1: poll the device every second. Still off. "Fikset!"
-  Patch 2: force a full reload of the model. Still off. "Fikset!"
-  Patch 3: invert the lamp's state in the UI. The living room is now right; the kitchen lamp is now wrong. "Fikset!"
-  Root cause: two lamps had their device IDs swapped in the mapping. One line. Every patch removed.
-- Storyboard [proposed]:
-  1. Confident and wrong: an answer stamped "Fikset!" appears, the bug is still there. Stamp again. And again. A counter climbs.
-  2. Patching: a leaking pipe. Each prompt adds a patch, a new leak appears further along. The pipe becomes mostly patches.
-  3. Pencil traces back to the source: one bad joint at the start. Fixed there, every leak stops.
+- Built: src/slides/fails.js. The firewood subscription.
+Point: confident, repeatedly wrong answers, and patching symptoms instead of the cause. Typical in long sessions.
+- Illustrative story: customers in Grünerløkka get the "veden kommer i morgen" SMS on Tuesday; the truck comes Thursday. Route plan (truth) beside the SMS days.
+  Patch 1: resend the SMS. Still Tuesday. "Fikset!"
+  Patch 2: rebuild the SMS queue. Still Tuesday. "Fikset!"
+  Patch 3: send every SMS a day later. Grünerløkka is right; Frogner now gets it on delivery day. "Fikset!!"
+  New session, asked for the cause: postcode 0552 sits under Frogner in bydeler.json. One line. Every patch removed.
 
 ## Model and effort [given]
 - Built: src/slides/effort.js.

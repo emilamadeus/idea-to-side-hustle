@@ -91,8 +91,9 @@ export const HELP = {
     'Bestem selv når du svarer.',
   ],
   'self-check': [
-    'Du som kontrollør: hver runde venter på deg.',
-    'Den tester selv. Du sjekker bare det den ikke kan bekrefte.',
+    'Hvert «ferdig» som ikke er ferdig, stopper deg.',
+    'Avbrudd etter avbrudd, og kunden venter.',
+    'Den finner feilene selv. Du avbrytes én gang.',
   ],
   fails: [
     'Lange sessions lapper gjerne symptomer.',
