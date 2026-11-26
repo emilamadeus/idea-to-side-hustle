@@ -280,7 +280,7 @@ export default {
         D.p(g, 'M1232 600 V440 q0 -12 12 -12 h92 q12 0 12 12 V600', '', F(WOOD_DARK));
         D.p(g, 'M1252 450 h76 M1252 470 h76', 'thin', { opacity: 0.5 });
         // her, in four versions: happy, annoyed, standing up texting (leaves)
-        const wife = { x: 1290, y: 480, s: 1, hair: 'long', hairColor: PALETTE.hair.red, skin: PALETTE.skin[2], outfit: 'dress', color: PALETTE.cloth.wine };
+        const wife = { x: 1290, y: 480, s: 1, hair: 'long', hairColor: PALETTE.hair.golden, skin: PALETTE.skin[2], outfit: 'dress', color: PALETTE.cloth.wine, slim: true, lashes: true };
         const happy = figure(g, { ...wife, arms: 'table', mouth: 'smile', eyes: 'open' });
         const cross = figure(g, { ...wife, arms: 'cross', mouth: 'frown', brows: 'annoyed', eyes: 'open' });
         const leaving = figure(g, { ...wife, pose: 'stand', arms: 'phone', mouth: 'smile', eyes: 'down', brows: 'raised' });
@@ -397,7 +397,7 @@ export default {
         D.el('rect', { x: 688, y: 660, width: 790, height: 100, rx: 10, ...F('#d8cdbb') }, g); // mattress
         D.el('ellipse', { cx: 790, cy: 640, rx: 64, ry: 24, ...F(CREAM) }, g);
         D.el('ellipse', { cx: 1040, cy: 640, rx: 64, ry: 24, ...F(CREAM) }, g);
-        const partner = lyingHead(g, { x: 1080, y: 622, s: 1.0, hair: 'long', hairColor: PALETTE.hair.red, skin: PALETTE.skin[2] });
+        const partner = lyingHead(g, { x: 1080, y: 622, s: 1.0, hair: 'long', hairColor: PALETTE.hair.golden, skin: PALETTE.skin[2], lashes: true });
         const zzzThem = D.text(g, 1120, 560, 'z z z', 'z', { style: 'font: 700 30px var(--font-note); fill: var(--muted)' });
         sceneLoops.push(gsap.fromTo(zzzThem, { y: 10, opacity: 0.2 }, { y: -16, opacity: 0.9, duration: 1.6, repeat: -1, ease: 'sine.out' }));
         const up = [790, 470];

@@ -12,6 +12,8 @@ import { el, g as group, p as path, inkFor } from './draw.js';
     hair          'short' | 'messy' | 'long' | 'bun' | 'curly'
     hairColor, skin, outfit ('hoodie'|'shirt'|'sweater'|'dress'|'blazer'), color
     glasses       boolean
+    slim          narrower body and arms
+    lashes        eyelashes and a touch of blush
     flip          mirror horizontally (faces the other way for 'point')
   })
   → { root, head, phone: {x, y} | null, expr(tl, {eyes, mouth, brows}, at), set({eyes,mouth,brows}) }
@@ -25,7 +27,7 @@ import { el, g as group, p as path, inkFor } from './draw.js';
 export const PALETTE = {
   ink: 'var(--fg)',
   skin: ['#e2b48f', '#c98f66', '#f0caa6', '#a8704b'],
-  hair: { dark: '#2b1d14', brown: '#6b4128', blonde: '#d4a35a', grey: '#a9a09a', red: '#a8482a' },
+  hair: { dark: '#2b1d14', brown: '#6b4128', blonde: '#d4a35a', golden: '#ecc874', grey: '#a9a09a', red: '#a8482a' },
   cloth: { slate: '#3c4a5c', wine: '#7e2f45', olive: '#55603a', rust: '#9a4a22', navy: '#2c3550', sand: '#9c8466', teal: '#2f5b5a' },
 };
 
@@ -126,7 +128,7 @@ function arms(g, kind, color, skin) {
   return out;
 }
 
-function face(g, { glasses }) {
+function face(g, { glasses, lashes }) {
   const parts = { eyes: {}, mouth: {}, brows: {} };
   const mk = (bucket, name) => (parts[bucket][name] = group(g, { opacity: 0 }));
   const eyeW = (grp, dy = 0, r = 2.4) => {
@@ -149,6 +151,10 @@ function face(g, { glasses }) {
   path(mk('mouth', 'frown'), 'M-9 -42 q9 -6 18 0', '', fillInk('none'));
   path(mk('mouth', 'talk'), 'M-7 -47 q7 9 14 0 Z', '', fillInk('#4a1f1a'));
   path(g, 'M1 -64 q5 8 -2 11', '', { ...fillInk('none'), 'stroke-width': 2 });
+  if (lashes) {
+    path(g, 'M-16 -68 l-4 -4 M-15 -70 l-2 -5 M16 -68 l4 -4 M15 -70 l2 -5', '', { ...fillInk('none'), 'stroke-width': 2 });
+    for (const x of [-18, 18]) el('ellipse', { cx: x, cy: -54, rx: 6, ry: 3.5, fill: '#e8848a', opacity: 0.45 }, g);
+  }
   if (glasses) {
     path(g, 'M-20 -66 a9 8 0 1 0 18 0 a9 8 0 1 0 -18 0 M2 -66 a9 8 0 1 0 18 0 a9 8 0 1 0 -18 0 M-2 -67 h4', '', { ...fillInk('none'), 'stroke-width': 2.2 });
   }
@@ -159,7 +165,7 @@ export function figure(parent, opts = {}) {
   const {
     x = 0, y = 0, s = 1, pose = 'sit', arms: armKind = 'table', hair = 'short',
     hairColor = PALETTE.hair.dark, skin = PALETTE.skin[0], outfit: kind = 'shirt',
-    color = PALETTE.cloth.slate, glasses = false, flip = false,
+    color = PALETTE.cloth.slate, glasses = false, flip = false, slim = false, lashes = false,
     eyes = 'open', mouth = 'neutral', brows = 'neutral',
   } = opts;
   const wrap = group(parent, { 'data-figure': '' });
@@ -167,7 +173,7 @@ export function figure(parent, opts = {}) {
   // long hair sits behind the body, not in front of it
   const back = group(root);
   hairBack(back, hair, hairColor);
-  const body = group(root);
+  const body = group(root, slim ? { transform: 'scale(0.84 1)' } : {});
   if (pose === 'stand') {
     limb(body, 'M-20 118 L-24 246', PALETTE.cloth.navy, 24);
     limb(body, 'M20 118 L24 246', PALETTE.cloth.navy, 24);
@@ -183,7 +189,7 @@ export function figure(parent, opts = {}) {
   // ears + face
   path(head, 'M-30 -68 q-10 2 -7 15 q3 6 9 4 M30 -68 q10 2 7 15 q-3 6 -9 4', '', fillInk(skin));
   path(head, 'M-31 -70 C-31 -106 31 -106 31 -70 C31 -44 18 -27 0 -25 C-18 -27 -31 -44 -31 -70 Z', '', fillInk(skin));
-  const parts = face(head, { glasses });
+  const parts = face(head, { glasses, lashes });
   hairFront(head, hair, hairColor);
 
   const state = { eyes, mouth, brows };
@@ -207,8 +213,8 @@ export function figure(parent, opts = {}) {
 }
 
 /** Lying figure: head on a pillow (rotated), body under a blanket drawn by the scene. */
-export function lyingHead(parent, { x, y, s = 1, hair = 'short', hairColor = PALETTE.hair.dark, skin = PALETTE.skin[0], glasses = false, eyes = 'closed' }) {
-  const f = figure(parent, { x, y, s, pose: 'lie', hair, hairColor, skin, glasses, eyes, mouth: 'neutral' });
+export function lyingHead(parent, { x, y, s = 1, hair = 'short', hairColor = PALETTE.hair.dark, skin = PALETTE.skin[0], glasses = false, lashes = false, eyes = 'closed' }) {
+  const f = figure(parent, { x, y, s, pose: 'lie', hair, hairColor, skin, glasses, lashes, eyes, mouth: 'neutral' });
   f.inner.setAttribute('transform', `translate(${x} ${y}) rotate(-78) scale(${s})`);
   return f;
 }
