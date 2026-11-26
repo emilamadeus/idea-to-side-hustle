@@ -13,11 +13,11 @@ import { codeApp } from '../engine/console.js';
 
   Layout zones (svg units):
     tip        x 80–540, y 110–260
-    app        x 80–1480, y 280–760: sessions x 82–302, conversation x 304–1178,
-               helpers panel x 1180–1478 (each helper with its run time)
+    app        x 560–1480, y 150–760: sessions x 562–732, conversation x 734–1238,
+               helpers panel x 1240–1478 (each helper with its run time)
 */
 
-const AX = 80, AY = 280, AW = 1400, AH = 480;
+const AX = 560, AY = 150, AW = 920, AH = 610;
 
 export default {
   id: 'helpers',
@@ -34,7 +34,7 @@ export default {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Sessions</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*2.6)">Gjør jobben<br>i sessionen selv.<br><em>Hjelpere</em> til research.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.2)">Gjør jobben<br>i sessionen selv.<br><em>Hjelpere</em> til research.</h2>`;
     const svg = D.stage(el);
     const tip = ctx.$('.tip');
     let P = {};
@@ -47,7 +47,7 @@ export default {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
-        const app = codeApp(svg, AX, AY, AW, AH, { size: 18, sidebar: 220, panel: 300 });
+        const app = codeApp(svg, AX, AY, AW, AH, { size: 18, sidebar: 170, panel: 240 });
         P.app = app;
         tl.fromTo(app.root, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.5 }, 0.2);
         const t = app.session('eksport', 'Eksport', 'work');
@@ -68,7 +68,7 @@ export default {
         tl.fromTo(h1.g, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.3 }, 0.3);
         h1.run(tl, 0.3, { from: 0, to: 12, dur: 1.4 });
         h1.done(tl, 1.7);
-        t.agent(tl, 'Finn ut hvordan DVR-API-et logger inn', '3 verktøykall · 12s', 1.8, { result: 'Token i header, fornyes hver time.' });
+        t.agent(tl, 'Finn DVR-innlogging', '3 verktøykall · 12s', 1.8, { result: 'Token i header, fornyes hver time.' });
         t.tool(tl, 'Edit', 'src/dvr.ts', '+12 −2', 2.6);
         t.ctx(tl, 210, 2.6, 0.6);
       }
@@ -77,7 +77,7 @@ export default {
         // a whole job to a helper, in the background; the lead carries on
         const t = P.t;
         t.fadeOld(tl, 0);
-        t.agent(tl, 'Bygg hele fakturamodulen', 'kjører i bakgrunnen', 0.3);
+        t.agent(tl, 'Bygg fakturamodulen', 'kjører i bakgrunnen', 0.3);
         P.h2 = P.app.helper('Fakturamodul');
         tl.fromTo(P.h2.g, { opacity: 0, x: 20 }, { opacity: 1, x: 0, duration: 0.3 }, 0.3);
         P.h2.run(tl, 0.3, { from: 0, to: 38 * 60, dur: 3.0 });
