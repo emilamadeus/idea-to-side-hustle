@@ -208,61 +208,56 @@ export default {
         const sky = D.g(svg, { 'data-bg': '' });
         D.p(sky, 'M560 640 C480 640 470 540 540 520 C510 420 600 350 690 382 C700 270 860 240 900 320 C950 240 1090 270 1080 370 C1130 380 1140 470 1100 510 C1140 560 1120 650 1060 640 Z', '', { style: 'fill: #121a20; stroke: #6fa8c8', 'stroke-width': 3 });
         tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.3);
-        // inside the cloud: no window, just Claude at work (its spinner and status line)
+        // inside the cloud: no window, just Claude at work. It keeps running: the spinner turns,
+        // the status line moves through the stages, the active stage travels along, data flows.
         const GL = ['✻', '✶', '✳', '✢', '✳', '✶'];
         const work = D.g(svg, { 'data-unit': '' });
         const star = D.text(work, 800, 446, '✻', 'cs', { 'text-anchor': 'middle', style: 'font: 700 100px var(--font-mono); fill: #ff7a2f' });
-        const say = D.text(work, 800, 528, '', 'cw', { 'text-anchor': 'middle', style: 'font: 700 24px var(--font-mono); fill: #ff7a2f' });
+        const say = D.text(work, 800, 524, '', 'cw', { 'text-anchor': 'middle', style: 'font: 700 24px var(--font-mono); fill: #ff7a2f' });
         tl.fromTo(work, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.6);
-        const WORDS = ['Kloner kamera-api', 'Retter varsler.ts', 'Kjører testene'];
-        const clock = { v: 0 };
-        tl.fromTo(clock, { v: 0 }, {
-          v: 1, duration: 1.8, ease: 'none', immediateRender: false,
-          onUpdate: () => {
-            const k = Math.min(2, Math.floor(clock.v * 3));
-            star.textContent = GL[Math.floor(clock.v * 30) % GL.length];
-            say.textContent = `${WORDS[k]} … ${Math.round(clock.v * 9 * 60 / 60)}m`;
-          },
-        }, 1.9);
-        tl.fromTo(star, { scale: 1 }, { scale: 1.12, svgOrigin: '800 412', duration: 0.3, repeat: 5, yoyo: true, immediateRender: false }, 1.9);
-        tl.call(() => {
-          star.textContent = '✓'; star.setAttribute('style', `font: 700 92px var(--font-mono); fill: ${OK}`);
-          say.textContent = 'Ferdig. Lager PR.'; say.setAttribute('style', `font: 700 24px var(--font-mono); fill: ${OK}`);
-        }, null, 3.7);
-        // the steps it runs: the active one spins and pulses, then ticks off
-        ['klon', 'rett', 'test'].forEach((l, k) => {
-          const x = 640 + k * 150, y = 560;
+        const STAGES = [['klon', 'Kloner kamera-api'], ['rett', 'Retter varsler.ts'], ['test', 'Kjører testene'], ['PR', 'Lager PR']];
+        const pills = STAGES.map(([l], k) => {
+          const x = 640 + k * 108, y = 556;
           const sg = D.g(svg, { 'data-unit': '' });
-          const pill = D.p(sg, rr(x, y, 130, 40, [20, 20, 20, 20]), '', { style: 'fill: #121a20; stroke: #4a6a80', 'stroke-width': 2.5 });
-          const mark = D.text(sg, x + 24, y + 27, '○', 'cm', { 'text-anchor': 'middle', ...mono(700, 18, '#6fa8c8') });
-          D.text(sg, x + 44, y + 27, l, 'cl', { style: 'font: 700 18px var(--font-display); fill: #e6f2fa' });
-          tl.fromTo(sg, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7 + k * 0.1);
-          const on = 1.9 + k * 0.6, off = on + 0.6;
-          const sp = { v: 0 };
-          tl.call(() => { pill.setAttribute('style', 'fill: #2a1d12; stroke: #ff7a2f'); mark.setAttribute('style', 'font: 700 18px var(--font-mono); fill: #ff7a2f'); }, null, on);
-          tl.fromTo(sp, { v: 0 }, { v: 8, duration: 0.6, ease: 'none', immediateRender: false, onUpdate: () => { mark.textContent = GL[Math.floor(sp.v) % GL.length]; } }, on);
-          tl.fromTo(sg, { scale: 1 }, { scale: 1.06, transformOrigin: '50% 50%', duration: 0.15, repeat: 3, yoyo: true, immediateRender: false }, on);
-          tl.call(() => { mark.textContent = '✓'; mark.setAttribute('style', `font: 700 18px var(--font-mono); fill: ${OK}`); pill.setAttribute('style', `fill: #142218; stroke: ${OK}`); }, null, off);
+          const pill = D.p(sg, rr(x, y, 96, 38, [19, 19, 19, 19]), '', { style: 'fill: #121a20; stroke: #4a6a80', 'stroke-width': 2.5 });
+          const label = D.text(sg, x + 48, y + 26, l, 'cl', { 'text-anchor': 'middle', style: 'font: 700 17px var(--font-display); fill: #9fb8c8' });
+          tl.fromTo(sg, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7 + k * 0.08);
+          return { sg, pill, label };
         });
         const bar = D.g(svg, { 'data-bg': '' });
-        D.p(bar, rr(640, 612, 420, 8, [4, 4, 4, 4]), '', { style: 'fill: #1c2a34' });
-        const fill = D.el('rect', { x: 640, y: 612, width: 0, height: 8, rx: 4, style: 'fill: #9fd3ff' }, bar);
+        D.p(bar, rr(640, 608, 420, 8, [4, 4, 4, 4]), '', { style: 'fill: #1c2a34' });
+        const fill = D.el('rect', { x: 640, y: 608, width: 0, height: 8, rx: 4, style: 'fill: #ff7a2f' }, bar);
         tl.fromTo(bar, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7);
-        tl.to(fill, { attr: { width: 420 }, duration: 1.8, ease: 'none' }, 1.9);
-        tl.call(() => fill.setAttribute('style', `fill: ${OK}`), null, 3.7);
-        // data moving along the arrows
-        const stream = (x1, x2, y, at) => {
-          const dots = [0, 1, 2].map(() => D.el('circle', { cx: x1, cy: y, r: 5, style: 'fill: #e6f2fa', opacity: 0, 'data-bg': '' }, svg));
-          dots.forEach((d, k) => {
-            tl.fromTo(d, { attr: { cx: x1 }, opacity: 1 }, { attr: { cx: x2 - 14 }, duration: 0.45, ease: 'none', immediateRender: false }, at + k * 0.15);
-            tl.to(d, { opacity: 0, duration: 0.1 }, at + k * 0.15 + 0.45);
+        const paint = (t) => {
+          // t: seconds of running time
+          const cyc = 2.8, ph = (t % cyc) / cyc, k = Math.min(3, Math.floor(ph * 4));
+          star.textContent = GL[Math.floor(t * 10) % GL.length];
+          say.textContent = `${STAGES[k][1]} … ${Math.floor(t * 1.5)}m`;
+          fill.setAttribute('width', 420 * ph);
+          pills.forEach((p, n) => {
+            const on = n === k, done = n < k;
+            p.pill.setAttribute('style', on ? 'fill: #2a1d12; stroke: #ff7a2f' : done ? `fill: #142218; stroke: ${OK}` : 'fill: #121a20; stroke: #4a6a80');
+            p.label.setAttribute('style', `font: 700 17px var(--font-display); fill: ${on ? '#ffb08a' : done ? OK : '#9fb8c8'}`);
           });
+          star.setAttribute('transform', `scale(${1 + 0.06 * Math.sin(t * 6)})`);
+          star.setAttribute('transform-origin', '800 412');
         };
-        stream(PX + PW + 14, 486, 470, 1.25);
+        paint(0);
+        // data flowing along an arrow, on a loop
+        const flow = (x1, x2, y) => {
+          const dots = [0, 1, 2].map(() => D.el('circle', { cx: x1, cy: y, r: 5, style: 'fill: #e6f2fa', opacity: 0, 'data-bg': '' }, svg));
+          return () => dots.forEach((d, k) => loops.push(gsap.fromTo(d, { attr: { cx: x1 }, opacity: 1 }, { attr: { cx: x2 - 14 }, opacity: 0.2, duration: 0.9, ease: 'none', repeat: -1, delay: k * 0.3 })));
+        };
+        const flow1 = flow(PX + PW + 14, 486, 470), flow2 = flow(1140, 1180, 470);
+        tl.call(() => {
+          flow1();
+          const run = { t: 0 };
+          loops.push(gsap.to(run, { t: 600, duration: 600, ease: 'none', onUpdate: () => paint(run.t) }));
+        }, null, 1.6);
         // cloud → GitHub
         const a2 = arrow(1140, 1180, 470);
         tl.fromTo(a2, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.9);
-        stream(1140, 1180, 470, 3.95);
+        tl.call(() => flow2(), null, 4.0);
         const gh = D.g(svg, { 'data-unit': '' });
         D.p(gh, rr(1186, 360, 294, 230, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--fg)', 'stroke-width': 2.5 });
         D.text(gh, 1206, 396, 'GitHub', 'gh', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
