@@ -3,8 +3,8 @@
 //   npm run dev          (in another terminal; the deck must be running on :5180)
 //   npm run thumbs       (all slides)   ·   npm run thumbs -- spec validate   (only these)
 //
-// Each slide is shown in a preview window at its picture step (def.thumbStep, default the last
-// step), jumped to its end state, and captured at 480×270. Uses the installed Google Chrome.
+// Each slide is shown in a preview window at its picture step (def.thumbStep, default step 0, where
+// a click in the zoom view lands), jumped to that step's end state, and captured at 480×270. Uses the installed Google Chrome.
 import { chromium } from 'playwright-core';
 import { mkdir, writeFile } from 'node:fs/promises';
 
@@ -20,7 +20,7 @@ await page.waitForFunction(() => window.deck?.defs?.length > 0);
 await page.waitForTimeout(1500);
 
 const defs = await page.evaluate(() => window.deck.defs.map((d, i) => ({
-  i, id: d.id, title: d.title ?? d.id, step: d.thumbStep ?? Math.max(1, d.steps ?? 1) - 1,
+  i, id: d.id, title: d.title ?? d.id, step: d.thumbStep ?? 0,
 })));
 
 for (const d of defs) {

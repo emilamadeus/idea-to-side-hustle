@@ -331,7 +331,7 @@ export function createZoom(deck, stage) {
   });
 
   // ── wheel: smooth zoom toward the pointer; past the limits, the next level ──
-  const FMIN = 0.18, FMAX = 1.9, PUSH = 520; // range inside a level, and how hard you push past it to change level
+  const FMIN = 0.18, FMAX = 1.12, PUSH = 520; // range inside a level, and how hard you push past it to change level
   let acc = 0, lock = 0;
   const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
   const hit = new THREE.Vector3();
@@ -380,9 +380,19 @@ export function createZoom(deck, stage) {
       acc = 0;
     } else {
       acc = 0;
-      const p = underPointer(), r = nf / view.f;
-      view.cx = p.x + (view.cx - p.x) * r;
-      view.cy = p.y + (view.cy - p.y) * r;
+      const r = nf / view.f;
+      if (dy < 0) {
+        // in: toward whatever is under the pointer
+        const p = underPointer();
+        view.cx = p.x + (view.cx - p.x) * r;
+        view.cy = p.y + (view.cy - p.y) * r;
+      } else {
+        // out: drift back toward the middle of the whole talk, so the full view ends centred
+        const c = layout.cam.look, k = 1 - 1 / r;
+        const pull = Math.min(1, k * 2.2 + (nf > 0.9 ? 0.3 : 0));
+        view.cx += (c[0] - view.cx) * pull;
+        view.cy += (c[1] - view.cy) * pull;
+      }
       view.f = nf;
     }
     setView();
