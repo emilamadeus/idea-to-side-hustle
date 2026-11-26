@@ -246,8 +246,11 @@ export function createZoom(deck, stage) {
       m.scale.setScalar(l.size);
       gsap.to(m.material, { opacity: 0.95, duration: 0.6, delay: dur * 0.5 });
     });
-    stage.fly({ pos: L.cam.pos, look: L.cam.look, duration: dur, ease: 'power3.inOut' });
     view = { cx: L.cam.look[0], cy: L.cam.look[1], zP: L.cam.look[2], d: L.cam.pos[2] - L.cam.look[2], f: 1 };
+    // coming out of a slide: land at the closest zoom, on that slide; scrolling out takes it from there
+    if (from && L.pos[from.i]) { view.cx = L.pos[from.i].x; view.cy = L.pos[from.i].y; view.f = FMIN; }
+    const cz = view.zP + view.d * view.f;
+    stage.fly({ pos: [view.cx, view.cy, cz], look: [view.cx, view.cy, view.zP], duration: dur, ease: 'power3.inOut' });
     paintEdges();
   }
 
