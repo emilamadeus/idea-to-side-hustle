@@ -117,7 +117,9 @@ export default {
       return { g, addr, lock };
     }
     function goButton() {
-      const g = D.g(svg, { 'data-unit': '' });
+      // a real button: clicking it (or the clicker) takes the step
+      const g = D.g(svg, { 'data-unit': '', 'data-interactive': '', style: 'cursor: pointer' });
+      g.addEventListener('click', () => { if (step === 0) ctx.deck?.next(); });
       const glow = D.el('rect', { x: 630, y: 727, width: 340, height: 76, rx: 38, style: 'fill: #ff5a1f', opacity: 0.25 }, g);
       D.el('rect', { x: 640, y: 735, width: 320, height: 60, rx: 30, ...FILL('#ff5a1f', 3) }, g);
       D.text(g, 800, 775, 'Gå live', 'gl', { 'text-anchor': 'middle', style: 'font: 800 28px var(--font-display); fill: #1a120c' });
