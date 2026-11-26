@@ -61,9 +61,9 @@ export default {
         tl.fromTo(P.you.root, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.3);
         // the wish: one project over the line
         const cloud = D.g(svg, { 'data-unit': '' });
-        D.p(cloud, 'M430 430 C380 430 372 370 420 360 C400 312 452 270 500 290 C512 236 600 226 626 276 C670 246 742 270 730 322 C780 334 780 424 724 430 Z', '', { style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 2.6 });
+        D.p(cloud, 'M430 430 C380 430 372 370 420 360 C400 312 452 270 500 290 C512 236 600 226 626 276 C670 246 742 270 730 322 C780 334 780 424 724 430 Z', '', { style: 'fill: #241a13; stroke: var(--deco)', 'stroke-width': 2.6 });
         flag(cloud, 530, 290, 0.78);
-        [[392, 458, 10], [366, 484, 7]].forEach(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 2 }, cloud));
+        [[392, 458, 10], [366, 484, 7]].forEach(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #241a13; stroke: var(--deco)', 'stroke-width': 2 }, cloud));
         tl.fromTo(cloud, { opacity: 0, scale: 0.7, transformOrigin: '0% 100%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.8)' }, 0.9);
         P.cloud = cloud;
       }

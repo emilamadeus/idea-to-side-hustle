@@ -237,7 +237,7 @@ export default {
         tl.fromTo(sky, { opacity: 0, scale: 0.9, transformOrigin: '50% 60%' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 1.6);
         // GitHub, waiting with the last commit
         const gh = D.g(svg, { 'data-unit': '' });
-        D.p(gh, rr(1206, 330, 274, 270, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--fg)', 'stroke-width': 2.5 });
+        D.p(gh, rr(1206, 330, 274, 270, [12, 12, 12, 12]), '', { style: 'fill: #0d1117; stroke: var(--deco)', 'stroke-width': 2.5 });
         D.text(gh, 1224, 366, 'GitHub', 'gh', { style: 'font: 800 22px var(--font-display); fill: #f3e9da' });
         D.text(gh, 1224, 390, 'kamera-api · main', 'gr', mono(400, 15, MUTED));
         D.p(gh, 'M1218 406 H1468', '', { style: 'fill: none; stroke: #30363d', 'stroke-width': 2 });

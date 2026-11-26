@@ -41,7 +41,7 @@ export default {
       const cp = D.el('clipPath', { id }, g);
       D.el('rect', { x, y: PHOTO_Y, width: w, height: h, rx: 10 }, cp);
       D.el('image', { href: `${MEDIA}${file}.webp`, x, y: PHOTO_Y, width: w, height: h, preserveAspectRatio: 'xMidYMid slice', 'clip-path': `url(#${id})`, 'data-bg': '' }, g);
-      D.el('rect', { x, y: PHOTO_Y, width: w, height: h, rx: 10, style: 'fill: none; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, g);
+      D.el('rect', { x, y: PHOTO_Y, width: w, height: h, rx: 10, style: 'fill: none; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, g);
       D.text(g, x, PHOTO_Y + h + 34, label, 'pl', { style: 'font: 700 15px var(--font-mono); letter-spacing: .12em; fill: var(--muted)' });
       return g;
     }

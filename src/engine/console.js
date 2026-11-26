@@ -29,7 +29,7 @@ export const STATE = {
 
 export function codeApp(parent, x, y, w, h, { sidebar = 250, size = 18, title = 'Claude Code', panel = 0 } = {}) {
   const root = group(parent, { 'data-unit': '' });
-  el('rect', { x, y, width: w, height: h, rx: 14, style: 'fill: #1b1511; stroke: var(--fg)', 'stroke-width': 2.5, 'data-body': '' }, root);
+  el('rect', { x, y, width: w, height: h, rx: 14, style: 'fill: #1b1511; stroke: var(--deco)', 'stroke-width': 2.5, 'data-body': '' }, root);
   const bar = 36;
   [0, 1, 2].forEach((k) => el('circle', { cx: x + 22 + k * 20, cy: y + bar / 2 + 2, r: 6, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, root));
   text(root, x + w / 2, y + bar / 2 + 7, title, 'apt', { 'text-anchor': 'middle', style: `font: 700 14px var(--font-mono); letter-spacing: .08em; fill: ${C.muted}` });

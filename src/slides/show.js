@@ -48,7 +48,7 @@ export default {
     function win(g, title) {
       const w = D.g(g);
       const bg = D.g(w, { 'data-bg': '' });
-      D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 30, style: 'fill: #1a0d07; stroke: var(--fg)', 'stroke-width': 3 }, bg);
+      D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 30, style: 'fill: #1a0d07; stroke: var(--deco)', 'stroke-width': 3 }, bg);
       D.el('rect', { x: WX + WW / 2 - 36, y: WY + 14, width: 72, height: 14, rx: 7, style: 'fill: #0f0a07' }, bg);
       D.text(bg, WX + 28, WY + 46, 'Ved.', 'wb', { style: 'font: 800 18px var(--font-display); fill: #ff8a3d' });
       D.text(w, WX + 28, WY + 92, title, 'wt', { style: 'font: 800 28px var(--font-display); fill: var(--fg)' });

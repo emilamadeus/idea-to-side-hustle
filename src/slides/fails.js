@@ -61,7 +61,7 @@ export default {
     }
     function panel(g, x, label, model) {
       const p = D.g(g, { 'data-unit': '' });
-      D.el('rect', { x, y: 190, width: 420, height: 330, rx: 10, style: `fill: #241a13; stroke: var(--fg)`, 'stroke-width': 2.5, 'data-bg': '' }, p);
+      D.el('rect', { x, y: 190, width: 420, height: 330, rx: 10, style: `fill: #241a13; stroke: var(--deco)`, 'stroke-width': 2.5, 'data-bg': '' }, p);
       D.text(p, x + 20, 222, label, 'pl', { style: `font: 700 16px var(--font-mono); letter-spacing: .14em; fill: var(--muted)` });
       ROOMS.forEach((r) => {
         D.el('rect', { x: x + 20 + r.dx, y: 250, width: 190, height: 250, rx: 4, style: `fill: none; stroke: var(--deco)`, 'stroke-width': 2, 'data-bg': '' }, p);

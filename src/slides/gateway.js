@@ -53,7 +53,7 @@ export default {
 
     function board(g) {
       const b = D.g(g, { 'data-unit': '' });
-      D.el('rect', { x: 600, y: 150, width: 880, height: 250, rx: 10, style: 'fill: #0e0a07; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, b);
+      D.el('rect', { x: 600, y: 150, width: 880, height: 250, rx: 10, style: 'fill: #0e0a07; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, b);
       D.text(b, 624, 186, 'BACKEND · KAMERA', 'bh', { style: 'font: 700 16px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
       return FEATS.map((f, k) => {
         const y = 236 + k * 46;

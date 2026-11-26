@@ -70,7 +70,7 @@ export default {
     // the tests: one row per feature, ✓ or ✗
     function tests() {
       const g = D.g(svg, { 'data-unit': '' });
-      D.el('rect', { x: 600, y: 470, width: 460, height: 60 + TESTS.length * 50 + 50, rx: 12, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 2.5 }, g);
+      D.el('rect', { x: 600, y: 470, width: 460, height: 60 + TESTS.length * 50 + 50, rx: 12, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 2.5 }, g);
       D.text(g, 624, 506, 'TESTER', 'tt', { style: 'font: 700 15px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
       const rows = [...TESTS, 'Pause'].map((name, k) => {
         const y = 552 + k * 50;

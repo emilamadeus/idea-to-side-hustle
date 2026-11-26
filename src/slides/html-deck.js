@@ -102,7 +102,7 @@ export default {
       if (i === 1) {
         // pull back: the deck itself, in a browser
         const win = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 12, style: 'fill: #2a1f17; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, win);
+        D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 12, style: 'fill: #2a1f17; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, win);
         [0, 1, 2].forEach((k) => D.el('circle', { cx: WX + 24 + k * 22, cy: WY + 20, r: 7, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, win));
         D.el('rect', { x: WX + 110, y: WY + 7, width: 420, height: 26, rx: 13, style: 'fill: #16100b', 'data-bg': '' }, win);
         D.text(win, WX + 128, WY + 26, 'localhost:5180', 'url', { style: 'font: 400 15px var(--font-mono); fill: var(--muted)' });
@@ -118,7 +118,7 @@ export default {
         // it is text
         tl.call(() => { src.then((t) => { code.textContent = t; code.scrollTop = 0; }); }, null, 0);
         const box = D.g(svg, { 'data-bg': '' });
-        D.el('rect', { x: 80, y: 300, width: 460, height: 460, rx: 10, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 2.5 }, box);
+        D.el('rect', { x: 80, y: 300, width: 460, height: 460, rx: 10, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 2.5 }, box);
         D.text(box, 100, 292, 'src/slides/goal.js', 'cf', { style: 'font: 700 15px var(--font-mono); fill: var(--accent-2)' });
         tl.fromTo(box, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0);
         tl.to(code, { opacity: 1, duration: 0.4 }, 0.2);

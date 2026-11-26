@@ -60,7 +60,7 @@ export default {
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         const win = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 12, style: 'fill: #2a1f17; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, win);
+        D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 12, style: 'fill: #2a1f17; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, win);
         [0, 1, 2].forEach((k) => D.el('circle', { cx: WX + 24 + k * 22, cy: WY + 20, r: 7, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, win));
         D.el('rect', { x: WX + 110, y: WY + 7, width: 420, height: 26, rx: 13, style: 'fill: #16100b', 'data-bg': '' }, win);
         P.url = D.text(win, WX + 128, WY + 26, '', 'url', { style: 'font: 400 15px var(--font-mono); fill: var(--muted)' });

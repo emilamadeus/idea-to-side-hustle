@@ -119,7 +119,7 @@ export default {
     function phoneAt(g, px, py) {
       const glow = D.el('ellipse', { cx: px + 12, cy: py + 10, rx: 130, ry: 100, fill: 'url(#aw-glow)', opacity: 0, 'data-bg': '' }, g);
       const phone = D.g(g);
-      D.el('rect', { x: px, y: py, width: 24, height: 42, rx: 5, fill: '#0f0a07', style: 'stroke: var(--fg)', 'stroke-width': 2.5 }, phone);
+      D.el('rect', { x: px, y: py, width: 24, height: 42, rx: 5, fill: '#0f0a07', style: 'stroke: var(--deco)', 'stroke-width': 2.5 }, phone);
       const screen = D.el('rect', { x: px + 4, y: py + 5, width: 16, height: 30, rx: 2, style: 'fill: var(--accent-2)', opacity: 0.15 }, phone);
       const arcs = D.g(g, { opacity: 0 });
       D.p(arcs, `M${px - 8} ${py + 6} q-10 15 0 30 M${px - 18} ${py} q-12 21 0 42 M${px + 32} ${py + 6} q10 15 0 30 M${px + 42} ${py} q12 21 0 42`, 'acc2', { 'stroke-width': 3 });
@@ -150,7 +150,7 @@ export default {
       const [tx, ty] = tailTo || [h.px + 12, h.py];
       D.p(grp, `M${tx} ${ty} L${x + w / 2} ${y + PH.h}`, 'dash', { opacity: 0.7 });
       // body, screen, notch, clock
-      D.el('rect', { x, y, width: w, height: PH.h, rx: 30, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3, 'data-body': '' }, grp);
+      D.el('rect', { x, y, width: w, height: PH.h, rx: 30, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 3, 'data-body': '' }, grp);
       D.el('rect', { x: x + 10, y: y + 10, width: w - 20, height: PH.h - 20, rx: 22, style: 'fill: #1c140e' }, grp);
       D.el('rect', { x: x + w / 2 - 34, y: y + 16, width: 68, height: 14, rx: 7, style: 'fill: #0f0a07' }, grp);
       D.text(grp, x + 28, y + 30, s.time ?? '', 'st', { style: 'font: 700 14px var(--font-mono); fill: var(--fg)' });
@@ -286,7 +286,7 @@ export default {
         const leaving = figure(g, { ...wife, pose: 'stand', arms: 'phone', mouth: 'smile', eyes: 'down', brows: 'raised' });
         cross.root.setAttribute('opacity', 0); leaving.root.setAttribute('opacity', 0);
         const herPhone = D.g(leaving.inner);
-        D.el('rect', { x: -12, y: 16, width: 24, height: 40, rx: 5, fill: '#0f0a07', style: 'stroke: var(--fg)', 'stroke-width': 2.5 }, herPhone);
+        D.el('rect', { x: -12, y: 16, width: 24, height: 40, rx: 5, fill: '#0f0a07', style: 'stroke: var(--deco)', 'stroke-width': 2.5 }, herPhone);
         D.el('rect', { x: -8, y: 21, width: 16, height: 28, rx: 2, style: 'fill: var(--accent-2)' }, herPhone);
         const flames = [], smoke = [];
         let sp2 = null, meSay = null, done = null;
@@ -295,7 +295,7 @@ export default {
           const x = 930, y = 78, w = 236, h = 258;
           const unit = D.g(root, { 'data-unit': '' });
           D.p(unit, `M1291 486 L${x + w / 2} ${y + h}`, 'dash', { opacity: 0.7 });
-          D.el('rect', { x, y, width: w, height: h, rx: 30, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3, 'data-body': '' }, unit);
+          D.el('rect', { x, y, width: w, height: h, rx: 30, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 3, 'data-body': '' }, unit);
           D.el('rect', { x: x + 10, y: y + 10, width: w - 20, height: h - 20, rx: 22, style: 'fill: #1c140e' }, unit);
           D.el('rect', { x: x + w / 2 - 34, y: y + 16, width: 68, height: 14, rx: 7, style: 'fill: #0f0a07' }, unit);
           D.text(unit, x + 28, y + 30, '18:41', 'st', { style: 'font: 700 14px var(--font-mono); fill: var(--fg)' });

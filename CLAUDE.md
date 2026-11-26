@@ -9,7 +9,7 @@ Live-presented talk (20–45 min, 10–20 people) on "optimizing AI in our workf
 - Visual identity: **Arbeidstegning** (working drawing). Arkade colours (warm near-black, orange #ff5a1f, yellow #ffd23f) on an architect's drawing: warm grid, crop marks, a title block naming each slide as a drawing sheet, pink pencil notes in the margin (Caveat). Type: Bricolage Grotesque 800 + Space Mono. Defined in `src/theme.js`.
   - Pencil notes are the humor device; use them sparingly (at most one per slide, not on every slide).
   - Keep lines 2px or thicker (AirPlay).
-  - Filled objects and characters get a dark ink outline (`FILL()` / `inkFor()` in `src/engine/draw.js`), like a rendered illustration; a cream outline reads as clip-art. Light outlines are only for UI frames (phones, panels, bubbles) and line drawings that sit directly on the dark background.
+  - Filled objects and characters get a dark ink outline (`FILL()` / `inkFor()` in `src/engine/draw.js`), like a rendered illustration; a cream outline reads as clip-art. UI frames (phones, app windows, browser windows, panels, cards, bubbles, thought clouds) use the warm `var(--deco)` outline, the same as the live map; cream lines are only for line drawings that sit directly on the dark background.
   - Zoom/connector lines from a small thumbnail to its enlargement: one dashed line, not two.
 - Tone: funny, intuitive, humorous. Humor comes from real situations and visual gags, never from forced jokes or puns.
 - Audience: mostly developers, some non-developers. Explain jargon visually, not verbally.

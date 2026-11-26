@@ -96,7 +96,7 @@ export default {
         tl.fromTo(signs, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.4 }, 0.3);
         // the shared file as a board
         const board = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: 900, y: 168, width: 260, height: 390, rx: 8, style: 'fill: #2a1f17; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, board);
+        D.el('rect', { x: 900, y: 168, width: 260, height: 390, rx: 8, style: 'fill: #2a1f17; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, board);
         D.text(board, 1030, 214, 'asset-queue.md', 'bt', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); fill: var(--accent-2)' });
         D.p(board, 'M916 232 H1144', '', { style: 'fill: none; stroke: var(--deco)', 'stroke-width': 2 });
         tl.fromTo(board, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.4);
@@ -187,7 +187,7 @@ export default {
       if (i === 3) {
         // the carts are real; and they break the way wood does
         const fab = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: 80, y: 290, width: 440, height: 250, rx: 12, style: 'fill: #1a120c; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, fab);
+        D.el('rect', { x: 80, y: 290, width: 440, height: 250, rx: 12, style: 'fill: #1a120c; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, fab);
         D.text(fab, 104, 332, 'FAB · ATLADEUS STUDIO', 'fb', { style: 'font: 700 15px var(--font-mono); letter-spacing: .12em; fill: var(--muted)' });
         D.text(fab, 104, 374, 'Destructible Medieval', 'f1', { style: 'font: 800 28px var(--font-display); fill: var(--fg)' });
         D.text(fab, 104, 408, 'Cart and Wagon Props', 'f2', { style: 'font: 800 28px var(--font-display); fill: var(--fg)' });

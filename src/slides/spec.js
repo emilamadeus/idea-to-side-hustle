@@ -87,7 +87,7 @@ export default {
     function page() {
       const g = D.g(svg);
       const chrome = D.g(g, { 'data-unit': '' });
-      D.el('rect', { x: PX, y: PY, width: PW, height: PH, rx: 12, style: 'fill: #1d1510; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, chrome);
+      D.el('rect', { x: PX, y: PY, width: PW, height: PH, rx: 12, style: 'fill: #1d1510; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, chrome);
       D.el('rect', { x: PX, y: PY, width: PW, height: 46, rx: 12, style: 'fill: #2a1f17' }, chrome);
       [0, 1, 2].forEach((k) => D.el('circle', { cx: PX + 24 + k * 22, cy: PY + 23, r: 7, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, chrome));
       D.el('rect', { x: PX + 110, y: PY + 10, width: 420, height: 26, rx: 13, style: 'fill: #16100b' }, chrome);
@@ -197,7 +197,7 @@ export default {
         // the colleague reacts with a thumbs up on the message
         const bb = msg.getBBox();
         const thumb = D.g(msg);
-        D.el('circle', { cx: bb.x - 4, cy: bb.y + bb.height - 4, r: 19, style: 'fill: #2c2119; stroke: var(--fg)', 'stroke-width': 2 }, thumb);
+        D.el('circle', { cx: bb.x - 4, cy: bb.y + bb.height - 4, r: 19, style: 'fill: #2c2119; stroke: var(--deco)', 'stroke-width': 2 }, thumb);
         D.text(thumb, bb.x - 4, bb.y + bb.height + 3, '👍', 'th', { 'text-anchor': 'middle', style: 'font-size: 20px' });
         tl.fromTo(thumb, { opacity: 0, scale: 0.3, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.4, ease: 'back.out(3)' }, 4.3);
         ctx.focus(tl, [chat.root, P.copy, cur, fly], 1.4);

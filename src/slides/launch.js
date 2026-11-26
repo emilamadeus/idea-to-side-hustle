@@ -138,7 +138,7 @@ export default {
         tl.add(D.slam(st.parentNode), 0.3);
         // the sale arrives as a phone notification on top of the page (overlap by design)
         const note = D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' });
-        D.el('rect', { x: 1150, y: 636, width: 330, height: 120, rx: 20, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3, 'data-body': '' }, note);
+        D.el('rect', { x: 1150, y: 636, width: 330, height: 120, rx: 20, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 3, 'data-body': '' }, note);
         D.text(note, 1174, 674, 'FAB', 'nl', { style: 'font: 700 14px var(--font-mono); letter-spacing: .14em; fill: #8fe3a2' });
         D.text(note, 1174, 710, 'Nytt salg:', 'n1', { style: 'font: 600 21px var(--font-display); fill: var(--fg)' });
         D.text(note, 1174, 738, 'Destructible Medieval Cart…', 'n2', { style: 'font: 600 18px var(--font-display); fill: #cfc3b2' });

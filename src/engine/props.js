@@ -102,7 +102,7 @@ export function promptBox(parent, x, y, w, str, { attach = null, size = 20, labe
   const attH = attach ? 76 : 0;
   const h = 46 + attH + lines.length * (size + 9) + 14;
   const grp = group(parent, { 'data-unit': '' });
-  el('rect', { x, y, width: w, height: h, rx: 18, style: 'fill: #1c140e; stroke: var(--fg)', 'stroke-width': 2 }, grp);
+  el('rect', { x, y, width: w, height: h, rx: 18, style: 'fill: #1c140e; stroke: var(--deco)', 'stroke-width': 2 }, grp);
   text(grp, x + 20, y + 26, label, 'plbl', { style: 'font: 700 12px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
   let chip = null;
   if (attach) {
@@ -131,7 +131,7 @@ export function chatPhone(parent, x, y, w, h, { app = 'Claude', compact = false,
   const root = group(parent, { 'data-unit': '' });
   const accent = app === 'ChatGPT' ? '#74aa9c' : 'var(--accent)';
   // data-body: the phone's frame is what it occupies (scrolled-out messages don't count)
-  el('rect', { x, y, width: w, height: h, rx: compact ? 24 : 34, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3, 'data-body': '' }, root);
+  el('rect', { x, y, width: w, height: h, rx: compact ? 24 : 34, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 3, 'data-body': '' }, root);
   const sx = x + 10, sy = y + 10, sw = w - 20, sh = h - 20;
   el('rect', { x: sx, y: sy, width: sw, height: sh, rx: compact ? 16 : 24, style: 'fill: #1c140e' }, root);
   const head = compact ? 34 : 70;

@@ -136,7 +136,7 @@ export default {
       // drawn at x 330 and moved right, clear of the tip at top left
       const g = D.g(svg, { 'data-unit': '' });
       const b = D.g(g, { transform: 'translate(250 0)' });
-      D.el('rect', { x: 330, y: 150, width: 940, height: 560, rx: 16, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 3 }, b);
+      D.el('rect', { x: 330, y: 150, width: 940, height: 560, rx: 16, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 3 }, b);
       D.el('rect', { x: 332, y: 152, width: 936, height: 48, rx: 14, style: 'fill: #1d1510' }, b);
       [0, 1, 2].forEach((k) => D.el('circle', { cx: 358 + k * 20, cy: 176, r: 6, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, b));
       D.el('rect', { x: 470, y: 161, width: 660, height: 30, rx: 15, style: 'fill: #2a1d14' }, b);

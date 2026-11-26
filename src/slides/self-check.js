@@ -98,7 +98,7 @@ export default {
       const g = D.g(svg, { 'data-unit': '' });
       const x = 1180, y = 190, w = 260, h = 280;
       D.text(g, x, y - 14, 'BESTILLINGSSIDEN', 'pl', { style: 'font: 700 14px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
-      D.el('rect', { x, y, width: w, height: h, rx: 18, style: 'fill: #1a0d07; stroke: var(--fg)', 'stroke-width': 2.5 }, g);
+      D.el('rect', { x, y, width: w, height: h, rx: 18, style: 'fill: #1a0d07; stroke: var(--deco)', 'stroke-width': 2.5 }, g);
       const id = `sc-clip-${Math.random().toString(36).slice(2, 7)}`;
       const cp = D.el('clipPath', { id }, g);
       D.el('rect', { x: x + 3, y: y + 3, width: w - 6, height: h - 6, rx: 16 }, cp);
@@ -181,7 +181,7 @@ export default {
         P.chat.reply(tl, 'Ok.', t);
         // the AI works in the background and catches the same faults itself
         const chk = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: 600, y: 190, width: 540, height: 280, rx: 14, style: 'fill: #0f0a07; stroke: var(--fg)', 'stroke-width': 2.5 }, chk);
+        D.el('rect', { x: 600, y: 190, width: 540, height: 280, rx: 14, style: 'fill: #0f0a07; stroke: var(--deco)', 'stroke-width': 2.5 }, chk);
         D.text(chk, 624, 226, 'CLAUDE · I BAKGRUNNEN', 'ck', { style: 'font: 700 14px var(--font-mono); letter-spacing: .14em; fill: var(--accent)' });
         tl.fromTo(chk, { opacity: 0 }, { opacity: 1, duration: 0.4 }, t + 0.3);
         const ROWS = [['Skjermbilde mobil', 'Bestill kuttet'], ['Bestillingstest', 'Pris 0 kr'], ['Bestillingstest', 'Søndag'], ['Bestillingstest', '']];

@@ -55,7 +55,7 @@ export default {
 
     // a browser window around the page
     function frame(g) {
-      D.el('rect', { x: PX, y: PY, width: PW, height: PH, rx: 10, style: 'fill: #1d1510; stroke: var(--fg)', 'stroke-width': 2.5, 'data-bg': '' }, g);
+      D.el('rect', { x: PX, y: PY, width: PW, height: PH, rx: 10, style: 'fill: #1d1510; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, g);
       D.el('rect', { x: PX, y: PY, width: PW, height: 34, rx: 10, style: 'fill: #2a1f17', 'data-bg': '' }, g);
       [0, 1, 2].forEach((k) => D.el('circle', { cx: PX + 20 + k * 18, cy: PY + 17, r: 6, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, g));
       D.el('rect', { x: PX + 90, y: PY + 8, width: 280, height: 18, rx: 9, style: 'fill: #16100b', 'data-bg': '' }, g);
@@ -87,12 +87,12 @@ export default {
         P.att.show(tl, 'FORSØK 1', 0.5);
         // what you actually have in mind: the Varm peis page
         const cloud = D.g(svg, { 'data-unit': '' });
-        D.p(cloud, 'M1236 400 C1196 400 1192 344 1230 336 C1214 296 1254 262 1290 276 C1300 232 1370 226 1392 266 C1430 244 1478 272 1466 314 C1494 330 1490 392 1450 400 Z', '', { style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 2.6 });
+        D.p(cloud, 'M1236 400 C1196 400 1192 344 1230 336 C1214 296 1254 262 1290 276 C1300 232 1370 226 1392 266 C1430 244 1478 272 1466 314 C1494 330 1490 392 1450 400 Z', '', { style: 'fill: #241a13; stroke: var(--deco)', 'stroke-width': 2.6 });
         targetPage(cloud, 1262, 286, 168, 112);
         // the dots lead back to you (your prompt in the phone); background, so they don't make
         // the cloud's box reach over the page
         const dots = D.g(svg, { 'data-bg': '' });
-        [[1206, 270, 11], [1080, 256, 9], [930, 250, 7], [780, 256, 6], [640, 272, 5], [530, 296, 4]].forEach(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #241a13; stroke: var(--fg)', 'stroke-width': 2 }, dots));
+        [[1206, 270, 11], [1080, 256, 9], [930, 250, 7], [780, 256, 6], [640, 272, 5], [530, 296, 4]].forEach(([cx, cy, r]) => D.el('circle', { cx, cy, r, style: 'fill: #241a13; stroke: var(--deco)', 'stroke-width': 2 }, dots));
         D.text(cloud, 1346, 432, 'DET DU SER FOR DEG', 'cl', { 'text-anchor': 'middle', style: 'font: 700 14px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
         tl.fromTo(cloud, { opacity: 0, scale: 0.7, transformOrigin: '0% 100%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.8)' }, 1.4);
         tl.fromTo(dots, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 1.4);
