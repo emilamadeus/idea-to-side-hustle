@@ -5,7 +5,7 @@
     POST /api/order   { bydel, sekker } → { id }     only while the shop is open
     GET  /api/ws      websocket
          ?role=deck&key=…   the talk: gets a snapshot and every new order; sends open/close/reset/notify
-         ?role=customer&id= a phone: gets open/close, and messages addressed to its order
+         ?role=customer&id=a,b  a phone: gets open/close, and messages addressed to its orders
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
   No payment and no personal data: an order is a district and a number of sacks.
 */
@@ -73,8 +73,9 @@ export class Room {
     if (role === 'deck' && url.searchParams.get('key') !== this.env.DECK_KEY) return json({ error: 'forbidden' }, 403);
     if (role !== 'deck' && role !== 'customer') return json({ error: 'role' }, 400);
     const [client, server] = Object.values(new WebSocketPair());
-    const id = (url.searchParams.get('id') || '').replace(/[^a-z0-9-]/gi, '').slice(0, 12);
-    this.ctx.acceptWebSocket(server, role === 'deck' ? ['deck'] : ['cust', ...(id ? [`c:${id}`] : [])]);
+    // a phone may hold several orders: ?id=a,b,c (a socket takes at most ten tags)
+    const ids = (url.searchParams.get('id') || '').split(',').map((x) => x.replace(/[^a-z0-9-]/gi, '').slice(0, 12)).filter(Boolean).slice(0, 8);
+    this.ctx.acceptWebSocket(server, role === 'deck' ? ['deck'] : ['cust', ...ids.map((x) => `c:${x}`)]);
     server.send(JSON.stringify(role === 'deck'
       ? { type: 'snapshot', open: this.open, orders: this.orders }
       : { type: 'state', open: this.open }));

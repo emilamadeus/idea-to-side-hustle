@@ -214,10 +214,11 @@ export default {
       P.statusDot.setAttribute('style', `fill: ${live ? '#8fe3a2' : '#6b5a48'}`);
     }
 
-    // a small truck for the map, front at (0, 0)
+    // a small truck for the map, centred on (0, 0) so it parks on the district itself
     function truck() {
       const o = D.g(svg, { 'data-unit': '' });
-      const t = D.g(o);
+      const c = D.g(o, { transform: 'translate(28 18)' });
+      const t = D.g(c);
       D.el('rect', { x: -58, y: -20, width: 40, height: 10, rx: 2, ...FILL('#6b4a30', 2) }, t);
       [[-50, -26], [-38, -26], [-26, -26], [-44, -34], [-32, -34]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 6, ...FILL('#c9935a', 1.8) }, t));
       D.p(t, 'M-18 -10 V-30 H-6 L2 -20 V-10 Z', '', FILL('#ff5a1f', 2));
@@ -305,7 +306,7 @@ export default {
           const len = path.getTotalLength ? path.getTotalLength() : 1000;
           tl.fromTo(path, { opacity: 0 }, { opacity: 0.9, duration: 0.4 }, 0.2);
           const tr = truck();
-          gsap.set(tr.o, { x: DEPOT[0], y: DEPOT[1] - 4 });
+          gsap.set(tr.o, { x: DEPOT[0], y: DEPOT[1] });
           tl.fromTo(tr.o, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.3);
           const speed = Math.max(260, len / 14);
           let at = 0.7;
@@ -313,7 +314,7 @@ export default {
             const a = pts[k - 1], b = pts[k];
             const dur = Math.hypot(b.x - a.x, b.y - a.y) / speed;
             tl.set(tr.t, { scaleX: b.x < a.x ? -1 : 1, transformOrigin: '-28px -16px' }, at);
-            tl.to(tr.o, { x: b.x, y: b.y - 4, duration: dur, ease: 'none' }, at);
+            tl.to(tr.o, { x: b.x, y: b.y, duration: dur, ease: 'none' }, at);
             at += dur;
             const s = P.map.dots[b.bydel];
             tl.to(s.stack, { opacity: 0.35, duration: 0.3 }, at);
