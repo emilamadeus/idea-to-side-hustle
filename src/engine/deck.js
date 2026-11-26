@@ -1,3 +1,4 @@
+import { createZoom } from './zoom.js';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { createStage } from './stage.js';
@@ -74,15 +75,21 @@ export async function start(defs, role, theme) {
   }
 
   buildOverview(deck, app.querySelector('.overview'));
+  deck.zoom = createZoom(deck, stage); // zoom-out: Z / Shift+Z / O / Esc
   bindKeys(deck, app);
   sync.on((m) => {
     if (m.type === 'hello') deck.emit();
     if (m.type !== 'cmd') return;
-    if (m.action === 'next') deck.next();
-    if (m.action === 'prev') deck.prev();
-    if (m.action === 'goto') deck.go(m.index, m.step ?? 0);
+    const z = deck.zoom;
+    if (m.action === 'next') { if (!z.key({ key: 'ArrowRight' })) deck.next(); }
+    if (m.action === 'prev') { if (!z.key({ key: 'ArrowLeft' })) deck.prev(); }
+    if (m.action === 'goto') z.open(m.index, m.step ?? 0);
     if (m.action === 'black') deck.toggleBlack();
-    if (m.action === 'overview') toggleOverview(deck);
+    if (m.action === 'overview') z.toggle(2);
+    if (m.action === 'zoom-out') z.out();
+    if (m.action === 'zoom-in') z.in();
+    if (m.action === 'zoom-section') z.toggle(1);
+    if (m.action === 'zoom-close') z.close();
   });
 }
 
@@ -335,12 +342,14 @@ function bindKeys(deck, app) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const k = e.key;
     if (/^\d$/.test(k)) { digits += k; jump.textContent = `→ ${digits}`; jump.classList.add('on'); return; }
-    if (k === 'Enter' && digits) {
+    if (k === 'Enter' && digits && !deck.zoom?.level) {
       deck.go(Number(digits) - 1, 0);
       digits = ''; jump.classList.remove('on');
       return;
     }
     digits = ''; jump.classList.remove('on');
+    // zoomed out: arrows move between panels, Enter opens one, Esc goes back
+    if (deck.zoom?.key(e)) { e.preventDefault(); return; }
 
     switch (k) {
       case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ':
@@ -349,8 +358,10 @@ function bindKeys(deck, app) {
         e.preventDefault(); deck.prev(); break;
       case 'Home': deck.go(0, 0); break;
       case 'End': deck.go(deck.defs.length - 1, 0); break;
-      case 'o': case 'O': toggleOverview(deck); break;
-      case 'Escape': toggleOverview(deck, false); break;
+      case 'z': deck.zoom.out(); break;      // zoom out: section, then the whole talk
+      case 'Z': deck.zoom.in(); break;       // Shift+Z: back in one level
+      case 'o': case 'O': deck.zoom.toggle(2); break;
+      case 'Escape': deck.zoom.close(); toggleOverview(deck, false); break;
       case 'b': case 'B': case '.': deck.toggleBlack(); break;
       case 'h': case 'H': document.body.classList.toggle('hud-off'); break;
       case 'f': case 'F':

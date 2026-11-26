@@ -42,6 +42,7 @@ export default {
   id: 'spec',
   title: 'Levende spec',
   steps: 7,
+  thumbStep: 3, // the zoom-out picture: the status copied into the chat (the last step is a live page)
   notes: [
     'En spec i HTML. AI-en oppdaterer den mens den jobber.',
     'Åpne en oppgave: hvorfor den er blokkert, og hva den venter på.',

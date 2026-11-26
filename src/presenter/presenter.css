@@ -83,3 +83,9 @@ body.linked .nolink { display: none; }
   padding: 12px 22px; border-radius: 10px; background: var(--accent); color: #1a0d05; font-weight: 600;
 }
 .nolink .hint { color: var(--muted); font-size: 14px; }
+
+/* zoom-out buttons: the section, or the whole talk */
+.zoom-btns { display: inline-flex; gap: 6px; }
+.zoom-btns button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--deco, #4a3c30);
+  font: 700 13px var(--font-mono, monospace); letter-spacing: .08em; color: var(--muted, #9a8a78); }
+.zoom-btns button:hover { color: var(--accent, #ff5a1f); border-color: var(--accent, #ff5a1f); }

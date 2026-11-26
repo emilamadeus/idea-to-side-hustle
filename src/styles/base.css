@@ -217,3 +217,11 @@ body.role-preview .hud-progress { display: none; }
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent); }
   50% { box-shadow: 0 0 0 calc(var(--u) * .35) color-mix(in srgb, var(--accent) 0%, transparent); }
 }
+
+/* zoom-out view: the slide layer steps aside; the panels live in the 3D stage */
+.slides, .deco, .backdrop, .hud-progress { transition: opacity .45s; }
+body.zoom-open .slides, body.zoom-open .deco, body.zoom-open .backdrop, body.zoom-open .hud-progress { opacity: 0; pointer-events: none; }
+.zoom-tip { position: fixed; z-index: 50; transform: translate(-50%, calc(-100% - 22px)); pointer-events: none;
+  padding: 8px 14px; border-radius: 10px; background: rgba(15, 10, 7, .9); border: 2px solid var(--accent);
+  font: 700 18px var(--font-display); color: var(--fg); white-space: nowrap; opacity: 0; transition: opacity .2s; }
+.zoom-tip.on { opacity: 1; }

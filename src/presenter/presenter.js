@@ -12,6 +12,7 @@ export function start(defs) {
       <div class="pos"><b class="cur">–</b><span>/ ${defs.length}</span><em class="stp"></em><span class="sprog" title="How far the current step has played"><i></i></span><span class="sready"></span></div>
       <div class="title"></div>
       <div class="status"></div>
+      <span class="zoom-btns"><button data-z="zoom-section" title="Zoom ut: denne seksjonen (Z)">Seksjon</button><button data-z="overview" title="Zoom ut: hele foredraget (O)">Hele</button></span>
       <button class="timer" title="Click to start/pause, double-click to reset">00:00</button>
       <div class="clock"></div>
     </header>
@@ -46,6 +47,10 @@ export function start(defs) {
   $('.list').addEventListener('click', (e) => {
     const b = e.target.closest('button');
     if (b) sync.send({ type: 'cmd', action: 'goto', index: Number(b.dataset.i), step: 0 });
+  });
+  app.querySelector('.zoom-btns').addEventListener('click', (e) => {
+    const z = e.target.closest('button')?.dataset.z;
+    if (z) sync.send({ type: 'cmd', action: z });
   });
 
   let linked = false;
@@ -135,6 +140,9 @@ export function start(defs) {
       case 'ArrowLeft': case 'ArrowUp': case 'PageUp': send('prev'); break;
       case 'b': case 'B': case '.': send('black'); break;
       case 'o': case 'O': send('overview'); break;
+      case 'z': send('zoom-out'); break;
+      case 'Z': send('zoom-in'); break;
+      case 'Escape': send('zoom-close'); break;
       case 't': case 'T': timer.toggle(); break;
     }
   });

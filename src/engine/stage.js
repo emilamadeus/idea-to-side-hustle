@@ -71,6 +71,7 @@ export function createStage(canvas, { preview = false, theme } = {}) {
   });
 
   const ticks = new Set();
+  let masked = true; // particles stay outside the 16:9 frame, except in the zoom-out view
   const clock = new THREE.Clock();
 
   function resize() {
@@ -87,7 +88,8 @@ export function createStage(canvas, { preview = false, theme } = {}) {
     const x0 = (w - fw) / 2 / w, y0 = (h - fh) / 2 / h;
     finish.uniforms.uFrame.value.set(x0, y0, 1 - x0, 1 - y0);
     const dpr = renderer.getPixelRatio();
-    particles.uniforms.uFrame.value.set(x0 * w * dpr, y0 * h * dpr, (1 - x0) * w * dpr, (1 - y0) * h * dpr);
+    if (masked) particles.uniforms.uFrame.value.set(x0 * w * dpr, y0 * h * dpr, (1 - x0) * w * dpr, (1 - y0) * h * dpr);
+    else particles.uniforms.uFrame.value.set(0, 0, 0, 0);
   }
   window.addEventListener('resize', resize);
   resize();
@@ -112,6 +114,9 @@ export function createStage(canvas, { preview = false, theme } = {}) {
 
   const stage = {
     THREE, theme, renderer, scene, camera, composer, bloom, particles, rig, pointer, pixelRatio: pr,
+
+    /** Keep particles out of the 16:9 frame (slides) or let them fill the screen (zoom-out). */
+    setFrameMask(on) { masked = on; resize(); },
 
     /** Register a per-frame callback. Returns an unsubscribe function. */
     tick(fn) { ticks.add(fn); return () => ticks.delete(fn); },
