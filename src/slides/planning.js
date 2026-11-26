@@ -8,8 +8,8 @@ import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
        so the stack comes apart and is rebuilt. Twice.
     1. Attempt 2 (new session): the whole product spec goes in with the prompt (goal, users,
        all six features, requirements, what is left out), "kun planlegging" in auto mode. The
-       spec opens beside the wall; six sheets go up from it. One is a product decision: it
-       comes to you as a question.
+       spec opens beside the wall; six sheets go up from it. The one product decision comes
+       to you as a question.
     2. The whole set is built in one pass.
 
   Layout zones (svg units):
@@ -172,21 +172,16 @@ export default {
           tl.fromTo(s, { opacity: 0, y: -20, rotation: -4 + k * 2, transformOrigin: '50% 0%' }, { opacity: 1, y: 0, rotation: 0, duration: 0.35, ease: 'back.out(2)' }, t + k * 0.25);
           return { s, x, y };
         });
-        // one sheet is a product decision: it comes to you
-        const pd = P.sheets[2];
-        const flag = D.g(svg, { 'data-unit': '' });
-        D.el('rect', { x: pd.x + 120, y: pd.y + 26, width: 104, height: 24, rx: 3, style: 'fill: #ffd23f' }, flag);
-        D.text(flag, pd.x + 172, pd.y + 43, 'PRODUKT', 'pf', { 'text-anchor': 'middle', style: 'font: 700 13px var(--font-mono); letter-spacing: .1em; fill: #1a120c' });
-        tl.fromTo(flag, { opacity: 0, scale: 1.6, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(3)' }, t + 1.8);
+        // the one product decision comes to you as a question
         P.chat.reply(tl, 'Skal gjester kunne se kameraene?', t + 2.3);
         P.chat.user(tl, 'Nei.', t + 3.4);
-        P.flag = flag; P.doc = doc; P.zoom = zoom;
-        ctx.focus(tl, [doc, zoom, P.wall, flag, P.chat.root, P.att.g], 0.6);
+        P.doc = doc; P.zoom = zoom;
+        ctx.focus(tl, [doc, zoom, P.wall, P.chat.root, P.att.g], 0.6);
       }
 
       if (i === 2) {
         // built in one pass, in the planned order
-        tl.to([P.flag, P.zoom], { opacity: 0, duration: 0.2 }, 0);
+        tl.to(P.zoom, { opacity: 0, duration: 0.2 }, 0);
         const b = FINAL.map((n) => block(svg, n));
         // the plan comes off the wall, then the whole set is built bottom-up in one pass
         tl.to(P.sheets.map((sh) => sh.s), { opacity: 0, y: -10, duration: 0.3, stagger: 0.05 }, 0.1);
