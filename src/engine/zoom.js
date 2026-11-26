@@ -293,6 +293,7 @@ export function createZoom(deck, stage) {
   function close(open = deck.index, step = open === deck.index ? deck.step : 0) {
     if (!level || busy) return;
     busy = true;
+    hover = -1; document.body.style.cursor = ''; // the panel pointer must not outlive the view
     const p = panels[open];
     panels.forEach((q) => { if (q !== p) gsap.to([q.mat, q.edgeMat], { opacity: 0, duration: 0.4 }); });
     labels.forEach((m) => gsap.to(m.material, { opacity: 0, duration: 0.3 }));
