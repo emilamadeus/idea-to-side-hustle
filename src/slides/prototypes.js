@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { chatPhone } from '../engine/props.js';
+import { varmPeis } from '../engine/varmpeis.js';
 
 /*
   Tip: build several throwaway versions and pick one, instead of debating one.
@@ -82,19 +83,18 @@ export default {
         [270, 300, 330].forEach((y, k) => D.p(deco, `M${440 + k * 20} ${y} H${520}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 6, 'stroke-linecap': 'round' }));
       }
       if (d.deco === 'fire') {
-        // warm: a fireplace with a fire, its glow on the wall
-        D.el('circle', { cx: 680, cy: 300, r: 170, style: 'fill: #ff7a2f', opacity: 0.12 }, deco);
-        D.p(deco, 'M570 420 V240 Q680 170 790 240 V420 Z', '', { style: 'fill: #120905; stroke: #5a3a22', 'stroke-width': 6 });
-        D.p(deco, 'M640 410 Q632 352 668 322 Q664 360 684 372 Q690 330 716 300 Q724 360 722 410 Z', '', { style: 'fill: #ff7a2f' });
-        D.p(deco, 'M664 410 Q662 372 684 352 Q688 382 702 392 Q706 374 712 364 Q716 392 712 410 Z', '', { style: 'fill: #ffd23f' });
-        D.p(deco, 'M612 412 H748', '', { style: 'fill: none; stroke: #8a5a34', 'stroke-width': 10, 'stroke-linecap': 'round' });
+        // the direction that wins: drawn as a finished, polished site
+        varmPeis(c, 0, 0, CW, CH);
+        D.el('rect', { x: 0, y: 0, width: CW, height: CH, rx: 14, style: 'fill: none; stroke: #6b5a48', 'stroke-width': 3, 'data-bg': '' }, c);
+      } else {
+        // the page: the same offer in every direction
+        D.text(c, 60, CH / 2 - 30, 'Ved på døra.', 'ct', { style: `font: ${d.font}; fill: ${d.fg}` });
+        D.text(c, 60, CH / 2 + 24, 'Hver 14. dag, hele vinteren.', 'cs', { style: `font: 600 26px var(--font-display); fill: ${d.fg}`, opacity: 0.85 });
+        D.el('rect', { x: 60, y: CH / 2 + 60, width: 170, height: 52, rx: 26, style: `fill: ${d.acc}` }, c);
+        D.text(c, 145, CH / 2 + 94, 'Bestill', 'cb', { 'text-anchor': 'middle', style: `font: 800 22px var(--font-display); fill: ${d.bg}` });
       }
-      // the page: the same offer in every direction
-      D.text(c, 60, CH / 2 - 30, 'Ved på døra.', 'ct', { style: `font: ${d.font}; fill: ${d.fg}` });
-      D.text(c, 60, CH / 2 + 24, 'Hver 14. dag, hele vinteren.', 'cs', { style: `font: 600 26px var(--font-display); fill: ${d.fg}`, opacity: 0.85 });
-      D.el('rect', { x: 60, y: CH / 2 + 60, width: 170, height: 52, rx: 26, style: `fill: ${d.acc}` }, c);
-      D.text(c, 145, CH / 2 + 94, 'Bestill', 'cb', { 'text-anchor': 'middle', style: `font: 800 22px var(--font-display); fill: ${d.bg}` });
-      D.text(c, 60, CH - 46, d.name.toUpperCase(), 'cn', { style: `font: 700 22px var(--font-mono); letter-spacing: .14em; fill: ${d.acc}` });
+      // the direction's name, under the card
+      D.text(c, 0, CH + 42, d.name.toUpperCase(), 'cn', { style: 'font: 700 22px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
       return c;
     }
 
@@ -150,7 +150,7 @@ export default {
                 tl.to(bin, { opacity: 0, duration: 0.3 }, 2.6);
         // the chosen one grows back to full size
         tl.to(P.cards[pick], { x: 620, y: 160, scale: 1, duration: 1.0, ease: 'power2.inOut' }, 3.0); // after the others are in the bin
-        const st = D.stamp(D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' }), 1290, 560, 'VALGT', { size: 40, rotate: -6 }); // lands on the card by design
+        const st = D.stamp(D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' }), 1340, 694, 'VALGT', { size: 40, rotate: -6 }); // beside the chosen direction's name, under the card
         tl.add(D.slam(st), 4.1);
       }
       return tl;

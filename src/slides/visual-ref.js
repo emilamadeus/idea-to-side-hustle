@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { chatPhone, attempt } from '../engine/props.js';
+import { varmPeis } from '../engine/varmpeis.js';
 
 /*
   Tip: a picture beats a description ("Et bilde slår en beskrivelse."). The firewood subscription's front page, right after
@@ -28,33 +29,9 @@ const PROMPT = 'Lag forsiden. Mørk, varm bakgrunn, som en stue om kvelden. En p
 const PX = 600, PY = 380, PW = 570, PH = 360;
 const INK = (fill, w = 2.6) => ({ style: `fill: ${fill}; stroke: #1a120c`, 'stroke-width': w, 'stroke-linejoin': 'round' });
 
-// The page you have in mind (240×180 design space), drawn into any frame: thought cloud,
-// polaroid, attachment chip, or the built page (plain: a little less than the reference).
-function targetPage(g, x, y, w, h, { plain = false, bar = true } = {}) {
-  // uniform scale, centred, so the text never stretches; the background fills the whole frame
-  D.el('rect', { x, y, width: w, height: h, rx: 4, style: 'fill: #22120a' }, g);
-  const k = Math.min(w / 240, h / 180);
-  const p = D.g(g, { transform: `translate(${x + (w - 240 * k) / 2} ${y + (h - 180 * k) / 2}) scale(${k})` });
-  if (bar) {
-    D.el('rect', { x: 0, y: 0, width: 240, height: 14, rx: 4, style: 'fill: #2c1a10' }, p);
-    [0, 1, 2].forEach((k) => D.el('circle', { cx: 9 + k * 8, cy: 7, r: 2.4, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, p));
-  }
-  if (!plain) D.el('circle', { cx: 176, cy: 108, r: 62, style: 'fill: #ff7a2f', opacity: 0.16 }, p);
-  D.p(p, 'M140 164 V96 Q176 72 212 96 V164 Z', '', { style: 'fill: #120905; stroke: #5a3a22', 'stroke-width': 3 });
-  D.p(p, 'M160 158 Q157 134 170 124 Q168 138 176 142 Q178 128 188 118 Q192 140 190 158 Z', '', { style: 'fill: #ff7a2f' });
-  if (!plain) D.p(p, 'M168 158 Q167 142 176 134 Q178 146 183 148 Q185 140 188 136 Q190 148 188 158 Z', '', { style: 'fill: #ffd23f' });
-  D.p(p, 'M150 160 H202', '', { style: 'fill: none; stroke: #8a5a34', 'stroke-width': 5, 'stroke-linecap': 'round' });
-  if (k < 0.5) {
-    // too small for text (the chat attachment): the same layout as bars
-    D.p(p, 'M16 70 H96 M16 92 H86', '', { style: 'fill: none; stroke: #fff3e3', 'stroke-width': 8, 'stroke-linecap': 'round' });
-  } else {
-    D.text(p, 16, 74, 'Ved på døra.', 'th', { style: 'font: 800 20px var(--font-display); fill: #fff3e3' });
-    D.text(p, 16, 96, 'Hver 14. dag, hele vinteren.', 'ts', { style: 'font: 600 9px var(--font-display); fill: #e6d8c6' });
-  }
-  D.el('rect', { x: 16, y: 108, width: 62, height: 20, rx: 10, style: 'fill: #ff7a2f' }, p);
-  if (k >= 0.5) D.text(p, 47, 122, 'Bestill', 'tb', { 'text-anchor': 'middle', style: 'font: 800 10px var(--font-display); fill: #22120a' });
-  return p;
-}
+// The page you have in mind: the polished Varm peis site (engine/varmpeis.js), drawn into any
+// frame: thought cloud, polaroid, attachment chip, or the built page (plain: a little less).
+const targetPage = (g, x, y, w, h, opts = {}) => varmPeis(g, x, y, w, h, opts);
 const miniPage = (g, x, y, w, h) => targetPage(g, x, y, w, h);
 
 export default {
@@ -181,7 +158,7 @@ export default {
         gsap.set(pol, { opacity: 0 });
         tl.to(P.cloud, { opacity: 0, scale: 0.9, transformOrigin: '50% 50%', duration: 0.4 }, 0.4);
         tl.to(P.dots, { opacity: 0, duration: 0.4 }, 0.4);
-        tl.fromTo(pol, { opacity: 0, scale: 0.85, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, rotation: -3, duration: 0.6, ease: 'back.out(1.6)' }, 0.6);
+        tl.fromTo(pol, { opacity: 0, scale: 0.85, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(1.6)' }, 0.6);
         // the same request, now with the picture attached
         const msg = P.chat.user(tl, 'Lag forsiden. Slik:', 1.0, { attach: miniPage });
         const c = msg.chip;
