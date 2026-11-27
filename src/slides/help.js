@@ -28,7 +28,6 @@ export const HELP = {
     'AI-en vil forsøke å tilpasse seg det du allerede har.',
     'Til slutt kaller den noe som ikke henger sammen for ferdig.',
     'Alle krav i én prompt: kjernen designes for hele omfanget.',
-    'Hele omfanget kjent: alle kan bygge hver sin del samtidig.',
     'Samme krav, én ren konstruksjon, og færre tokens.',
     'Endres omfanget sent, er det kjernen som sprekker.',
   ],

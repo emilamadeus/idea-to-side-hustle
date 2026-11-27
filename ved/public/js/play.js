@@ -1,6 +1,5 @@
 // The room's games on the phone, each a full-screen card in the talk's look:
 //   price   a slider: what would you pay for a sack, delivered? (the median becomes the price)
-//   build   your part(s) of the house: tap to place; with none left, tap to light a window
 //   bug     spot the bug: one of the SMS cards is wrong; the first to tap it, with times
 //   clicker you hold the deck's next button, for one click
 // Messages come through window.vedHook (chained after vote.js, lobby.js and room.js).
@@ -38,12 +37,6 @@ css.textContent = `
   .pl-range::-webkit-slider-thumb { -webkit-appearance: none; width: 38px; height: 38px; margin-top: -14px; border-radius: 50%; background: #fff3e3; border: 3px solid #1a120c; box-shadow: 0 6px 18px rgba(0,0,0,.6); }
   .pl-range::-moz-range-thumb { width: 34px; height: 34px; border-radius: 50%; background: #fff3e3; border: 3px solid #1a120c; }
   .pl-scale { display: flex; justify-content: space-between; font: 700 12px 'Space Mono', monospace; color: #74604d; margin-top: -8px; }
-  /* build */
-  .pl-house { width: 100%; max-width: 360px; margin: 0 auto; display: block; }
-  .pl-house .b { fill: none; stroke: rgba(255,190,120,.3); stroke-width: 2; stroke-dasharray: 5 5; }
-  .pl-house .b.mine { fill: rgba(255,90,31,.18); stroke: #ff5a1f; stroke-dasharray: none; animation: pl-pulse 1.2s ease-in-out infinite; }
-  .pl-house .b.done { fill: #ff7a2f; stroke: #1a120c; stroke-dasharray: none; animation: none; }
-  @keyframes pl-pulse { 50% { fill: rgba(255,90,31,.45); } }
   /* bug */
   .pl-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .pl-col { border: 2px solid rgba(255,190,120,.35); border-radius: 14px; padding: 10px; display: grid; gap: 8px; background: rgba(36,26,19,.7); }
@@ -117,32 +110,6 @@ function priceSet(m) {
   buzz([40, 60, 40]);
 }
 
-// ---------- build ----------
-const GRID = { 12: [4, 3], 24: [6, 4], 48: [8, 6] };
-function houseSvg(N, mine, left) {
-  const [cols, rows] = GRID[N] || GRID[12];
-  const W = 320, H = 224, bw = W / cols, bh = H / rows;
-  const placed = new Set(mine.slice(0, mine.length - left));
-  let b = '';
-  for (let k = 0; k < N; k++) {
-    const c = k % cols, r = rows - 1 - Math.floor(k / cols);   // brick 0 is bottom left: the house goes up from the ground
-    const cls = mine.includes(k) ? (placed.has(k) ? 'b done' : 'b mine') : 'b';
-    b += `<rect class="${cls}" x="${20 + c * bw + 3}" y="${70 + r * bh + 3}" width="${bw - 6}" height="${bh - 6}" rx="4"/>`;
-  }
-  return `<svg class="pl-house" viewBox="0 0 360 310"><path d="M10 72 L180 12 L350 72" fill="none" stroke="rgba(255,190,120,.45)" stroke-width="3" stroke-linejoin="round"/>
-    ${b}<path d="M6 296 H354" stroke="rgba(255,190,120,.45)" stroke-width="3"/></svg>`;
-}
-function build(m) {
-  const lights = m.extra || m.left === 0;
-  const head = m.extra ? 'Huset er delt ut.' : m.left ? `Du har ${m.left === 1 ? 'én del' : `${m.left} deler`}.` : 'Dine deler står.';
-  const html = `<p class="pl-eye">Bygg huset</p><h2>${head}</h2>
-    ${houseSvg(m.N, m.mine, m.left)}
-    <p>${lights ? 'Trykk for å tenne lys i vinduene.' : 'Trykk for å legge neste del på plass.'}</p>
-    <button class="pl-go" type="button">${lights ? 'Tenn lys' : 'Legg på plass'}</button>`;
-  const c = kind === 'build' && card ? (card.innerHTML = html, card) : open('build', html);
-  $('.pl-go', c).addEventListener('click', () => { send({ type: 'build-place' }); buzz(18); });
-}
-
 // ---------- bug ----------
 function bugStart() {
   const c = open('bug', `<p class="pl-eye">Finn feilen</p>
@@ -187,8 +154,6 @@ const handle = (m) => {
   if (!m?.type) return;
   if (m.type === 'price-open') priceOpen(m);
   if (m.type === 'price-set') priceSet(m);
-  if (m.type === 'build') build(m);
-  if (m.type === 'build-end' && kind === 'build') finish('<p class="pl-eye">Bygg huset</p><h2>Huset står.</h2><p>Se opp på skjermen.</p>', 2600);
   if (m.type === 'bug-start') bugStart();
   if (m.type === 'bug-wrong') bugWrong();
   if (m.type === 'bug-ok') bugOk(m);

@@ -1,24 +1,14 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { lineModel } from '../engine/lines3d.js';
-import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
-import { onRelay, relaySend } from '../engine/relay.js';
+import { chatPhone, attempt, tokenMeter } from '../engine/props.js';
 
 /*
   Tip: give the full scope before starting.
   A house is specified one prompt at a time and grows patches, braces and a
   staircase to nowhere. Then the same requirements arrive as one prompt and
-  the house is drawn clean. With the whole scope known, the room builds it together
-  (step 5): every phone gets its own bricks of the main block and places them; phones
-  with no brick light the windows. The house is sized to the room (12, 24 or 48 bricks);
-  with no phones it builds itself. Bricks still missing when the step ends stay holes
-  until the next step fills them, then it lifts into 3D.
-    build zone: bricks x 700–1100, y 480–760 (behind the line drawing); counter x 1150–1470, y 470–600
+  the house is drawn clean, then lifts into 3D.
 */
-const GRID = { 12: [4, 3], 24: [6, 4], 48: [8, 6] };
-const BX = 700, BY = 480, BW = 400, BH = 280;
-const DOT = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '#ffb25e', '#9be7b0'];
-const WINDOWS = [[740, 650, 70, 45], [980, 650, 70, 45], [740, 515, 70, 60], [860, 515, 70, 60], [980, 515, 70, 60]];
 
 const CSS = `
 .slide-full-scope .fs-tip { position: absolute; left: var(--pad); top: calc(var(--u) * 10.5); width: max-content; white-space: nowrap; font-size: calc(var(--u) * 3.4); }
@@ -58,14 +48,13 @@ function house3d() {
 export default {
   id: 'full-scope',
   title: 'Hele omfanget først',
-  steps: 8,
+  steps: 7,
   notes: [
     'Én prompt om gangen. Først en hytte.',
     'Så garasje. Den blir boltet på, i en annen høyde.',
     'Andre etasje. Ingen planla for den, så den balanserer på mønet.',
     'Takterrasse med basseng. Ingen trapp opp, så den boltes på utenpå. Og AI-en melder at alt fungerer.',
     'Spol tilbake. Samme krav, men alt i én prompt. Ett hus.',
-    'Når hele omfanget er kjent, kan alle bygge samtidig. Ta frem telefonen: dere har fått hver deres del. Klikk når det står.',
     'Og siden hele omfanget var kjent, kunne det bygges ordentlig.',
     'Så kommer kunden med REV 1.',
   ],
@@ -208,7 +197,6 @@ export default {
     }
     const reset = () => {
       wobble?.kill(); wobble = null;
-      clearTimeout(autoT);
       dropModel();
       svg.innerHTML = '';
       revs.innerHTML = '';
@@ -275,9 +263,7 @@ export default {
         tl.add(D.fadeIn(parts.clean.note), 4.2);
       }
       if (i === 5) {
-        // anything the room left open is filled in first: the scope was complete
-        if (parts.build) fillHoles(tl, 0);
-        tl.to([parts.clean?.grp, parts.ground, parts.build?.g, parts.build?.cnt].filter(Boolean), { opacity: 0, duration: 0.8 }, parts.build ? 0.9 : 0);
+        tl.to([parts.clean?.grp, parts.ground].filter(Boolean), { opacity: 0, duration: 0.8 }, 0);
         // The clean house lifts into 3D as thick glowing lines, built bottom-up.
         const segs = house3d().sort((a, b) => Math.min(a[0][1], a[1][1]) - Math.min(b[0][1], b[1][1]));
         dropModel();
@@ -324,98 +310,7 @@ export default {
       4: { label: 'REV 0', msg: 'Hus med garasje, to etasjer og takterrasse med basseng.', reply: 'Ferdig.', fresh: true },
       6: { label: 'REV 1', msg: 'Kunden spør: kan bassenget være i kjelleren?', reply: null },
     };
-    // ----- step 5: the room builds the house -----
-    let buildOn = false, autoT = null;
-    const brickAt = (N, k) => {
-      const [cols, rows] = GRID[N];
-      const w = BW / cols, h = BH / rows, c = k % cols, r = rows - 1 - Math.floor(k / cols);
-      return { x: BX + c * w, y: BY + r * h, w, h };
-    };
-    const placeBrick = (k, color, animate = true) => {
-      const B = parts.build;
-      if (!B || B.placed.has(k) || k >= B.N) return;
-      B.placed.add(k);
-      const { x, y, w, h } = brickAt(B.N, k);
-      const b = D.el('rect', { x: x + 2, y: y + 2, width: w - 4, height: h - 4, rx: 3, ...FILL(color, 2), opacity: 0.78 }, B.bricks);
-      if (animate) gsap.fromTo(b, { opacity: 0, y: -18 }, { opacity: 0.78, y: 0, duration: 0.35, ease: 'power3.out' });
-      B.num.textContent = `${B.placed.size} / ${B.N}`;
-    };
-    const lightWindow = (name) => {
-      const B = parts.build;
-      if (!B) return;
-      const w = B.lights[Math.floor(Math.random() * B.lights.length)];
-      gsap.killTweensOf(w);
-      gsap.fromTo(w, { opacity: 1 }, { opacity: 0.55, duration: 2.5, ease: 'power2.out' });
-      if (name) B.last.textContent = `Lys: ${name}`;
-    };
-    const fillHoles = (tl, at) => {
-      const B = parts.build;
-      const missing = [...Array(B.N).keys()].filter((k) => !B.placed.has(k));
-      missing.forEach((k, n) => tl.call(() => placeBrick(k, '#c9ad92'), null, at + n * (0.8 / Math.max(1, missing.length))));
-    };
-    const autoBuild = (N) => {
-      // nobody on the line: the house builds itself, bottom up
-      const B = parts.build;
-      if (!B) return;
-      B.N = N;
-      for (let k = 0; k < N; k++) setTimeout(() => { if (parts.build === B) placeBrick(k, DOT[k % DOT.length]); }, 150 * k);
-    };
-    const offRelay = onRelay((m) => {
-      const B = parts.build;
-      if (!B || !buildOn) return;
-      if (m.type === 'build-ready') {
-        clearTimeout(autoT);
-        drawHoles(m.N);
-        if (!m.phones) autoBuild(m.N);
-      }
-      if (m.type === 'built') { placeBrick(m.k, DOT[((m.p?.n || 1) - 1) % DOT.length]); if (m.p?.name) B.last.textContent = `Sist: ${m.p.name}`; }
-      if (m.type === 'build-light') lightWindow(m.p?.name);
-    });
-    function drawHoles(N) {
-      const B = parts.build;
-      B.N = N;
-      B.holes.innerHTML = '';
-      for (let k = 0; k < N; k++) {
-        const { x, y, w, h } = brickAt(N, k);
-        D.el('rect', { x: x + 2, y: y + 2, width: w - 4, height: h - 4, rx: 3, style: 'fill: none; stroke: var(--deco); stroke-dasharray: 6 6', 'stroke-width': 2 }, B.holes);
-      }
-      B.num.textContent = `${B.placed.size} / ${N}`;
-    }
-    function buildStep(instant) {
-      const tl = gsap.timeline();
-      const live = !instant && !ctx.deck?.instant;
-      const g = D.g(svg, { 'data-bg': '' });
-      svg.insertBefore(g, parts.clean.grp);        // behind the line drawing
-      const holes = D.g(g), bricks = D.g(g);
-      const lights = WINDOWS.map(([x, y, w, h]) => D.el('rect', { x: x + 3, y: y + 3, width: w - 6, height: h - 6, rx: 2, style: 'fill: #ffd23f', opacity: 0 }, g));
-      const cnt = D.g(svg, { 'data-unit': '' });
-      D.text(cnt, 1150, 494, 'SALEN BYGGER', 'bl', { style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
-      const num = D.text(cnt, 1150, 552, '0 / 12', 'bn', { style: 'font: 700 46px var(--font-mono); fill: var(--accent-2)' });
-      const last = D.text(cnt, 1150, 590, '', 'bs', { style: 'font: 700 17px var(--font-display); fill: var(--fg)' });
-      parts.build = { g, holes, bricks, lights, cnt, num, last, N: 12, placed: new Set() };
-      tl.fromTo(cnt, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.2);
-      if (live) {
-        buildOn = true;
-        drawHoles(12);
-        tl.call(() => relaySend({ type: 'build-start' }), null, 0.3);
-        // no relay, or it never answers: build it ourselves
-        autoT = setTimeout(() => { if (parts.build && !parts.build.placed.size) autoBuild(parts.build.N); }, 2500);
-      } else {
-        // a replay: the house as built
-        drawHoles(24);
-        for (let k = 0; k < 24; k++) placeBrick(k, DOT[k % DOT.length], false);
-      }
-      ctx.focus(tl, [parts.clean.grp, g, cnt], 0.1);
-      return tl;
-    }
-    const endBuild = () => { if (buildOn) { buildOn = false; clearTimeout(autoT); relaySend({ type: 'build-end' }); } };
-
     const play = (i, instant) => {
-      if (i === 5) return buildStep(instant);
-      if (i === 6) endBuild();
-      return playOld(i > 5 ? i - 1 : i, instant);
-    };
-    const playOld = (i, instant) => {
       const tl = gsap.timeline();
       if (i === 0) {
         tl.add(ctx.fx.rise(tip, { stagger: 0.015 }), 0);
@@ -450,6 +345,6 @@ export default {
     };
 
     const s = D.stepper(ctx, { reset, play });
-    return { ...s, leave() { wobble?.kill(); }, dispose() { dropModel(); offRelay(); endBuild(); } };
+    return { ...s, leave() { wobble?.kill(); }, dispose() { dropModel(); } };
   },
 };
