@@ -271,6 +271,8 @@
   .sum b { white-space: nowrap; }
   .sum small { min-width: 0; padding-right: 10px; }
   html[data-theme="skog"] .hearth .chip { right: auto; left: 16px; }
+  /* Nordisk (its price tag) and Rask (its 24 t sticker) carry that message in the picture itself */
+  html[data-theme="nordisk"] .hearth .chip, html[data-theme="rask"] .hearth .chip { display: none; }
   body, .card, .bydeler span, .seg span { transition: background-color .8s, color .8s, border-color .8s; }
 
   /* ---------- the vote ---------- */
