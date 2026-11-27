@@ -5,23 +5,25 @@ import { onRelay, relayState } from '../engine/relay.js';
 const SITE = import.meta.env.VITE_VED_SITE || 'https://ved.atladeus.com';
 
 /*
-  Title. Crisp text rises in and a dimension line is drawn under it like a drawing
-  annotation. On the second click the subtitle comes in under the line (what you get:
-  an idea turned into income, or the tips for tomorrow). Particles swirl outside the frame.
-  Bottom left, a QR code to ved.atladeus.com: the room joins here, and their phones take part
-  later (the vote on the prototypes, the buzzes, the go-live). x 80–420, y 690–810.
+  Title. Crisp text rises in. Particles swirl outside the frame.
+  Step 0 is the arrival: bottom left, a big QR code to ved.atladeus.com (240 px, about 30 cm on
+  the 100" TV, so the back rows can scan it) with "Bli med" and a large live count. The room
+  joins here, and their phones take part later (the vote, the buzzes, the go-live).
+  Step 1 starts the talk: the QR block shrinks to its corner (x 80–420, y 690–810), a dimension
+  line is drawn under the title and the subtitle comes in under it.
   Everyone who joins becomes a named glowing mote: a small burst where it lands, then it
-  orbits the title on an ellipse (cx 800, cy 360, rx 770, ry 270) that stays clear of the
-  title, the dimension line and the QR, drawn as a faint dashed ring. Names are filtered by the relay.
-  "N i salen" under the URL. The phones' lobby (ved/public/js/lobby.js) shows the same room, same colours.
+  orbits the title on an ellipse (cx 800, cy 330, rx 770, ry 230, bottom at y 560) drawn as a
+  faint dashed ring, clear of the title, the dimension line (y 655) and the QR. Names sit
+  outside the ring (above it at the top, below it at the bottom). Names are filtered by the relay.
+  The phones' lobby (ved/public/js/lobby.js) shows the same room, same colours.
 */
 export default {
   id: 'title',
   title: 'Tittel',
   steps: 2,
   notes: [
-    'Tittelen kommer inn.',
-    'Undertittelen kommer inn.',
+    'Salen kommer inn. Stor QR, tallet teller opp.',
+    'Start: QR krymper, undertittelen kommer inn.',
   ],
 
   create(ctx) {
@@ -42,8 +44,9 @@ export default {
     D.hide(dim);
 
     // join: the room's phones come along for the whole talk
-    let count;
-    const join = D.g(svg, { 'data-unit': '' });
+    let count, num;
+    const joinOuter = D.g(svg);
+    const join = D.g(joinOuter, { 'data-unit': '' });
     {
       const x = 80, y = 690, size = 120, pad = 10;
       D.el('rect', { x, y, width: size, height: size, rx: 8, style: 'fill: #fff3e3' }, join);
@@ -52,21 +55,46 @@ export default {
       let d = '';
       for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (code.data[r * n + c]) d += `M${(x + pad + c * m).toFixed(2)} ${(y + pad + r * m).toFixed(2)}h${m.toFixed(2)}v${m.toFixed(2)}h-${m.toFixed(2)}z`;
       D.p(join, d, '', { style: 'fill: #1a120c; stroke: none', 'shape-rendering': 'crispEdges' });
-      D.text(join, x + size + 20, y + 50, 'Bli med', 'jt', { style: 'font: 800 26px var(--font-display); fill: var(--fg)' });
-      D.text(join, x + size + 20, y + 80, SITE.replace(/^https?:\/\//, ''), 'js', { style: 'font: 700 15px var(--font-mono); fill: var(--accent)' });
-      count = D.text(join, x + size + 20, y + 112, '', 'jc', { style: 'font: 700 18px var(--font-mono); fill: var(--accent-2)' });
+      D.text(join, x + size + 20, y + 40, 'Bli med', 'jt', { style: 'font: 800 26px var(--font-display); fill: var(--fg)' });
+      D.text(join, x + size + 20, y + 66, SITE.replace(/^https?:\/\//, ''), 'js', { style: 'font: 700 15px var(--font-mono); fill: var(--accent)' });
+      // the count: a big number that pops as people join, "i salen" beside it
+      count = D.text(join, x + size + 20, y + 116, '', 'jc', { style: 'font: 700 16px var(--font-mono); fill: var(--muted)' });
+      num = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      num.setAttribute('style', 'font: 700 44px var(--font-mono); fill: var(--accent-2)');
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+      lbl.setAttribute('dx', '10'); lbl.textContent = 'i salen';
+      count.append(num, lbl);
       gsap.set(join, { opacity: 0 });
+    }
+    // big on arrival, small once the talk starts: scale the block about its bottom-left corner
+    const Z = { s: 2 };
+    const setZoom = () => joinOuter.setAttribute('transform', `translate(80 ${810 + (Z.s - 1) * 48}) scale(${Z.s}) translate(-80 -810)`);
+    const zoomTo = (s, instant) => {
+      gsap.killTweensOf(Z);
+      if (instant) { Z.s = s; setZoom(); return; }
+      ctx.track(gsap.to(Z, { s, duration: 1.1, ease: 'expo.inOut', onUpdate: setZoom }));
+    };
+    setZoom();
+    {
     }
 
     // the room: one glowing mote per phone, orbiting the title
-    const O = { cx: 800, cy: 360, rx: 770, ry: 270 };
+    const O = { cx: 800, cy: 330, rx: 770, ry: 230 };
     const DOT = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '#ffb25e', '#9be7b0'];
     const ring = D.g(svg, { 'data-bg': '' });
     // the path they travel, drawn as a construction line (the phones draw the same ring)
     const track = D.el('ellipse', { cx: O.cx, cy: O.cy, rx: O.rx, ry: O.ry, style: 'fill: none; stroke: var(--deco); stroke-width: 2; stroke-dasharray: 4 12; opacity: 0' }, ring);
     const motes = new Map(); // id → { g, dot, label, w, off, target }
     let spin = 0;
-    const setCount = () => { const n = motes.size; count.textContent = n ? `${n} i salen` : ''; };
+    let shown = 0;
+    const setCount = () => {
+      const n = motes.size;
+      count.style.visibility = n ? 'visible' : 'hidden';
+      if (n === shown) return;
+      num.textContent = n;
+      if (n > shown && shown > 0) ctx.track(gsap.fromTo(count, { scale: 1.3 }, { scale: 1, duration: 0.7, ease: 'back.out(3)', svgOrigin: '220 806' }));
+      shown = n;
+    };
     const layout = () => { [...motes.values()].sort((a, b) => a.n - b.n).forEach((m, i, all) => { m.target = (i / all.length) * Math.PI * 2; }); };
     const place = (m) => {
       const a = spin + m.off - Math.PI / 2;
@@ -75,7 +103,7 @@ export default {
       if (m.label) {
         const lx = Math.min(Math.max(x, 24 + m.w / 2), 1576 - m.w / 2) - x;
         m.label.setAttribute('x', lx.toFixed(1));
-        m.label.setAttribute('y', Math.sin(a) > 0 ? -24 : 36);
+        m.label.setAttribute('y', Math.sin(a) > 0 ? 38 : -24); // outside the ring
       }
     };
     const add = (p, live) => {
@@ -133,13 +161,17 @@ export default {
         stage.particles.morphTo(shapes.nebula(stage), { duration: 3, turbulence: 0.8 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 3 });
         ctx.track(fx.rise(h1, { stagger: 0.03, duration: 1.2, y: 80 }));
-        ctx.track(D.drawOn(dim, { duration: 0.9, delay: 1.1 }));
         ctx.track(gsap.to(join, { opacity: 1, duration: 0.8, delay: 1.6 }));
         ctx.track(gsap.to(track, { opacity: 0.65, duration: 1.2, delay: 1.6 }));
         relayState.people.forEach((p) => add(p, false));
-        if (step >= 1) showSub(true);
+        zoomTo(step >= 1 ? 1 : 2, true);
+        if (step >= 1) { showSub(true); ctx.track(D.drawOn(dim, { duration: 0.9, delay: 1.1 })); }
       },
-      step(n) { showSub(n >= 1); },
+      step(n) {
+        showSub(n >= 1);
+        zoomTo(n >= 1 ? 1 : 2);
+        if (n >= 1) ctx.track(D.drawOn(dim, { duration: 0.9, delay: 0.5 })); else { gsap.killTweensOf(dim.querySelectorAll('path')); D.hide(dim); }
+      },
       dispose() { offRelay(); },
     };
   },
