@@ -7,7 +7,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const DOT = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '#ffb25e', '#9be7b0'];
 const ACC = { peis: ['#ffb25e', '#ff5a1f'], skog: ['#c6e8ab', '#86b86b'], nordisk: ['#f4efe7', '#e9dfd0'], rask: ['#ffe27a', '#ffd23f'] };
 const INK = { peis: '#1a0d07', skog: '#0d1a12', nordisk: '#1a120c', rask: '#14110c' };
-const TITLE = 'Fra idé til startup, med AI';
+const TITLE = 'Fra idé til lansering, med AI';
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const voterId = (() => { try { return JSON.parse(localStorage.getItem('ved-voter') || '""').slice(0, 6); } catch { return ''; } })();
 
@@ -46,7 +46,6 @@ css.textContent = `
   .lb-title span > i { display: inline-block; font-style: normal; animation: lb-rise .9s cubic-bezier(.2,.8,.2,1) both; }
   .lb-title span:nth-child(2) > i { animation-delay: .08s; } .lb-title span:nth-child(3) > i { animation-delay: .16s; }
   @keyframes lb-rise { from { transform: translateY(105%); } }
-  .lb-title em { font-style: normal; background: linear-gradient(100deg, #ffd23f, #ff7a2f 45%, #ff5a1f); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .lb-orbit { flex: 1; min-height: 240px; margin: 4px -22px 0; }
   .lb-orbit canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .lb-count { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; }
@@ -86,7 +85,7 @@ function mount() {
   el.innerHTML = `<div class="lb-grid"></div><div class="lb-glow"></div>
     <i class="lb-crop tl"></i><i class="lb-crop tr"></i><i class="lb-crop bl"></i><i class="lb-crop br"></i>
     <div class="lb-top"><span>10.12.2026</span><span class="lb-live"><i></i><span>Kobler til</span></span></div>
-    <div class="lb-hero"><p class="lb-eye">Foredrag</p><h1 class="lb-title"><span><i>Fra idé til</i></span><span><i><em>startup</em>,</i></span><span><i>med AI</i></span></h1></div>
+    <div class="lb-hero"><p class="lb-eye">Foredrag</p><h1 class="lb-title"><span><i>Fra idé til</i></span><span><i>lansering,</i></span><span><i>med AI</i></span></h1></div>
     <div class="lb-orbit"><canvas></canvas><div class="lb-count"><b>0</b><span>i salen</span></div></div>
     <div class="lb-foot"><p class="lb-hint">Hold siden åpen. Den skifter av seg selv.</p>
       <div class="lb-block"><div class="y"><small>Ark</small><b>00</b></div><div><small>Tittel</small><b>Salen</b></div><div><small>Dato</small><b>10.12.26</b></div></div></div>`;

@@ -29,7 +29,7 @@ export default {
     el.innerHTML = `
       <h1 class="title-text" style="position:absolute;left:50%;transform:translateX(-50%);width:max-content;top:calc(var(--u)*15.5);text-align:center;margin:0;
         font-family:var(--font-display);font-weight:var(--display-weight);letter-spacing:var(--display-tracking);
-        font-size:calc(var(--u)*8);line-height:.95;color:var(--fg)">Fra idé til startup,<br>med AI</h1>
+        font-size:calc(var(--u)*7.4);line-height:.95;color:var(--fg)">Fra idé til lansering,<br>med AI</h1>
       <p class="title-sub" style="position:absolute;left:calc(var(--u)*27);right:calc(var(--u)*27);top:calc(var(--u)*43);text-align:center;margin:0;
         font:600 calc(var(--u)*1.75)/1.4 var(--font-display);color:var(--fg);opacity:0">Se hvordan AI gjør en idé om til inntekt.<br><span style="color:var(--muted)">Eller ta med deg grepene til jobb i morgen.</span></p>`;
     const h1 = ctx.$('.title-text');
@@ -133,10 +133,6 @@ export default {
         stage.particles.morphTo(shapes.nebula(stage), { duration: 3, turbulence: 0.8 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 3 });
         ctx.track(fx.rise(h1, { stagger: 0.03, duration: 1.2, y: 80 }));
-        // "startup" in the yellow-to-orange of the phones' lobby, one colour per letter (the split keeps no markup)
-        const word = [...h1.querySelectorAll('.w')].find((w) => w.textContent.startsWith('startup'));
-        const ramp = ['#ffd23f', '#ffbf3a', '#ffa535', '#ff8f2f', '#ff7a2a', '#ff6a24', '#ff5a1f'];
-        word?.querySelectorAll('.c').forEach((c, k) => { if (k < 7) c.style.color = ramp[k]; });
         ctx.track(D.drawOn(dim, { duration: 0.9, delay: 1.1 }));
         ctx.track(gsap.to(join, { opacity: 1, duration: 0.8, delay: 1.6 }));
         ctx.track(gsap.to(track, { opacity: 0.65, duration: 1.2, delay: 1.6 }));

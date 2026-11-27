@@ -258,7 +258,7 @@ Hooks, connectors (MCP), dictation, AI code review, non-developer uses: not in t
 
 ## Story order [agreed: a journey, set in src/slides/index.js]
 Each stage opens with a divider slide (src/slides/chapter.js); every slide shows the journey in the top-right corner, current stage lit.
-Title: "Fra idé til startup, med AI".
+Title: "Fra idé til lansering, med AI".
 0. Cold open (src/slides/opening.js): "Jeg ville finne ut om AI kunne bidra til et hobbyprosjekt." The wish (a finish flag in a thought), then 15 projects as progress bars: one over the finish line, fourteen stopping just short. No mention of the game here.
 1. Idé: validate the idea (src/slides/validate.js: first the idea itself, drawn: a truck loaded with logs drives up to a city house and unloads them at the door, one by one; below, every 14 days all winter; then the everyday idea is run through four checks one card at a time: customer, willingness to pay, competition, can you build and deliver. The last one comes back yellow: winter only, so start small. Then the bigger picture: AI covers every link of the value chain with little capital, but everyone gets the same tools, so the market fills up; the openings are a niche or a product that reaches very many customers. Illustrative answers)
 2. Plan: living spec → full scope → batched planning → instruction files
