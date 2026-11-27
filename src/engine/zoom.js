@@ -250,7 +250,7 @@ export function createZoom(deck, stage) {
   }
 
   // ── state ──
-  let level = 0, layout = null, sel = deck.index, hover = -1, busy = false;
+  let level = 0, layout = null, sel = deck.index, hover = -1, busy = false, keyTip = false;
   let baseSize = null; // the particles' normal size, restored on the way back to a slide
   let view = null; // wheel zoom within a level: centre, depth of the panels, base distance, factor
   const tip = document.createElement('div');
@@ -299,7 +299,8 @@ export function createZoom(deck, stage) {
       p.edgeMat.color.copy(p.i === deck.index || on ? ACCENT : EDGE);
       gsap.to(p.lift, { v: p.i === hover ? 1 : 0, duration: 0.25 });
     });
-    const h = hover >= 0 ? hover : (level ? sel : -1);
+    // the title shows for the panel under the pointer; the selection only after arrow keys
+    const h = hover >= 0 ? hover : (level && keyTip ? sel : -1);
     if (h >= 0 && level) {
       tip.textContent = `${String(h + 1).padStart(2, '0')} · ${defs[h].title ?? defs[h].id}`;
       tip.classList.add('on');
@@ -374,6 +375,7 @@ export function createZoom(deck, stage) {
   window.addEventListener('pointermove', (e) => {
     px = e.clientX; py = e.clientY;
     tip.style.left = `${px}px`; tip.style.top = `${py}px`;
+    if (keyTip) { keyTip = false; paintEdges(); }
   });
   window.addEventListener('click', (e) => {
     if (!level || busy || e.target.closest?.('.zoom-ui')) return;
@@ -382,7 +384,7 @@ export function createZoom(deck, stage) {
   });
 
   // ── wheel: smooth zoom toward the pointer; past the limits, the next level ──
-  let baseOpacity = 1;
+  let baseOpacity = 1, gestT = 0, gestPanel = -1;
   const FMIN = 0.18, FMAX = 1.12, PUSH = 520; // range inside a level, and how hard you push past it to change level
   let acc = 0, lock = 0;
   const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -418,13 +420,20 @@ export function createZoom(deck, stage) {
     }
     e.preventDefault();
     if (busy || now < lock || !view) return;
+    // one scroll gesture = wheel events less than 300 ms apart; note the panel it started on
+    if (now - gestT > 300) gestPanel = pick();
+    gestT = now;
     const nf = view.f * Math.exp(dy * 0.0008); // about 8 % per wheel notch
     if (nf < FMIN) {
       view.f = FMIN; acc += -dy;
-      if (acc > PUSH) {
+      // pushing on past the closest zoom opens the slide under the pointer, and only that: with
+      // the pointer between panels nothing opens, nor does a panel that drifted under the pointer
+      // during the same scroll
+      const i = pick();
+      if (i < 0 || i !== gestPanel) acc = 0;
+      else if (acc > PUSH) {
         acc = 0; lock = now + 1200;
-        const i = pick();
-        close(i >= 0 ? i : sel);
+        close(i);
         return;
       }
     } else if (nf > FMAX) {
@@ -590,6 +599,7 @@ export function createZoom(deck, stage) {
     const order = layout.order;
     const k = Math.max(0, Math.min(order.length - 1, order.indexOf(sel) + dk));
     sel = order[k];
+    keyTip = true;
     paintEdges();
     tip.style.left = '50%'; tip.style.top = '88%';
   }
