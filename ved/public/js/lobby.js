@@ -59,6 +59,7 @@ css.textContent = `
   .lb-block > div:first-child { border-left: 0; }
   .lb-block b { display: block; font-weight: 700; font-size: 12px; color: #fff3e3; letter-spacing: .04em; white-space: nowrap; }
   .lb-block .y b { color: #ffd23f; }
+  .lb-block .w { min-width: 0; } .lb-block .w b { overflow: hidden; text-overflow: ellipsis; }
   .lobby.out .lb-top, .lobby.out .lb-hero, .lobby.out .lb-foot, .lobby.out .lb-count { transition: opacity .5s, transform .7s cubic-bezier(.6,0,.4,1); opacity: 0; }
   .lobby.out .lb-hero { transform: translateY(-24px); } .lobby.out .lb-foot { transform: translateY(24px); } .lobby.out .lb-count { transform: translate(-50%, -50%) scale(.4); }
   .lb-flash { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; clip-path: circle(0% at 50% var(--cy, 56%));
@@ -77,6 +78,7 @@ let el = null, cv, cx, W = 0, H = 0, dpr = 1, raf = 0, exiting = 0;
 let people = [];               // { id, name, n, a (angle now), r (ring), pop, me }
 let shown = 0;                  // the count as displayed (eases toward people.length)
 let liveOn = false;
+let where = '';                 // the talk's current part, from the deck's dividers
 
 function mount() {
   if (el) return;
@@ -88,10 +90,10 @@ function mount() {
     <div class="lb-hero"><p class="lb-eye">Foredrag</p><h1 class="lb-title"><span><i>Fra idé til</i></span><span><i>lansering,</i></span><span><i>med AI</i></span></h1></div>
     <div class="lb-orbit"><canvas></canvas><div class="lb-count"><b>0</b><span>i salen</span></div></div>
     <div class="lb-foot"><p class="lb-hint">Hold siden åpen. Den skifter av seg selv.</p>
-      <div class="lb-block"><div class="y"><small>Ark</small><b>00</b></div><div><small>Tittel</small><b>Salen</b></div><div><small>Dato</small><b>10.12.26</b></div></div></div>`;
+      <div class="lb-block"><div class="y"><small>Ark</small><b>00</b></div><div class="w"><small>Del</small><b>Salen</b></div><div><small>Dato</small><b>10.12.26</b></div></div></div>`;
   document.body.append(el);
   cv = $('canvas', el); cx = cv.getContext('2d');
-  size(); live(liveOn);
+  size(); live(liveOn); setWhere(where);
   document.title = TITLE;
   $('meta[name="theme-color"]')?.setAttribute('content', '#16100b');
   document.documentElement.classList.add('lobby-on');
@@ -105,6 +107,7 @@ function size() {
   W = r.width; H = r.height; cv.width = W * dpr; cv.height = H * dpr;
 }
 addEventListener('resize', size);
+function setWhere(label) { where = label || ''; if (el) $('.lb-block .w b', el).textContent = where || 'Salen'; }
 function live(on) { liveOn = on; if (!el) return; $('.lb-live', el).classList.toggle('on', on); $('.lb-live span', el).textContent = on ? 'Live' : 'Kobler til'; }
 
 // ---------- the room ----------
@@ -295,9 +298,12 @@ const prev = window.vedHook;
 window.vedHook = (m) => {
   prev?.(m);
   if (Array.isArray(m.room)) setRoom(m.room);
+  if (typeof m.where === 'string') setWhere(m.where);
+  if (m.type === 'where') setWhere(m.label);
   if (m.type === 'room-joined' && m.p) addPerson(m.p);
   if (m.type === 'me' && m.me) addPerson(m.me);
   if (m.type === 'room-reset') setRoom([]);
   if (el && m.theme) $('meta[name="theme-color"]')?.setAttribute('content', '#16100b'); // vote.js recolours the bar for the shop
 };
 if (window.vedRoomNow) setRoom(window.vedRoomNow);
+if (window.vedWhereNow != null) setWhere(window.vedWhereNow);

@@ -9,7 +9,8 @@ import { discoBall, discoBeams, discoSpots, djTable } from '../engine/disco.js';
     0. A classic slide tries what this deck did: the 3D house is a flat picture, the live
        site is a missing plugin, the 80 % bar will not move.
     1. Pull back: this deck, live, in a browser window (an iframe of itself). The room lights up:
-       every joined phone goes full-screen colour and pulses in sync, a wave in join order.
+       every joined phone goes full-screen colour and pulses in sync, a wave in join order,
+       until step 2 or leaving the slide sends light-off.
     2. Its source scrolls past: it is text, so the AI can write and change all of it.
     3. The other side, on a card: it takes some imagination, and others can't edit it as easily.
 
@@ -122,7 +123,7 @@ export default {
         tl.to(frame, { opacity: 1, duration: 0.6 }, 1.1);
         // so is every phone in the room: they light up together (live only, never on replays)
         const live = !instant && !ctx.deck?.instant;
-        tl.call(() => relaySend({ type: 'light', mode: 'wave', delay: 1200, dur: 14000 }, live), null, 1.2);
+        tl.call(() => relaySend({ type: 'light', mode: 'wave', delay: 1200, dur: 600000 }, live), null, 1.2);
         P.win = win;
         // the party in the free column: the ball pops in on its string, the table rises, the light starts
         const disco = D.g(svg);

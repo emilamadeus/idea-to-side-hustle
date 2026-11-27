@@ -1,6 +1,6 @@
 import QRCode from 'qrcode';
 import * as D from '../engine/draw.js';
-import { onRelay, relayState } from '../engine/relay.js';
+import { onRelay, relayState, relaySend } from '../engine/relay.js';
 
 const SITE = import.meta.env.VITE_VED_SITE || 'https://ved.atladeus.com';
 
@@ -190,6 +190,7 @@ export default {
         stage.particles.morphTo(shapes.nebula(stage), { duration: 3, turbulence: 0.8 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 3 });
         relayState.people.forEach((p) => add(p, false));
+        if (!ctx.deck?.instant) relaySend({ type: 'where', label: '' }); // a new run: the phones' lobby starts at the beginning
         ctx.track(gsap.to(track, { opacity: 0.65, duration: 1.2, delay: 0.6 }));
         ctx.track(gsap.to(qr, { opacity: 1, duration: 0.8, delay: 0.3 }));
         if (step >= 1) start(true);

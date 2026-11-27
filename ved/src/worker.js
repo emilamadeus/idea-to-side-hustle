@@ -24,7 +24,8 @@
     phone ← state.room (the roster) · { type: 'room-joined', p }   the lobby's orbit
     deck  → watch-start { sessions } · watch-alert { k, text } · watch-end      the room keeps watch
     phone → { type: 'watch-ack', k }           deck ← { type: 'watch-acked', k, name, ms }
-    deck  → light { mode, delay, dur } · light-off                              the finale light-up
+    deck  → light { mode, delay, dur } · light-off                              the finale light-up (runs until light-off; capped at 10 min)
+    deck  → where { label }                    phone ← where { label }       the talk's current part, shown in the lobby
     deck  → awards                             deck ← { type: 'awards', list }; winners' phones glow
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
   No payment. An order is an address (any address; it is shown on the screen) and a number of sacks.
@@ -114,6 +115,7 @@ export class Room {
       this.people = (await ctx.storage.get('people')) ?? {}; // voter → { name, n, t, chops, watch }
       this.alert = (await ctx.storage.get('alert')) ?? null;         // survives hibernation between alarm and tap
       this.watchNames = (await ctx.storage.get('watchNames')) ?? null;
+      this.where = (await ctx.storage.get('where')) ?? '';            // the talk's current part, for the phones' lobby
     });
   }
 
@@ -160,7 +162,7 @@ export class Room {
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
       ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster() }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster() }));
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -222,9 +224,10 @@ export class Room {
       // a synchronised light-up: each phone gets its place in the join order, for the wave
       const total = Object.keys(this.people).length || 1;
       const start = Date.now() + (Number(m.delay) || 1500);
-      this.eachPhone((ws, v) => ws.send(JSON.stringify({ type: 'light', mode: m.mode || 'wave', start, now: Date.now(), dur: Number(m.dur) || 14000, n: this.people[v]?.n || 1, total, theme: this.theme })));
+      this.eachPhone((ws, v) => ws.send(JSON.stringify({ type: 'light', mode: m.mode || 'wave', start, now: Date.now(), dur: Math.min(Number(m.dur) || 14000, 600000), n: this.people[v]?.n || 1, total, theme: this.theme })));
     }
     if (m.type === 'light-off') this.send('cust', { type: 'light-off' });
+    if (m.type === 'where') { this.where = String(m.label || '').slice(0, 40); await this.ctx.storage.put('where', this.where); this.send('cust', { type: 'where', label: this.where }); }
     if (m.type === 'awards') {
       const list = this.awards();
       this.send('deck', { type: 'awards', list });

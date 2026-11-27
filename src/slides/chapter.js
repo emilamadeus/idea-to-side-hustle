@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
+import { relaySend } from '../engine/relay.js';
 
 /*
   Stage divider: the journey from idea to launch as a line with five stations. The line
@@ -33,7 +34,9 @@ export function chapter(k) {
       const svg = D.stage(el);
       const name = ctx.$('.ch-name');
 
-      const play = () => {
+      const play = (i, instant) => {
+        // the phones' lobby shows where we are in the talk
+        if (!instant && !ctx.deck?.instant) relaySend({ type: 'where', label: `${k + 1} · ${STAGES[k]}` });
         const tl = gsap.timeline();
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
@@ -81,7 +84,12 @@ export function part(n, name, parts = ['Reisen', name]) {
           font-size:calc(var(--u)*10);line-height:1;color:var(--fg)">${name}</h1>`;
       const svg = D.stage(el);
       const nm = ctx.$('.ch-name');
-      const play = () => {
+      const play = (i, instant) => {
+        if (!instant && !ctx.deck?.instant) {
+          relaySend({ type: 'where', label: `Del ${n} · ${name}` });
+          // the journey is over: the shop closes, and every phone goes back to the talk's page
+          if (n === 2) relaySend({ type: 'close' });
+        }
         const tl = gsap.timeline();
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });

@@ -523,7 +523,8 @@
   let open = false, shopping = false;
   const sacks = (n) => `${n} ${n === 1 ? 'sekk' : 'sekker'}`;
   const show = () => {
-    const done = orders.length > 0 && !shopping;
+    // the receipt shows while the shop is open; once it closes (after the launch part) every phone is back on the talk's page
+    const done = open && orders.length > 0 && !shopping;
     window.vedViewNow = { lobby: !done && !open };
     window.vedView?.(window.vedViewNow);
     document.documentElement.classList.add('shown');
@@ -607,6 +608,7 @@
     ws.onmessage = (e) => {
       const m = JSON.parse(e.data);
       if (Array.isArray(m.room)) window.vedRoomNow = m.room;
+      if (typeof m.where === 'string') window.vedWhereNow = m.where;
       if (m.type === 'state') { open = m.open; live(true); show(); }
       if (m.type === 'notify') notify(m);
       if (m.type === 'reset') { store.del('ved-orders'); store.del('ved-order'); store.del('ved-msgs'); location.reload(); }
