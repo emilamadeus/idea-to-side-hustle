@@ -12,7 +12,8 @@ const SITE = import.meta.env.VITE_VED_SITE || 'https://ved.atladeus.com';
   later (the vote on the prototypes, the buzzes, the go-live). x 80–420, y 690–810.
   Everyone who joins becomes a named glowing mote: a small burst where it lands, then it
   orbits the title on an ellipse (cx 800, cy 360, rx 770, ry 270) that stays clear of the
-  title, the dimension line and the QR. Names are filtered by the relay. "N med" under the URL.
+  title, the dimension line and the QR, drawn as a faint dashed ring. Names are filtered by the relay.
+  "N i salen" under the URL. The phones' lobby (ved/public/js/lobby.js) shows the same room, same colours.
 */
 export default {
   id: 'title',
@@ -26,9 +27,9 @@ export default {
   create(ctx) {
     const { el, stage, shapes, fx, gsap } = ctx;
     el.innerHTML = `
-      <h1 class="title-text" style="position:absolute;left:0;right:0;top:calc(var(--u)*15.5);text-align:center;margin:0;
+      <h1 class="title-text" style="position:absolute;left:50%;transform:translateX(-50%);width:max-content;top:calc(var(--u)*15.5);text-align:center;margin:0;
         font-family:var(--font-display);font-weight:var(--display-weight);letter-spacing:var(--display-tracking);
-        font-size:calc(var(--u)*8);line-height:.95;color:var(--fg)">Fra idé til startup,<br><em style="font-style:normal;color:var(--accent)">med AI</em></h1>
+        font-size:calc(var(--u)*8);line-height:.95;color:var(--fg)">Fra idé til startup,<br>med AI</h1>
       <p class="title-sub" style="position:absolute;left:calc(var(--u)*27);right:calc(var(--u)*27);top:calc(var(--u)*43);text-align:center;margin:0;
         font:600 calc(var(--u)*1.75)/1.4 var(--font-display);color:var(--fg);opacity:0">Se hvordan AI gjør en idé om til inntekt.<br><span style="color:var(--muted)">Eller ta med deg grepene til jobb i morgen.</span></p>`;
     const h1 = ctx.$('.title-text');
@@ -61,9 +62,11 @@ export default {
     const O = { cx: 800, cy: 360, rx: 770, ry: 270 };
     const DOT = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '#ffb25e', '#9be7b0'];
     const ring = D.g(svg, { 'data-bg': '' });
+    // the path they travel, drawn as a construction line (the phones draw the same ring)
+    const track = D.el('ellipse', { cx: O.cx, cy: O.cy, rx: O.rx, ry: O.ry, style: 'fill: none; stroke: var(--deco); stroke-width: 2; stroke-dasharray: 4 12; opacity: 0' }, ring);
     const motes = new Map(); // id → { g, dot, label, w, off, target }
     let spin = 0;
-    const setCount = () => { const n = motes.size; count.textContent = n ? `${n} med` : ''; };
+    const setCount = () => { const n = motes.size; count.textContent = n ? `${n} i salen` : ''; };
     const layout = () => { [...motes.values()].sort((a, b) => a.n - b.n).forEach((m, i, all) => { m.target = (i / all.length) * Math.PI * 2; }); };
     const place = (m) => {
       const a = spin + m.off - Math.PI / 2;
@@ -130,8 +133,13 @@ export default {
         stage.particles.morphTo(shapes.nebula(stage), { duration: 3, turbulence: 0.8 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 3 });
         ctx.track(fx.rise(h1, { stagger: 0.03, duration: 1.2, y: 80 }));
+        // "startup" in the yellow-to-orange of the phones' lobby, one colour per letter (the split keeps no markup)
+        const word = [...h1.querySelectorAll('.w')].find((w) => w.textContent.startsWith('startup'));
+        const ramp = ['#ffd23f', '#ffbf3a', '#ffa535', '#ff8f2f', '#ff7a2a', '#ff6a24', '#ff5a1f'];
+        word?.querySelectorAll('.c').forEach((c, k) => { if (k < 7) c.style.color = ramp[k]; });
         ctx.track(D.drawOn(dim, { duration: 0.9, delay: 1.1 }));
         ctx.track(gsap.to(join, { opacity: 1, duration: 0.8, delay: 1.6 }));
+        ctx.track(gsap.to(track, { opacity: 0.65, duration: 1.2, delay: 1.6 }));
         relayState.people.forEach((p) => add(p, false));
         if (step >= 1) showSub(true);
       },
