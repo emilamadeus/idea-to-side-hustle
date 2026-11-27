@@ -62,7 +62,7 @@ export function varmPeis(g, x, y, w, h, { plain = false, bar = true } = {}) {
   }
 
   // hero copy
-  T(40, 118, 'VEDLEVERING · OSLO', `font: 700 13px var(--font-mono); letter-spacing: .18em; fill: ${ORANGE}`);
+  T(40, 118, 'VEDLEVERING · HELE NORGE', `font: 700 13px var(--font-mono); letter-spacing: .18em; fill: ${ORANGE}`);
   T(40, 194, 'Ved på døra,', `font: 800 60px var(--font-display); fill: ${CREAM}; letter-spacing: -0.03em`);
   T(40, 276, 'hele vinteren.', `font: 800 60px var(--font-display); fill: ${ORANGE}; letter-spacing: -0.03em`);
   T(40, 316, 'Tørr bjørkeved levert hver 14. dag.', `font: 500 17px var(--font-display); fill: ${SOFT}`);

@@ -1,7 +1,7 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { chatPhone } from '../engine/props.js';
-import { varmPeis } from '../engine/varmpeis.js';
+import { LANDINGS } from '../engine/landings.js';
 
 /*
   Tip: build several throwaway versions and pick one, instead of debating one.
@@ -52,47 +52,9 @@ export default {
     function card(g, d) {
       const c = D.g(g, { 'data-unit': '' });
       D.el('rect', { x: 0, y: 0, width: CW, height: CH, rx: 14, style: `fill: ${d.bg}; stroke: #6b5a48`, 'stroke-width': 3, 'data-bg': '' }, c);
-      const deco = D.g(c, { 'data-bg': '' });
-      const grid = (color, step = 40) => {
-        let p = '';
-        for (let x = step; x < CW; x += step) p += `M${x} 0 V${CH} `;
-        for (let y = step; y < CH; y += step) p += `M0 ${y} H${CW} `;
-        D.p(deco, p, '', { style: `fill: none; stroke: ${color}`, 'stroke-width': 1.5 });
-      };
-      if (d.deco === 'trees') {
-        // a dark forest along the bottom right, a pale moon
-        D.el('circle', { cx: 700, cy: 110, r: 44, style: 'fill: #eef3e6', opacity: 0.85 }, deco);
-        [[560, 470, 150], [640, 470, 200], [720, 470, 170], [800, 470, 220]].forEach(([x, y, h]) => {
-          D.p(deco, `M${x} ${y - h} L${x + 52} ${y - 10} H${x - 52} Z`, '', { style: 'fill: #2f4a2c' });
-          D.el('rect', { x: x - 7, y: y - 12, width: 14, height: 12, style: 'fill: #3a2a1c' }, deco);
-        });
-      }
-      if (d.deco === 'logs') {
-        // light and plain: a neat stack of log ends in line art
-        for (let r = 0; r < 3; r++) for (let k = 0; k < 4 - r; k++) {
-          D.el('circle', { cx: 600 + k * 62 + r * 31, cy: 380 - r * 54, r: 28, style: `fill: none; stroke: ${d.fg}`, 'stroke-width': 3 }, deco);
-          D.el('circle', { cx: 600 + k * 62 + r * 31, cy: 380 - r * 54, r: 10, style: `fill: none; stroke: ${d.acc}`, 'stroke-width': 3 }, deco);
-        }
-        D.p(deco, 'M560 412 H800', '', { style: `fill: none; stroke: ${d.fg}`, 'stroke-width': 3 });
-      }
-      if (d.deco === 'truck') {
-        // loud and fast: a black truck with speed lines
-        D.el('rect', { x: 540, y: 250, width: 170, height: 90, rx: 6, style: 'fill: #1a120c' }, deco);
-        D.p(deco, 'M712 270 H770 L800 300 V340 H712 Z', '', { style: 'fill: #1a120c' });
-        [580, 760].forEach((cx) => { D.el('circle', { cx, cy: 345, r: 22, style: 'fill: #1a120c; stroke: #ffd23f', 'stroke-width': 5 }, deco); });
-        [270, 300, 330].forEach((y, k) => D.p(deco, `M${440 + k * 20} ${y} H${520}`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 6, 'stroke-linecap': 'round' }));
-      }
-      if (d.deco === 'fire') {
-        // the direction that wins: drawn as a finished, polished site
-        varmPeis(c, 0, 0, CW, CH);
-        D.el('rect', { x: 0, y: 0, width: CW, height: CH, rx: 14, style: 'fill: none; stroke: #6b5a48', 'stroke-width': 3, 'data-bg': '' }, c);
-      } else {
-        // the page: the same offer in every direction
-        D.text(c, 60, CH / 2 - 30, 'Ved på døra.', 'ct', { style: `font: ${d.font}; fill: ${d.fg}` });
-        D.text(c, 60, CH / 2 + 24, 'Hver 14. dag, hele vinteren.', 'cs', { style: `font: 600 26px var(--font-display); fill: ${d.fg}`, opacity: 0.85 });
-        D.el('rect', { x: 60, y: CH / 2 + 60, width: 170, height: 52, rx: 26, style: `fill: ${d.acc}` }, c);
-        D.text(c, 145, CH / 2 + 94, 'Bestill', 'cb', { 'text-anchor': 'middle', style: `font: 800 22px var(--font-display); fill: ${d.bg}` });
-      }
+      // every direction drawn as a finished site (src/engine/landings.js), so the choice is real
+      LANDINGS.find((l) => l.name === d.name).draw(c, 0, 0, CW, CH);
+      D.el('rect', { x: 0, y: 0, width: CW, height: CH, rx: 14, style: 'fill: none; stroke: #6b5a48', 'stroke-width': 3, 'data-bg': '' }, c);
       // the direction's name, under the card
       D.text(c, 0, CH + 42, d.name.toUpperCase(), 'cn', { style: 'font: 700 22px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
       return c;

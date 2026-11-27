@@ -7,7 +7,9 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview --host",
-    "thumbs": "node scripts/thumbs.mjs"
+    "thumbs": "node scripts/thumbs.mjs",
+    "ved:sync": "node scripts/ved-sync.mjs",
+    "ved:deploy": "node scripts/ved-sync.mjs && npm --prefix ved run deploy"
   },
   "dependencies": {
     "gsap": "^3.15.1",

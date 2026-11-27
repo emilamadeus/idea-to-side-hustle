@@ -9,11 +9,21 @@
     GET  /api/ws      websocket
          ?role=deck&key=…   the talk: gets a snapshot and every new order; sends open/close/reset/notify
          ?role=customer&id=a,b  a phone: gets open/close, and messages addressed to its orders
+  The vote (the talk's prototypes slide): phones pick one of four visual directions for this very
+  site. Deck: vote-open → vote-close. A tie becomes a 15-second sudden death: phones chop at the
+  tied contenders and the most chops wins. The winner becomes the site's theme. No votes, or a
+  tie that stays tied, keeps the default (peis) when it is in the running.
+    phone → { type: 'vote', choice } · { type: 'chop', choice }
+    deck  ← { type: 'vote-state', vote } on every change · { type: 'voted', choice, prev } ·
+            { type: 'chopped', choice }
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
   No payment. An order is an address (any address; it is shown on the screen) and a number of sacks.
 */
 
 const MAX_ORDERS = 400;
+const THEMES = ['skog', 'nordisk', 'rask', 'peis'];
+const DEFAULT_THEME = 'peis';
+const SUDDEN_MS = 15000;
 
 export default {
   async fetch(req, env) {
@@ -77,12 +87,14 @@ export class Room {
     ctx.blockConcurrencyWhile(async () => {
       this.open = (await ctx.storage.get('open')) ?? false;
       this.orders = (await ctx.storage.get('orders')) ?? [];
+      this.theme = (await ctx.storage.get('theme')) ?? DEFAULT_THEME;
+      this.vote = (await ctx.storage.get('vote')) ?? { phase: 'idle', votes: {}, chops: {}, contenders: [], endsAt: 0, winner: null };
     });
   }
 
   async fetch(req) {
     const url = new URL(req.url);
-    if (url.pathname === '/api/state') return json({ open: this.open });
+    if (url.pathname === '/api/state') return json({ open: this.open, theme: this.theme });
     if (url.pathname === '/api/order' && req.method === 'POST') return this.order(req);
     if (url.pathname === '/api/ws') return this.connect(url);
     return json({ error: 'not found' }, 404);
@@ -117,22 +129,37 @@ export class Room {
     const [client, server] = Object.values(new WebSocketPair());
     // a phone may hold several orders: ?id=a,b,c (a socket takes at most ten tags)
     const ids = (url.searchParams.get('id') || '').split(',').map((x) => x.replace(/[^a-z0-9-]/gi, '').slice(0, 12)).filter(Boolean).slice(0, 8);
+    const voter = (url.searchParams.get('voter') || '').replace(/[^a-z0-9]/gi, '').slice(0, 16);
     this.ctx.acceptWebSocket(server, role === 'deck' ? ['deck'] : ['cust', ...ids.map((x) => `c:${x}`)]);
+    server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
-      ? { type: 'snapshot', open: this.open, orders: this.orders }
-      : { type: 'state', open: this.open }));
+      ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public() }
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter) }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
   async webSocketMessage(ws, raw) {
-    if (!this.ctx.getTags(ws).includes('deck')) return; // phones only listen
     let m;
     try { m = JSON.parse(raw); } catch { return; }
+    if (!this.ctx.getTags(ws).includes('deck')) return this.fromPhone(ws, m); // phones: vote and chop only
     if (m.type === 'open' || m.type === 'close') {
       this.open = m.type === 'open';
       await this.ctx.storage.put('open', this.open);
       this.send('cust', { type: 'state', open: this.open });
       this.send('deck', { type: 'state', open: this.open });
+    }
+    if (m.type === 'vote-open') {
+      this.vote = { phase: 'open', votes: {}, chops: {}, contenders: [...THEMES], endsAt: 0, winner: null };
+      await this.saveVote();
+    }
+    if (m.type === 'vote-close' && this.vote.phase === 'open') await this.closeVote();
+    if (m.type === 'vote-reset') {
+      this.vote = { phase: 'idle', votes: {}, chops: {}, contenders: [], endsAt: 0, winner: null };
+      this.theme = DEFAULT_THEME;
+      await this.ctx.storage.put('theme', this.theme);
+      await this.saveVote();
+      this.send('cust', { type: 'theme', theme: this.theme });
+      this.send('deck', { type: 'theme', theme: this.theme });
     }
     if (m.type === 'reset') {
       this.orders = [];
@@ -149,6 +176,79 @@ export class Room {
       const msg = { type: 'notify', title: String(m.title || '').slice(0, 60), text: String(m.text || '').slice(0, 140) };
       for (const id of m.ids.slice(0, MAX_ORDERS)) this.send(`c:${id}`, msg);
     }
+  }
+
+  // ---- the vote ----
+  tally() {
+    const t = Object.fromEntries(THEMES.map((k) => [k, 0]));
+    Object.values(this.vote.votes).forEach((c) => { if (c in t) t[c]++; });
+    return t;
+  }
+  // what a phone (or the deck) may see: counts, never who voted for what; a phone also gets its own vote
+  public(voter = null) {
+    const v = this.vote;
+    return { phase: v.phase, tally: this.tally(), chops: v.chops, contenders: v.contenders, endsAt: v.endsAt, winner: v.winner, mine: voter ? v.votes[voter] ?? null : undefined, now: Date.now() };
+  }
+  async saveVote() {
+    await this.ctx.storage.put('vote', this.vote);
+    this.send('deck', { type: 'vote-state', vote: this.public() });
+    for (const ws of this.ctx.getWebSockets('cust')) {
+      const a = ws.deserializeAttachment() || {};
+      try { ws.send(JSON.stringify({ type: 'vote-state', vote: this.public(a.voter) })); } catch {}
+    }
+  }
+  async fromPhone(ws, m) {
+    const a = ws.deserializeAttachment() || {};
+    const v = this.vote;
+    if (m.type === 'vote' && v.phase === 'open' && a.voter && THEMES.includes(m.choice)) {
+      const prev = v.votes[a.voter] ?? null;
+      if (prev === m.choice) return;
+      v.votes[a.voter] = m.choice;
+      this.send('deck', { type: 'voted', choice: m.choice, prev });
+      await this.saveVote();
+    }
+    if (m.type === 'chop' && v.phase === 'sudden' && v.contenders.includes(m.choice) && Date.now() < v.endsAt) {
+      // at most 12 chops a second per phone: fast thumbs, not scripts
+      const now = Date.now();
+      if (now - a.chopT > 1000) { a.chopT = now; a.chopN = 0; }
+      if (++a.chopN > 12) return;
+      ws.serializeAttachment(a);
+      v.chops[m.choice] = (v.chops[m.choice] || 0) + 1;
+      this.send('deck', { type: 'chopped', choice: m.choice });
+      // the running count goes out at most every 250 ms
+      if (!this.chopTimer) this.chopTimer = setTimeout(async () => { this.chopTimer = null; await this.saveVote(); }, 250);
+    }
+  }
+  async closeVote() {
+    const t = this.tally();
+    const max = Math.max(...Object.values(t));
+    const top = THEMES.filter((k) => t[k] === max);
+    if (max === 0) return this.finish(DEFAULT_THEME);
+    if (top.length === 1) return this.finish(top[0]);
+    // a tie: sudden death between the tied contenders
+    this.vote.phase = 'sudden';
+    this.vote.contenders = top;
+    this.vote.chops = Object.fromEntries(top.map((k) => [k, 0]));
+    this.vote.endsAt = Date.now() + SUDDEN_MS;
+    await this.ctx.storage.setAlarm(this.vote.endsAt + 200);
+    await this.saveVote();
+  }
+  async alarm() {
+    if (this.vote.phase !== 'sudden') return;
+    const c = this.vote.chops;
+    const max = Math.max(...Object.values(c));
+    const top = this.vote.contenders.filter((k) => c[k] === max);
+    // still tied: the default if it is in the running, else the first of them
+    await this.finish(top.length === 1 ? top[0] : (top.includes(DEFAULT_THEME) ? DEFAULT_THEME : top[0]));
+  }
+  async finish(winner) {
+    this.vote.phase = 'closed';
+    this.vote.winner = winner;
+    this.theme = winner;
+    await this.ctx.storage.put('theme', this.theme);
+    await this.saveVote();
+    this.send('cust', { type: 'theme', theme: this.theme });
+    this.send('deck', { type: 'theme', theme: this.theme });
   }
 
   webSocketClose(ws, code) { try { ws.close(code, 'bye'); } catch {} }
