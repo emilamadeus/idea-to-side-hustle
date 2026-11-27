@@ -2,6 +2,7 @@ import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { paperCard, FILL } from '../engine/props.js';
 import { relaySend } from '../engine/relay.js';
+import { discoBall, discoBeams, discoSpots, djTable } from '../engine/disco.js';
 
 /*
   Meta: this presentation is a web page, built with Claude Code.
@@ -15,6 +16,8 @@ import { relaySend } from '../engine/relay.js';
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     window     x 600–1480, y 150–670 (16:9 content 840×472 at x 620, y 190)
+    disco      x 90–530, y 262–770 (step 1 only): mirror ball (cx 310, cy 400, r 78) on a string
+               from y 262, light spots drifting over y 280–520, DJ table x 95–525, y 575–761
     code       x 80–540, y 300–760 (step 2)
     card       x 80–540, y 300–600 (step 3, replaces code)
 */
@@ -53,7 +56,11 @@ export default {
       try { return JSON.parse(t.slice(t.indexOf('"'), t.lastIndexOf('"') + 1)); } catch { return t; }
     }).catch(() => '');
 
+    // the party runs off one tick; it only moves while it is on the page
+    let party = null;
+    ctx.tick(() => { if (!party) return; const t = performance.now() / 1000; party.forEach((x) => x.update(t)); });
     const reset = () => {
+      party = null;
       svg.innerHTML = ''; P = {};
       gsap.killTweensOf(code);
       gsap.set([frame, code], { opacity: 0 });
@@ -117,10 +124,23 @@ export default {
         const live = !instant && !ctx.deck?.instant;
         tl.call(() => relaySend({ type: 'light', mode: 'wave', delay: 1200, dur: 14000 }, live), null, 1.2);
         P.win = win;
+        // the party in the free column: the ball pops in on its string, the table rises, the light starts
+        const disco = D.g(svg);
+        const beams = discoBeams(disco, 310, 400, { x: 80, y: 262, w: 460, h: 310 });
+        const spots = discoSpots(disco, 90, 280, 440, 240);
+        const ball = discoBall(disco, 310, 400, 78, { top: 262 });
+        const table = djTable(disco, 95, 575, 430);
+        party = [beams, spots, ball, table];
+        P.disco = disco;
+        tl.fromTo([beams.g, spots.g], { opacity: 0 }, { opacity: 1, duration: 1 }, 1.9);
+        tl.fromTo(ball.g, { opacity: 0, scale: 0.4, svgOrigin: '310 400' }, { opacity: 1, scale: 1, duration: 0.9, ease: 'back.out(1.8)' }, 1.3);
+        tl.fromTo(table.g, { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, 1.5);
       }
 
       if (i === 2) {
         relaySend({ type: 'light-off' }, !instant && !ctx.deck?.instant);
+        // the party makes room for the code
+        if (P.disco) { const d = P.disco; tl.to(d, { opacity: 0, duration: 0.4, onComplete: () => { d.remove(); party = null; } }, 0); }
         // it is text
         tl.call(() => { src.then((t) => { code.textContent = t; code.scrollTop = 0; }); }, null, 0);
         const box = D.g(svg, { 'data-bg': '' });

@@ -39,8 +39,10 @@ css.textContent = `
   .room-alert h2 { color: #ffd2d2; }
   .room-alert .room-go { background: linear-gradient(180deg, #8fe3a2, #3fbf6a); margin-top: 18px; font-size: 22px; padding: 20px; }
 
-  .room-light { position: fixed; inset: 0; z-index: 40; background: #000; opacity: 0; transition: opacity .25s; pointer-events: auto; }
+  .room-light { position: fixed; inset: 0; z-index: 40; background: #000; opacity: 0; transition: opacity .25s; pointer-events: auto; overflow: hidden; }
   .room-light.on { opacity: 1; }
+  .room-light .bg { position: absolute; inset: 0; }
+  .room-light canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .room-award .room-card { border-color: #ffd23f; box-shadow: 0 0 0 2px #ffd23f, 0 0 90px -10px #ffd23f; }
   .room-medal { width: 96px; height: 96px; margin: 0 auto 6px; animation: r-pop .8s cubic-bezier(.2,1.5,.4,1) both; }
   @keyframes r-pop { from { transform: scale(.3) rotate(-20deg); opacity: 0; } }
@@ -108,35 +110,140 @@ function closeAlert(by) {
 }
 
 // ---------- the finale: the room lights up ----------
+// The screen pulses in the site's colours on the relay's clock (a wave in join order), and a
+// mirror ball drops in on its string, turns, throws beams and spots, and glints.
 let light = null;
 function onLight(m) {
-  light?.remove();
+  stopLight(true);
   light = document.createElement('div');
   light.className = 'room-light';
+  light.innerHTML = '<div class="bg"></div><canvas></canvas>';
   document.body.append(light);
+  const bg = $('.bg', light), cv = $('canvas', light), cx = cv.getContext('2d');
   const off = (m.now || Date.now()) - Date.now();          // server clock offset
   const acc = ACC[m.theme] || '#ff7a2f';
   const palette = [acc, '#ffd23f', '#ff5a1f', '#fff3e3', acc];
   const wave = ((m.n - 1) / Math.max(1, m.total)) * 2400;  // the wave rolls through the room in join order
   const t0 = m.start + wave, end = m.start + m.dur;
+  let W = 0, H = 0, dpr = 1;
+  const size = () => { dpr = Math.min(2, devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; };
+  size(); addEventListener('resize', size);
+  const ball = mirrorBall();
+  const spots = Array.from({ length: 26 }, (_, k) => ({ a: Math.random() * 6.28, d: 0.25 + Math.random() * 0.75, r: 3 + Math.random() * 6, ph: Math.random() * 6.28 }));
+  let shown = 0;
   const frame = () => {
-    if (!light) return;
+    if (!light || light._cv !== cv) return;
     const now = Date.now() + off;
     if (now >= end) { stopLight(); return; }
     if (now >= t0) {
-      light.classList.add('on');
+      if (!shown) { shown = now; light.classList.add('on'); navigator.vibrate?.([60, 40, 60]); }
       // everyone pulses in phase off the shared clock; the colour walks through the palette
       const ph = ((now - m.start) % 1200) / 1200;
       const c = palette[Math.floor((now - m.start) / 2400) % palette.length];
-      light.style.background = c;
-      light.style.filter = `brightness(${0.55 + 0.45 * Math.sin(ph * Math.PI * 2) ** 2})`;
+      bg.style.background = `radial-gradient(120% 85% at 50% 38%, ${c} 10%, color-mix(in srgb, ${c} 45%, #000) 100%)`;
+      bg.style.filter = `brightness(${0.7 + 0.35 * Math.sin(ph * Math.PI * 2) ** 2}) saturate(1.15)`;
+      const t = (now - shown) / 1000;
+      cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cx.clearRect(0, 0, W, H);
+      const R = Math.min(W, H) * 0.24;
+      // the ball drops in on its string and settles with a little swing
+      const drop = Math.min(1, t / 1.1), ease = 1 - (1 - drop) ** 3;
+      const swing = Math.sin(t * 1.6) * 0.035 * Math.exp(-t * 0.25);
+      const ox = W / 2 + Math.sin(swing) * H * 0.38, oy = (H * 0.38) * ease - R * (1 - ease) * 2;
+      // beams: white light sweeping the room, strongest near the ball
+      cx.globalCompositeOperation = 'lighter';
+      const L = Math.hypot(W, H);
+      for (let k = 0; k < 7; k++) {
+        const a = k / 7 * Math.PI * 2 + t * 0.5, w = 0.05 + (k % 3) * 0.02;
+        const g = cx.createRadialGradient(ox, oy, R * 0.6, ox, oy, L * 0.8);
+        g.addColorStop(0, `rgba(255,248,232,${0.28 * ease})`); g.addColorStop(1, 'rgba(255,248,232,0)');
+        cx.fillStyle = g;
+        cx.beginPath(); cx.moveTo(ox, oy); cx.lineTo(ox + Math.cos(a - w) * L, oy + Math.sin(a - w) * L); cx.lineTo(ox + Math.cos(a + w) * L, oy + Math.sin(a + w) * L); cx.fill();
+      }
+      // spots thrown on the walls, turning with the ball
+      for (const sp of spots) {
+        const a = sp.a + t * 0.5, d = sp.d * L * 0.55;
+        const x = ox + Math.cos(a) * d, y = oy + Math.sin(a) * d * 0.9;
+        cx.fillStyle = `rgba(255,248,232,${(0.35 + 0.5 * Math.max(0, Math.sin(t * 2 + sp.ph))) * ease})`;
+        cx.beginPath(); cx.arc(x, y, sp.r, 0, 7); cx.fill();
+      }
+      cx.globalCompositeOperation = 'source-over';
+      // string
+      cx.strokeStyle = 'rgba(255,243,227,.7)'; cx.lineWidth = 2;
+      cx.beginPath(); cx.moveTo(W / 2, 0); cx.lineTo(ox, oy - R); cx.stroke();
+      ball(cx, ox, oy, R, t, c);
     }
     requestAnimationFrame(frame);
   };
+  light._cv = cv;
   requestAnimationFrame(frame);
-  light.addEventListener('click', stopLight, { once: true });
+  light.addEventListener('click', () => stopLight(), { once: true });
 }
-function stopLight() { if (!light) return; const l = light; light = null; l.classList.remove('on'); setTimeout(() => l.remove(), 300); }
+function stopLight(now) { if (!light) return; const l = light; light = null; l.classList.remove('on'); setTimeout(() => l.remove(), now ? 0 : 300); }
+
+// A mirror ball on a 2D canvas: facets projected on a turning, slightly tilted sphere, lit from
+// the top left, tinted by the room's colour, with the odd facet flashing and throwing a glint.
+function mirrorBall() {
+  const LAT = 12, LON = 24, TILT = 0.32, K = 0.93;
+  const Lv = (() => { const v = [-0.55, 0.65, 0.55]; const l = Math.hypot(...v); return v.map((c) => c / l); })();
+  const facets = [];
+  for (let i = 0; i < LAT; i++) for (let j = 0; j < LON; j++) facets.push({ i, j, ph: Math.random() * 1000, sp: 0.6 + Math.random() * 1.4, jit: (Math.random() - 0.5) * 0.3, col: Math.random() < 0.12 });
+  const glints = [];
+  const proj = (phi, lam, rot) => {
+    const x = Math.cos(phi) * Math.sin(lam + rot), y = Math.sin(phi), z = Math.cos(phi) * Math.cos(lam + rot);
+    return [x, y * Math.cos(TILT) + z * Math.sin(TILT), z * Math.cos(TILT) - y * Math.sin(TILT)];
+  };
+  const hex = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
+  return (cx, ox, oy, R, t, tint) => {
+    const [tr, tg, tb] = hex(tint);
+    const rot = t * 0.6;
+    // glow and grout
+    const glow = cx.createRadialGradient(ox, oy, R * 0.8, ox, oy, R * 2.2);
+    glow.addColorStop(0, 'rgba(255,248,232,.35)'); glow.addColorStop(1, 'rgba(255,248,232,0)');
+    cx.fillStyle = glow; cx.beginPath(); cx.arc(ox, oy, R * 2.2, 0, 7); cx.fill();
+    cx.save();
+    cx.beginPath(); cx.arc(ox, oy, R, 0, 7); cx.clip();
+    cx.fillStyle = '#4a3f36'; cx.fillRect(ox - R, oy - R, R * 2, R * 2);
+    for (const f of facets) {
+      const p0 = -Math.PI / 2 + f.i / LAT * Math.PI, p1 = -Math.PI / 2 + (f.i + 1) / LAT * Math.PI;
+      const l0 = f.j / LON * Math.PI * 2, l1 = (f.j + 1) / LON * Math.PI * 2;
+      const pm = (p0 + p1) / 2, lm = (l0 + l1) / 2;
+      const n = proj(pm, lm, rot);
+      if (n[2] < 0.02) continue;
+      const lam = Math.max(0, n[0] * Lv[0] + n[1] * Lv[1] + n[2] * Lv[2]);
+      const spark = Math.max(0, Math.sin(t * f.sp + f.ph)) ** 40;
+      const v = Math.max(0, Math.min(1, 0.25 + 0.6 * lam + f.jit + spark));
+      // silver mirrors reflecting the room: mix toward the current colour in the mid tones; a few catch it fully
+      const mix = f.col ? 0.75 : 0.35 * (1 - Math.abs(v - 0.5) * 2);
+      const r = Math.round((70 + 185 * v) * (1 - mix) + tr * mix), g = Math.round((60 + 185 * v) * (1 - mix) + tg * mix), b = Math.round((52 + 170 * v) * (1 - mix) + tb * mix);
+      cx.fillStyle = `rgb(${r},${g},${b})`;
+      cx.beginPath();
+      [[p0, l0], [p0, l1], [p1, l1], [p1, l0]].forEach(([a, c], k) => {
+        const q = proj(pm + (a - pm) * K, lm + (c - lm) * K, rot);
+        const x = ox + q[0] * R, y = oy - q[1] * R;
+        k ? cx.lineTo(x, y) : cx.moveTo(x, y);
+      });
+      cx.fill();
+      if (spark > 0.6 && glints.length < 3 && !glints.some((q) => t - q.t < 0.3)) glints.push({ t, x: n[0], y: n[1] });
+    }
+    // shading: a soft highlight top left, darkness at the rim
+    const sh = cx.createRadialGradient(ox - R * 0.3, oy - R * 0.35, R * 0.1, ox, oy, R);
+    sh.addColorStop(0, 'rgba(255,255,255,.22)'); sh.addColorStop(0.55, 'rgba(0,0,0,0)'); sh.addColorStop(1, 'rgba(0,0,0,.55)');
+    cx.fillStyle = sh; cx.fillRect(ox - R, oy - R, R * 2, R * 2);
+    cx.restore();
+    cx.strokeStyle = '#1a120c'; cx.lineWidth = 3; cx.beginPath(); cx.arc(ox, oy, R, 0, 7); cx.stroke();
+    // glints: four-point stars
+    for (let k = glints.length - 1; k >= 0; k--) {
+      const q = glints[k], a = (t - q.t) / 0.6;
+      if (a > 1) { glints.splice(k, 1); continue; }
+      const s = Math.sin(a * Math.PI) * R * 0.3, x = ox + q.x * R, y = oy - q.y * R;
+      cx.save(); cx.translate(x, y); cx.rotate(a * 0.8);
+      cx.fillStyle = `rgba(255,250,236,${Math.sin(a * Math.PI)})`;
+      cx.beginPath(); cx.moveTo(0, -s); cx.lineTo(s * 0.18, -s * 0.18); cx.lineTo(s, 0); cx.lineTo(s * 0.18, s * 0.18); cx.lineTo(0, s); cx.lineTo(-s * 0.18, s * 0.18); cx.lineTo(-s, 0); cx.lineTo(-s * 0.18, -s * 0.18); cx.closePath(); cx.fill();
+      cx.restore();
+    }
+  };
+}
 
 // ---------- awards ----------
 function onAward(m) {
