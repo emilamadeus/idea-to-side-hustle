@@ -2,7 +2,8 @@ import gsap from 'gsap';
 import QRCode from 'qrcode';
 import * as D from '../engine/draw.js';
 import { FILL } from '../engine/props.js';
-import { varmPeis } from '../engine/varmpeis.js';
+import { LANDINGS } from '../engine/landings.js';
+import { relayState, onRelay } from '../engine/relay.js';
 import { liveMap } from '../engine/livemap.js';
 
 /*
@@ -144,8 +145,11 @@ export default {
       D.el('rect', { x: 490, y: 175, width: 12, height: 10, rx: 2, style: 'fill: #8fe3a2' }, lock);
       D.p(lock, 'M492.5 175 v-3 a3.5 3.5 0 0 1 7 0 v3', '', { style: 'fill: none; stroke: #8fe3a2', 'stroke-width': 2 });
       const addr = D.text(b, 512, 182, 'localhost:8787', 'ad', { style: 'font: 700 16px var(--font-mono); fill: var(--muted)' });
+      // the site in the look the room voted for on the prototypes slide (Varm peis if no vote)
       const page = D.g(b, { 'data-bg': '' });
-      varmPeis(page, 340, 206, 920, 496, { bar: true });
+      const draw = (theme) => { page.innerHTML = ''; (LANDINGS.find((l) => l.key === theme) || LANDINGS[3]).draw(page, 340, 206, 920, 496, { bar: true }); };
+      draw(relayState.theme);
+      P.redrawSite = draw;
       return { g, addr, lock };
     }
     function goButton() {
@@ -333,11 +337,13 @@ export default {
       return tl;
     };
 
+    const offTheme = onRelay((m) => { if (m.theme) P.redrawSite?.(m.theme); });
     const st = D.stepper(ctx, { reset, play });
     return {
       ...st,
       dispose() {
         closed = true;
+        offTheme();
         clearTimeout(wsTimer);
         window.removeEventListener('keydown', onKey);
         try { ws?.close(); } catch {}

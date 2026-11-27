@@ -11,6 +11,8 @@ import gsap from 'gsap';
     data-bg      on an SVG group: background art (grids) that text may sit on.
     data-unit    on a group/element: its text belongs inside its own shapes (bar labels, stamps).
     data-overlap-ok  on a unit: may overlap other units by design (e.g. zoom lines); text checks still apply.
+    data-picture  on a group: a picture of something else (a website, a screenshot); the text and
+                  shapes drawn inside it are part of the picture and are not checked.
 */
 
 // Visible box of an element, clipped by a scrolling area (data-clip) if it sits in one.
@@ -44,7 +46,7 @@ const label = (el) => {
 
 function textElements(root) {
   const set = new Set();
-  root.querySelectorAll('svg text').forEach((t) => { if (t.textContent.trim()) set.add(t); });
+  root.querySelectorAll('svg text').forEach((t) => { if (t.textContent.trim() && !t.closest('[data-picture]')) set.add(t); });
   root.querySelectorAll('*').forEach((el) => {
     if (el.closest('svg') || el.tagName === 'STYLE') return;
     const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
@@ -58,7 +60,7 @@ function textElements(root) {
 
 function shapeElements(root) {
   return [...root.querySelectorAll('svg rect, svg path, svg ellipse, svg circle')].filter((s) => {
-    if (s.closest('[data-bg]')) return false;
+    if (s.closest('[data-bg], [data-picture]')) return false;
     if (!visible(s)) return false;
     const r = box(s);
     if (s.tagName === 'path') return r.width < 8 || r.height < 8; // straight lines only

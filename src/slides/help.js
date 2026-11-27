@@ -143,6 +143,7 @@ export const HELP = {
   prototypes: [
     'Fire ekte versjoner koster mindre enn ett møte om én.',
     'Du ser forskjellen i stedet for å diskutere den.',
+    'Stem nå: den som vinner, blir ekte.',
     'Velg én, kast resten.',
   ],
   'html-deck': [

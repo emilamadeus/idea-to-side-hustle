@@ -20,7 +20,7 @@ function frame(g, x, y, w, h, bg) {
   const svg = g.ownerSVGElement || g;
   D.el('rect', { x, y, width: w, height: h, rx: Math.min(8, w * 0.02), style: `fill: ${bg}` }, g);
   const k = Math.min(w / W, h / H);
-  const p = D.g(g, { transform: `translate(${x + (w - W * k) / 2} ${y + (h - H * k) / 2}) scale(${k})` });
+  const p = D.g(g, { transform: `translate(${x + (w - W * k) / 2} ${y + (h - H * k) / 2}) scale(${k})`, 'data-picture': '' });
   return { svg, p, k };
 }
 const defs = (svg) => svg.querySelector('defs') || D.el('defs', {}, svg);

@@ -43,7 +43,7 @@ export function varmPeis(g, x, y, w, h, { plain = false, bar = true } = {}) {
   // the page background fills the frame; the design is centred inside it
   D.el('rect', { x, y, width: w, height: h, rx: Math.min(8, w * 0.02), style: 'fill: url(#vp-bg)' }, g);
   const k = Math.min(w / W, h / H);
-  const p = D.g(g, { transform: `translate(${x + (w - W * k) / 2} ${y + (h - H * k) / 2}) scale(${k})` });
+  const p = D.g(g, { transform: `translate(${x + (w - W * k) / 2} ${y + (h - H * k) / 2}) scale(${k})`, 'data-picture': '' });
   const tiny = k < 0.15;
   const T = (tx, ty, str, style, attrs = {}) => {
     if (tiny) return; // too small to read: leave the shapes

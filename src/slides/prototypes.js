@@ -1,21 +1,33 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { chatPhone } from '../engine/props.js';
+import QRCode from 'qrcode';
 import { LANDINGS } from '../engine/landings.js';
+import { relaySend, onRelay, relayState } from '../engine/relay.js';
+
+const SITE = import.meta.env.VITE_VED_SITE || 'https://ved.atladeus.com';
+const KEYS = ['skog', 'nordisk', 'rask', 'peis'];
+const ACC = { skog: '#a8d08d', nordisk: '#d2693a', rask: '#ffd23f', peis: '#ff7a2f' };
+const ROWX = (k) => 600 + k * 222, ROWY = 300, S = 0.24;
 
 /*
   Tip: build several throwaway versions and pick one, instead of debating one.
-  The example is the firewood subscription's landing page.
+  The example is the firewood subscription's landing page, and the room picks it for real.
     0. Asked for four real proposals for the site.
     1. They flip past one at a time: Skog, Nordisk enkel, Rask levering, Varm peis.
-    2. Side by side for the pick. Three go in the bin; the chosen one (Varm peis) comes back,
-       stamped.
+    2. The room votes on their phones (ved.atladeus.com). Each vote is a log that arcs up from the
+       bottom edge onto a woodpile under its design; the leader glows and grows a little.
+    3. Closed. A tie becomes a 15-second sudden death: phones chop, chips fly onto the piles, a
+       countdown runs. Then three go in the bin and the winner is stamped VALGT. No votes (or no
+       relay): Varm peis, as before. The winner becomes the real site's look.
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
-    chat       x 80–520, y 262–560
+    chat       x 80–520, y 262–560 · QR x 80–200, y 600–720 (step 2–3)
     card       x 620–1460, y 160–632 (one direction at a time); label y 680
-    pick row   y 300–520 (step 2); bin x 1360–1460, y 600–760
+    vote row   cards y 300–420, names y 440; piles grow up from y 550; counts y 580
+    countdown  x 1040–1360, y 160–270 (sudden death)
+    bin        x 1360–1460, y 600–760
 */
 
 // four landing pages for the firewood subscription; the last one is picked
@@ -30,11 +42,12 @@ const CW = 840, CH = 472;
 export default {
   id: 'prototypes',
   title: 'Prototyper',
-  steps: 3,
+  steps: 4,
   notes: [
     'Fire ekte forslag til nettsiden for ved-abonnementet, i stedet for et møte om ett.',
     'Skog, Nordisk enkel, Rask levering, Varm peis.',
-    'Velg ett. Resten kastes.',
+    'Nå velger dere. Stem på telefonen: den som vinner, blir den ekte siden.',
+    'Stengt. Uavgjort gir utslagsrunde: hogg i 15 sekunder. Så kastes resten.',
   ],
 
   create(ctx) {
@@ -46,7 +59,7 @@ export default {
     const tip = ctx.$('.tip');
     let P = {};
 
-    const reset = () => { svg.innerHTML = ''; P = {}; };
+    const reset = () => { clearTimeout(P.await); clearInterval(P.sdTimer); svg.innerHTML = ''; P = {}; };
 
     // a mini title slide drawn in each direction's own style (0,0 → CW×CH)
     function card(g, d) {
@@ -60,7 +73,154 @@ export default {
       return c;
     }
 
+    // ---- the vote on the TV ----
+    // a woodpile under each design: logs stack in rows (9, 8, 7 …) from y 610 up
+    function pile(key, k) {
+      const g = D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' });
+      const cx = ROWX(k) + 100;
+      const count = D.text(g, cx, 580, '0', 'pc', { 'text-anchor': 'middle', style: 'font: 700 22px var(--font-mono); fill: var(--fg)' });
+      const glow = D.el('rect', { x: ROWX(k) - 8, y: ROWY - 8, width: 840 * S + 16, height: 472 * S + 16, rx: 10, style: `fill: none; stroke: ${ACC[key]}; stroke-width: 4`, opacity: 0, 'data-bg': '' }, g); // a halo around the card
+      return { g, key, k, cx, count, glow, logs: [], n: 0 };
+    }
+    // logs fill each row from the middle out, so even two votes look like a little pile
+    const slot = (i) => {
+      let row = 0, left = i, cap = 9;
+      while (left >= cap && cap > 1) { left -= cap; row++; cap--; }
+      const side = left === 0 ? 0 : (left % 2 ? 1 : -1) * Math.ceil(left / 2);
+      return { dx: side * 20 + (row % 2 ? 10 : 0) * (cap % 2 ? 0 : 1), dy: -row * 17 };
+    };
+    function addLog(key, animate = true) {
+      const p = P.piles?.find((q) => q.key === key);
+      if (!p) return;
+      const { dx, dy } = slot(p.n++);
+      const x = p.cx + dx, y = 540 + dy;
+      const l = D.g(p.g);
+      D.el('circle', { cx: 0, cy: 0, r: 9, style: `fill: #c9935a; stroke: #1a120c; stroke-width: 2.4` }, l);
+      D.el('circle', { cx: 0, cy: 0, r: 3.4, style: 'fill: none; stroke: #8a5a34; stroke-width: 2' }, l);
+      p.logs.push(l);
+      p.count.textContent = p.n;
+      if (!animate) { gsap.set(l, { x, y }); return; }
+      // it rises from the room (the bottom edge) and arcs onto the pile, spinning, then settles
+      const sx = 200 + Math.random() * 1200, s = { t: 0 }, peak = 380 + Math.random() * 90;
+      const spin = (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 360);
+      gsap.set(l, { x: sx, y: 880, rotation: 0, opacity: 0 });
+      gsap.to(l, { opacity: 1, duration: 0.15 });
+      gsap.to(s, { t: 1, duration: 1.05, ease: 'power1.inOut', onUpdate: () => {
+        const t = s.t, ex = sx + (x - sx) * t, ey = 880 + (y - 880) * t - 4 * (880 - peak) * t * (1 - t) * 0.9;
+        gsap.set(l, { x: ex, y: ey, rotation: spin * t });
+      }, onComplete: () => {
+        gsap.fromTo(l, { scaleY: 0.7, scaleX: 1.2 }, { scaleY: 1, scaleX: 1, duration: 0.35, ease: 'elastic.out(1.2, 0.5)', transformOrigin: '50% 100%' });
+        puff(x, y + 9);
+        gsap.fromTo(p.count, { scale: 1.35, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.4, ease: 'back.out(3)' });
+        leader();
+      } });
+    }
+    function removeLog(key) {
+      const p = P.piles?.find((q) => q.key === key);
+      if (!p || !p.logs.length) return;
+      const l = p.logs.pop(); p.n--; p.count.textContent = p.n;
+      gsap.to(l, { y: '-=40', opacity: 0, rotation: 40, duration: 0.5, ease: 'power2.in', onComplete: () => l.remove() });
+      leader();
+    }
+    // a small puff of wood dust where a log lands
+    function puff(x, y) {
+      for (let k = 0; k < 5; k++) {
+        const d = D.el('circle', { cx: x, cy: y, r: 2.4, style: 'fill: #d9b27a', 'data-bg': '' }, svg);
+        gsap.to(d, { attr: { cx: x + (Math.random() - 0.5) * 40, cy: y - 6 - Math.random() * 16 }, opacity: 0, duration: 0.5, ease: 'power2.out', onComplete: () => d.remove() });
+      }
+    }
+    // the leader glows and grows a little (ties: all of the top ones)
+    function leader(animate = true) {
+      if (!P.piles) return;
+      const max = Math.max(...P.piles.map((p) => p.n));
+      P.piles.forEach((p) => {
+        const lead = max > 0 && p.n === max;
+        gsap.to(p.glow, { opacity: lead ? 1 : 0, duration: animate ? 0.4 : 0 });
+        gsap.to(P.cards[p.k], { scale: lead ? S * 1.06 : S, x: lead ? ROWX(p.k) - 6 : ROWX(p.k), y: lead ? ROWY - 4 : ROWY, duration: animate ? 0.5 : 0, ease: 'back.out(2)' });
+      });
+    }
+    // the QR code beside the chat: join here
+    function joinCode() {
+      const g = D.g(svg, { 'data-unit': '' });
+      const x = 80, y = 600, size = 124, pad = 10;
+      D.el('rect', { x, y, width: size, height: size, rx: 8, style: 'fill: #fff3e3' }, g);
+      const code = QRCode.create(SITE, { errorCorrectionLevel: 'M' }).modules;
+      const n = code.size, m = (size - pad * 2) / n;
+      let d = '';
+      for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (code.data[r * n + c]) d += `M${(x + pad + c * m).toFixed(2)} ${(y + pad + r * m).toFixed(2)}h${m.toFixed(2)}v${m.toFixed(2)}h-${m.toFixed(2)}z`;
+      D.p(g, d, '', { style: 'fill: #1a120c; stroke: none', 'shape-rendering': 'crispEdges' });
+      D.text(g, x + size + 20, y + 52, 'Stem på telefonen', 'qj', { style: 'font: 800 24px var(--font-display); fill: var(--fg)' });
+      D.text(g, x + size + 20, y + 82, SITE.replace(/^https?:\/\//, ''), 'qs', { style: 'font: 700 15px var(--font-mono); fill: var(--accent)' });
+      return g;
+    }
+    // sudden death: a big countdown; the contenders stay lit, the rest step back
+    function sudden(v) {
+      if (P.sd) return;
+      const g = D.g(svg, { 'data-unit': '' });
+      D.text(g, 1200, 182, 'UTSLAGSRUNDE', 'sdl', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); letter-spacing: .22em; fill: var(--accent)' });
+      const num = D.text(g, 1200, 262, '15', 'sdn', { 'text-anchor': 'middle', style: 'font: 800 84px var(--font-display); fill: var(--fg)' });
+      gsap.fromTo(g, { opacity: 0, scale: 0.8, transformOrigin: '1200px 220px' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' });
+      const offset = (v.now || Date.now()) - Date.now();
+      let last = null;
+      P.sdTimer = setInterval(() => {
+        const left = Math.max(0, Math.ceil((v.endsAt - (Date.now() + offset)) / 1000));
+        if (left !== last) { num.textContent = left; gsap.fromTo(num, { scale: 1.25, transformOrigin: '1200px 240px' }, { scale: 1, duration: 0.4, ease: 'power3.out' }); last = left; }
+        if (!left) clearInterval(P.sdTimer);
+      }, 100);
+      P.piles.forEach((p) => { if (!v.contenders.includes(p.key)) gsap.to([p.g, P.cards[p.k]], { opacity: 0.25, duration: 0.5 }); });
+      P.sd = g;
+    }
+    // a chop in the sudden death: a chip flies onto that pile
+    function chip(key) {
+      const p = P.piles?.find((q) => q.key === key);
+      if (!p) return;
+      const c = D.el('rect', { x: -5, y: -3, width: 10, height: 6, rx: 2, style: 'fill: #d9b27a; stroke: #1a120c; stroke-width: 1.6', 'data-bg': '' }, svg);
+      const sx = 300 + Math.random() * 1000, tx = p.cx + (Math.random() - 0.5) * 120, ty = 560 - Math.random() * 60;
+      gsap.fromTo(c, { x: sx, y: 880, rotation: 0 }, { x: tx, y: ty, rotation: (Math.random() - 0.5) * 720, duration: 0.7, ease: 'power2.out', onComplete: () => gsap.to(c, { opacity: 0, duration: 0.6, delay: 0.4, onComplete: () => c.remove() }) });
+    }
+    // the end: three in the bin, the winner grows back and is stamped
+    function finale(pick, instantly = false) {
+      const tl = gsap.timeline();
+      if (P.sd) tl.to(P.sd, { opacity: 0, duration: 0.3 }, 0);
+      tl.to([...(P.piles || []).map((p) => p.g), P.qr].filter(Boolean), { opacity: 0, duration: 0.4 }, 0);
+      const bin = D.g(svg, { 'data-bg': '' });
+      D.p(bin, 'M1370 620 L1385 760 H1455 L1470 620 Z', 'ln');
+      D.p(bin, 'M1360 612 H1480 M1400 612 V600 H1440 V612', 'ln');
+      tl.fromTo(bin, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.3);
+      let n = 0;
+      P.cards.forEach((c, k) => {
+        if (k === pick) return;
+        const at = 0.9 + n++ * 0.3;
+        tl.to(c, { opacity: 1, duration: 0.01 }, at - 0.05);
+        tl.to(c, { scale: 0.02, x: `+=${100}`, y: `+=${56}`, rotation: 20, opacity: 0, duration: 0.45, ease: 'power2.in' }, at);
+        const ball = D.el('circle', { cx: 1420, cy: 560, r: 12, style: 'fill: #e7dccb; stroke: #1a120c', 'stroke-width': 2, opacity: 0, 'data-bg': '' }, svg);
+        tl.to(ball, { opacity: 1, duration: 0.05 }, at + 0.35);
+        tl.to(ball, { attr: { cy: 650 }, duration: 0.35, ease: 'power2.in' }, at + 0.35);
+        tl.to(ball, { opacity: 0, duration: 0.1 }, at + 0.7);
+      });
+      tl.to(bin, { opacity: 0, duration: 0.3 }, 2.0);
+      tl.to(P.cards[pick], { x: 620, y: 160, scale: 1, opacity: 1, duration: 1.0, ease: 'power2.inOut' }, 2.3);
+      const st = D.stamp(D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' }), 1340, 694, 'VALGT', { size: 40, rotate: -6 });
+      tl.add(D.slam(st), 3.4);
+      if (instantly) tl.progress(1);
+      return tl;
+    }
+    function runFinale(key) {
+      if (P.done) return;
+      P.done = true;
+      clearTimeout(P.await);
+      ctx.track(finale(KEYS.indexOf(key in ACC ? key : 'peis')));
+    }
+    const offRelay = onRelay((m) => {
+      if (!P.live) return;
+      if (m.type === 'voted') { addLog(m.choice); if (m.prev) removeLog(m.prev); }
+      if (m.type === 'chopped') chip(m.choice);
+      if (m.type === 'vote-state' && m.vote.phase === 'sudden') sudden(m.vote);
+      if (m.type === 'vote-state' && m.vote.phase === 'closed' && m.vote.winner && P.step === 3) runFinale(m.vote.winner);
+    });
+
     const play = (i, instant) => {
+      P.step = i;
       const tl = gsap.timeline();
       if (i === 0) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
@@ -84,40 +244,42 @@ export default {
       }
 
       if (i === 2) {
-        // side by side for the pick; three in the bin; one fills the frame
-        const s = 0.24;
-        // the shown card shrinks into its slot; the other three fade in at theirs (no fanning through each other)
+        // the vote: four in a row, a woodpile under each; the room votes on their phones
         P.cards.forEach((c, k) => {
           tl.set(c, { transformOrigin: '0% 0%' }, 0);
-          if (k === P.cards.length - 1) tl.to(c, { x: 600 + k * 222, y: 320, scale: s, rotation: 0, opacity: 1, duration: 0.6, ease: 'power2.inOut' }, 0);
-          else {
-            tl.set(c, { x: 600 + k * 222, y: 320, scale: s, rotation: 0, opacity: 0 }, 0);
-            tl.to(c, { opacity: 1, duration: 0.3 }, 0.6 + k * 0.1);
-          }
+          if (k === P.cards.length - 1) tl.to(c, { x: ROWX(k), y: ROWY, scale: S, rotation: 0, opacity: 1, duration: 0.6, ease: 'power2.inOut' }, 0);
+          else { tl.set(c, { x: ROWX(k), y: ROWY, scale: S, rotation: 0, opacity: 0 }, 0); tl.to(c, { opacity: 1, duration: 0.3 }, 0.6 + k * 0.1); }
         });
-        const bin = D.g(svg, { 'data-bg': '' });
-        D.p(bin, 'M1370 620 L1385 760 H1455 L1470 620 Z', 'ln');
-        D.p(bin, 'M1360 612 H1480 M1400 612 V600 H1440 V612', 'ln');
-        tl.fromTo(bin, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.8);
-        const pick = 3;
-        P.cards.forEach((c, k) => {
-          if (k === pick) return;
-          // crumple in place (no flight across the other cards), a paper ball drops in the bin
-          tl.to(c, { scale: 0.02, x: `+=${100}`, y: `+=${56}`, rotation: 20, opacity: 0, duration: 0.45, ease: 'power2.in' }, 1.6 + k * 0.3);
-          const ball = D.el('circle', { cx: 1420, cy: 560, r: 12, style: 'fill: #e7dccb; stroke: #1a120c', 'stroke-width': 2, opacity: 0, 'data-bg': '' }, svg);
-          tl.to(ball, { opacity: 1, duration: 0.05 }, 1.95 + k * 0.3);
-          tl.to(ball, { attr: { cy: 650 }, duration: 0.35, ease: 'power2.in' }, 1.95 + k * 0.3);
-          tl.to(ball, { opacity: 0, duration: 0.1 }, 2.3 + k * 0.3);
-        });
-                tl.to(bin, { opacity: 0, duration: 0.3 }, 2.6);
-        // the chosen one grows back to full size
-        tl.to(P.cards[pick], { x: 620, y: 160, scale: 1, duration: 1.0, ease: 'power2.inOut' }, 3.0); // after the others are in the bin
-        const st = D.stamp(D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' }), 1340, 694, 'VALGT', { size: 40, rotate: -6 }); // beside the chosen direction's name, under the card
-        tl.add(D.slam(st), 4.1);
+        tl.to(P.chat.root, { opacity: 0.35, duration: 0.4 }, 0);
+        P.piles = KEYS.map((key, k) => pile(key, k));
+        P.qr = joinCode();
+        tl.fromTo([...P.piles.map((p) => p.g), P.qr], { opacity: 0 }, { opacity: 1, duration: 0.5, stagger: 0.05 }, 0.8);
+        tl.call(() => relaySend({ type: 'vote-open' }, !instant && !ctx.deck?.instant), null, 0.6);
+        // votes already in (coming back to the slide): stack them without animation
+        const v = relayState.vote;
+        if (v?.tally && v.phase !== 'idle') KEYS.forEach((key) => { for (let n = 0; n < (v.tally[key] || 0); n++) addLog(key, false); });
+        tl.call(() => leader(false), null, 1.3); // after the cards have settled into the row
+        P.live = true;
+      }
+
+      if (i === 3) {
+        // closed: the relay decides (or a sudden death does); without it, Varm peis
+        P.live = true;
+        tl.call(() => relaySend({ type: 'vote-close' }, !instant && !ctx.deck?.instant), null, 0.1);
+        const v = relayState.vote;
+        if (instant || ctx.deck?.instant || !relayState.connected) {
+          // replays and audits: the result as it stands (or the default)
+          const winner = v?.phase === 'closed' && v.winner ? v.winner : 'peis';
+          tl.add(finale(KEYS.indexOf(winner), true), 0);
+        } else {
+          // the live result arrives as a message; a fallback if it never does
+          P.await = setTimeout(() => { if (!P.done) runFinale('peis'); }, 25000);
+        }
       }
       return tl;
     };
 
-    return D.stepper(ctx, { reset, play });
+    const st = D.stepper(ctx, { reset, play });
+    return { ...st, dispose() { offRelay(); clearTimeout(P.await); clearInterval(P.sdTimer); } };
   },
 };

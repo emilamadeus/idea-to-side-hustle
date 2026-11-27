@@ -219,6 +219,7 @@ Point: example from work. The speaker used AI to track the upstream gateway team
 - Material: illustrative, not real release notes. Build numbers increase; each build adds camera support features (e.g. privacy mode, snapshots, recordings, motion). Some builds contain nothing camera-related, so nothing on the board flips: the AI says so and you skip reading that changelog.
 
 ## Throwaway prototypes to decide [given]
+- Live vote (src/slides/prototypes.js, phone: ved/public/js/vote.js): four equally finished directions (src/engine/landings.js: Skog, Nordisk enkel, Rask levering, Varm peis). The room votes on their phones ("Velg visuell retning"); every vote is a log that arcs onto a woodpile under its design, the leader glows. Closing: a tie becomes a 15-second sudden death (phones chop, chips fly, countdown on the TV). Three in the bin, the winner stamped VALGT. No votes: Varm peis. The winner becomes ved.atladeus.com's look and the go-live window shows it. QR to join on the title slide. Deploy the site with `npm run ved:deploy` (it syncs the shared drawings first).
 - Built: src/slides/prototypes.js.
 Point: build several versions and pick, instead of debating one.
 - Example: the firewood subscription's landing page: four real proposals (Skog, Nordisk enkel, Rask levering, Varm peis), same offer "Ved på døra. Hver 14. dag, hele vinteren. Bestill"; one picked (Varm peis), the rest binned.
