@@ -483,10 +483,13 @@
   };
   msgs.forEach(renderMsg);
   let bannerTimer;
+  const ICON_VED = $('#banner .ic').innerHTML;
+  const ICON_CLAUDE = '<svg width="22" height="22" viewBox="0 0 24 24"><g stroke="#1a0d07" stroke-width="2.6" stroke-linecap="round"><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/></g></svg>';
   const notify = (m) => {
     m.t = Date.now();
-    msgs.push(m); store.set('ved-msgs', msgs);
-    renderMsg(m);
+    const fromTalk = m.app === 'claude';
+    $('#banner .ic').innerHTML = fromTalk ? ICON_CLAUDE : ICON_VED;
+    if (!fromTalk) { msgs.push(m); store.set('ved-msgs', msgs); renderMsg(m); }
     $('#bannerTitle').textContent = m.title || 'Ved.';
     $('#bannerText').textContent = m.text;
     $('#banner').classList.add('show');

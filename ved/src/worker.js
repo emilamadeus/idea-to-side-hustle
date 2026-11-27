@@ -140,6 +140,10 @@ export class Room {
       this.send('cust', { type: 'reset' });
       this.send('deck', { type: 'snapshot', open: this.open, orders: [] });
     }
+    // a message to every open phone: { type: 'broadcast', app, title, text } (the talk's own buzzes)
+    if (m.type === 'broadcast') {
+      this.send('cust', { type: 'notify', app: String(m.app || '').slice(0, 20), title: String(m.title || '').slice(0, 60), text: String(m.text || '').slice(0, 140), all: true });
+    }
     // a message to the phones behind some orders: { type: 'notify', ids: [...], title, text }
     if (m.type === 'notify' && Array.isArray(m.ids)) {
       const msg = { type: 'notify', title: String(m.title || '').slice(0, 60), text: String(m.text || '').slice(0, 140) };

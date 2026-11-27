@@ -131,6 +131,7 @@ Point: a big win. The AI always sends a notification when it is done or needs a 
 - Titles: step 0–1 "Remote sessions med notifikasjoner.", step 2 "Cloud sessions når maskinen ikke kjører."
 
 ## Always working (humor) [given]
+- Live: every time the developer's phone buzzes on the slide, every phone in the room that has ved.atladeus.com open gets the same notification as a "Claude Code" banner (and a buzz on Android). Sent only from the audience window, never on replays (src/engine/relay.js).
 Point: being this productive with AI means you are always working. Notifications arrive at odd times and you start the next task.
 - Storyboard [built]: one main character across three scenes (lunch and Christmas Eve were cut). Clock spins to each moment; attention ring shows HER vs JOBB.
   In every scene the phone buzzes (vibration arcs), lights up the face, the head turns, the notification pops out of the phone, a one-word reply, "→ neste oppgave startet", while the others keep talking.

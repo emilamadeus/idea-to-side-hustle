@@ -1,4 +1,5 @@
 import gsap from 'gsap';
+import { phones } from '../engine/relay.js';
 import * as D from '../engine/draw.js';
 import { speech as sharedSpeech } from '../engine/props.js';
 import { figure, lyingHead, PALETTE } from '../engine/characters.js';
@@ -542,6 +543,7 @@ export default {
       tl.call(() => { P.clock.label.textContent = `${s.day.toUpperCase()} ${s.time}`; }, null, 0.2);
       tl.to(night, { opacity: s.night, duration: 1.2 }, 0.1);
       setAttention(tl, 1, 0.3);
+      tl.call(() => phones({ text: s.msg }, liveNow), null, base);
       tl.to(h.arcs, { opacity: 1, duration: 0.12, yoyo: true, repeat: 5 }, base);
       tl.to(h.screen, { opacity: 1, duration: 0.2 }, base);
       tl.to(h.glow, { opacity: 1, duration: 0.5 }, base + 0.05);
@@ -600,6 +602,7 @@ export default {
     }
 
     // ---------- steps ----------
+    let liveNow = false; // set per step: whether this step plays for real
     const reset = () => {
       loops.forEach((l) => l.kill()); loops = [];
       killScene();
@@ -647,6 +650,8 @@ export default {
       setAttention(tl, 1, 0.4);
 
       // the buzz: phone vibrates and lights up, eyes drop to it, notification pops out
+      // … and every phone in the room gets the same notification
+      tl.call(() => phones({ text: s.msg }, liveNow), null, T.buzz);
       tl.to(h.arcs, { opacity: 1, duration: 0.12, yoyo: true, repeat: 5 }, T.buzz);
       if (!instant) tl.fromTo(h.phone.querySelectorAll('rect'), { x: -3 }, { x: 3, duration: 0.05, repeat: 9, yoyo: true, clearProps: 'x' }, T.buzz);
       tl.to(h.screen, { opacity: 1, duration: 0.2 }, T.buzz);
@@ -672,6 +677,7 @@ export default {
     };
 
     const play = (i, instant) => {
+      liveNow = !instant && !ctx.deck?.instant; // replays and audits never buzz the room
       const tl = gsap.timeline();
       const st = STEPS[i];
       if (i === 0) {
