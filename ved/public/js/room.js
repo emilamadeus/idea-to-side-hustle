@@ -90,6 +90,7 @@ function onShift(m) {
   document.body.append(shift);
 }
 function onAlert(m) {
+  window.vedWake?.('Vakten din');
   alertEl?.remove();
   alertEl = document.createElement('div');
   alertEl.className = 'room-alert';
@@ -247,6 +248,7 @@ function mirrorBall() {
 
 // ---------- awards ----------
 function onAward(m) {
+  window.vedWake?.('Du fikk en pris');
   const o = document.createElement('div');
   o.className = 'room-award';
   o.innerHTML = `<div class="room-card"><svg class="room-medal" viewBox="0 0 96 96"><path d="M34 6h28l-6 30H40z" fill="#ff5a1f"/><circle cx="48" cy="58" r="30" fill="#ffd23f" stroke="#1a120c" stroke-width="4"/><circle cx="48" cy="58" r="20" fill="none" stroke="#b8860b" stroke-width="3"/><path d="M48 44l4 9 10 1-7.5 6.5 2.5 9.5-9-5-9 5 2.5-9.5L34 54l10-1z" fill="#fff3c0"/></svg>

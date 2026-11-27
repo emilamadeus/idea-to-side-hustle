@@ -44,6 +44,8 @@ function connect() {
     if (typeof m.price === 'number' && (m.type === 'snapshot' || m.type === 'price-set')) relayState.price = m.price; // the room's price for a sack
     if (m.type === 'joined' && m.p && !relayState.people.some((p) => p.id === m.p.id)) relayState.people = [...relayState.people, m.p];
     if (m.type === 'joined' && m.p) relayState.people = relayState.people.map((p) => (p.id === m.p.id ? m.p : p));
+    // a sudden death ends by itself on the relay; the clicker ends when the holder clicks
+    if ((m.type === 'vote-state' && m.vote?.phase === 'closed') || m.type === 'clicker-next') roomCue(false);
     subs.forEach((fn) => { try { fn(m); } catch (err) { console.error(err); } });
   };
   ws.onclose = () => { relayState.connected = false; ws = null; clearTimeout(timer); timer = setTimeout(connect, 2000); };
@@ -51,8 +53,18 @@ function connect() {
 }
 connect();
 
+// The TV's cue that a room activity is open: a yellow phone cell in the title block. It follows
+// the commands that open and close an activity on the phones; a slide without def.room clears it.
+const CUE_ON = ['price-open', 'bug-start', 'clicker-start', 'arena-open', 'vote-open', 'sudden-start', 'watch-start'];
+const CUE_OFF = ['price-close', 'bug-end', 'clicker-end', 'arena-end', 'vote-close', 'watch-end', 'reset', 'people-reset'];
+export function roomCue(on) {
+  if (typeof document === 'undefined') return;
+  document.body.classList.toggle('room-on', !!on);
+}
 export function relaySend(msg, live = true) {
   if (!live || !control || !KEY) return;
+  if (CUE_ON.includes(msg.type)) roomCue(true);
+  if (CUE_OFF.includes(msg.type)) roomCue(false);
   const m = JSON.stringify(msg);
   const s = connect();
   if (s?.readyState === 1) s.send(m); else queue.push(m);

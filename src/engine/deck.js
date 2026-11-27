@@ -1,5 +1,5 @@
 import { createZoom } from './zoom.js';
-import { relaySend } from './relay.js';
+import { relaySend, roomCue } from './relay.js';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { createStage } from './stage.js';
@@ -34,6 +34,7 @@ export async function start(defs, role, theme) {
     <div class="deco">
       <i class="crop tl"></i><i class="crop tr"></i><i class="crop bl"></i><i class="crop br"></i>
       <div class="title-block">
+        <div class="tb-room"><i></i><span>Ta frem<b>telefonen</b></span></div>
         <div>Tegning<b class="tb-title"></b></div>
         <div class="tb-sheet">Ark<b class="tb-n"></b></div>
         <div class="tb-step">Steg<b class="tb-dots"></b></div>
@@ -200,6 +201,12 @@ class Deck {
     else gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.8 });
     this.setHelp(); // after enter, so it can wait for the step's animation
     this.pocket(def, tipHtml, index);
+    // the phones show which sheet the talk is on (dimmed, under "look at the screen")
+    if (!this.preview && !this.instant) {
+      const part = def.stage !== undefined ? ['Idé', 'Plan', 'Bygg', 'Kvalitet', 'Lansering'][def.stage] : def.part || '';
+      relaySend({ type: 'sheet', n: index + 1, total: this.defs.length, part, title: def.title || '' });
+    }
+    if (!def.room) roomCue(false);
   }
 
   // A slide with def.pocket sends its tip to the phones, which collect them into a list the

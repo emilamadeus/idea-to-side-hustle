@@ -108,6 +108,7 @@ const now = () => Date.now() + (A?.off || 0);
 
 function open(m) {
   if (A) { A.R = m.R || A.R; return; }
+  if (!m.out) window.vedWake?.('Arenaen');
   const root = document.createElement('div');
   root.className = 'ar';
   root.innerHTML = `
@@ -139,6 +140,7 @@ function open(m) {
 
 function close(fast) {
   if (!A) return;
+  window.vedWakeCancel?.();
   noZoom(false);
   const r = A.root; cancelAnimationFrame(A.raf); A = null;
   if (fast) { r.remove(); return; }

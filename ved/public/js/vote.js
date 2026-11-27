@@ -149,6 +149,12 @@ function chopButton(key) {
 
 function render() {
   const p = vote.phase;
+  // the phone lights up as the vote or the sudden death opens (or as the page loads into one)
+  if (p !== lastPhase) {
+    if (p === 'open') window.vedWake?.('Stem på designet');
+    else if (p === 'sudden') window.vedWake?.('Hogg for favoritten');
+    else window.vedWakeCancel?.();
+  }
   ui.vote.classList.toggle('hide', p !== 'open');
   ui.sudden.classList.toggle('hide', p !== 'sudden');
   if (p === 'open') {

@@ -35,6 +35,7 @@
             arena-roster { list } · arena-state { … } (passed straight to the phones)
             phone ← arena { phase, R, at, now } · the deck's arena-* messages        phone → apos { x, y, a } · afire { x, y, a } · acheer
             deck ← apos / afire { id, x, y, a } · acheer { id }
+    deck  → sheet { n, total, part, title }    phone ← sheet { sheet } · state.sheet       the slide the talk is on
     deck  → talk { on } · tip { id, n, total, part, text, em }   phone ← talk { on, tips } · tip { tip } · state.talk/tips
                                                the tip list that replaces the waiting room once the talk starts
     deck  → where { label }                    phone ← where { label }       the talk's current part, shown in the lobby
@@ -131,7 +132,8 @@ export class Room {
       this.g = (await ctx.storage.get('game')) ?? null;               // the running room game (price, bug, clicker, arena)
       this.price = (await ctx.storage.get('price')) ?? 129;
       this.talk = (await ctx.storage.get('talk')) ?? false;           // the talk has started: phones show the tip list
-      this.tips = (await ctx.storage.get('tips')) ?? [];              // the tips so far, one per slide, in talk order          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
+      this.tips = (await ctx.storage.get('tips')) ?? [];              // the tips so far, one per slide, in talk order
+      this.sheet = (await ctx.storage.get('sheet')) ?? null;          // the slide the talk is on { n, total, part, title }          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
     });
   }
 
@@ -178,7 +180,7 @@ export class Room {
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
       ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster(), price: this.price }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, talk: this.talk, tips: this.tips, game: this.gameFor(voter) }));
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, talk: this.talk, tips: this.tips, sheet: this.sheet, game: this.gameFor(voter) }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -249,6 +251,12 @@ export class Room {
     if (m.type === 'talk') {
       this.talk = !!m.on; await this.ctx.storage.put('talk', this.talk);
       this.send('cust', { type: 'talk', on: this.talk, tips: this.tips });
+    }
+    if (m.type === 'sheet') {
+      const clean = (v, n) => String(v ?? '').slice(0, n);
+      this.sheet = { n: Number(m.n) || 0, total: Number(m.total) || 0, part: clean(m.part, 30), title: clean(m.title, 60) };
+      await this.ctx.storage.put('sheet', this.sheet);
+      this.send('cust', { type: 'sheet', sheet: this.sheet });
     }
     if (m.type === 'tip' && m.id) {
       const clean = (v, n) => String(v ?? '').slice(0, n);

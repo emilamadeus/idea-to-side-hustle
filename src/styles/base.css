@@ -189,7 +189,7 @@ body.role-preview .hud-progress { display: none; }
 .deco .crop.br { right: calc(var(--u) * 2); bottom: calc(var(--u) * 2); border-width: 0 2px 2px 0; }
 .title-block {
   position: absolute; right: calc(var(--u) * 3); bottom: calc(var(--u) * 3);
-  display: grid; grid-template-columns: auto auto auto;
+  display: grid; grid-template-columns: auto auto auto auto;
   border: 2px solid var(--deco);
   font: 400 calc(var(--u) * .78) var(--font-mono); color: var(--muted);
   text-transform: uppercase; letter-spacing: .08em;
@@ -200,6 +200,20 @@ body.role-preview .hud-progress { display: none; }
 .title-block > div:first-child { border-left: 0; }
 .title-block b { display: block; font-weight: 700; color: var(--fg); font-size: calc(var(--u) * .95); letter-spacing: .04em; }
 .title-block .tb-sheet b { color: var(--accent-2); }
+/* the room cue: a yellow cell with a phone, while a room activity is open on the phones */
+.title-block { transition: opacity .5s; }
+.title-block .tb-room { display: none; }
+.title-block .tb-room + div { border-left: 0; }
+body.room-on .title-block .tb-room + div { border-left: 2px solid var(--deco); }
+body.room-on .title-block { opacity: 1; }
+body.room-on .title-block .tb-room { display: flex; align-items: center; gap: calc(var(--u) * .7); background: #ffd23f; color: #1a120c;
+  font-weight: 700; animation: tb-room-in .6s cubic-bezier(.2,.8,.2,1) both; }
+body.room-on .title-block .tb-room b { color: #1a120c; font-size: calc(var(--u) * 1.05); }
+.tb-room i { position: relative; width: calc(var(--u) * 1.15); height: calc(var(--u) * 1.9); border: 2.5px solid #1a120c; border-radius: calc(var(--u) * .3); flex: none; }
+.tb-room i::after { content: ''; position: absolute; left: 50%; bottom: 12%; width: 22%; aspect-ratio: 1; margin-left: -11%; border-radius: 50%; background: #1a120c; }
+.tb-room i::before { content: ''; position: absolute; inset: calc(var(--u) * -.55); border-radius: 50%; border: 2.5px solid #1a120c; opacity: 0; animation: tb-ring 1.8s ease-out infinite; }
+@keyframes tb-ring { 0% { opacity: .7; transform: scale(.6); } 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes tb-room-in { from { opacity: 0; transform: translateX(calc(var(--u) * 1)); } }
 /* step dots: past filled, current fills as its animation plays, glows when it is time to click */
 .title-block .tb-dots { display: flex; gap: calc(var(--u) * .35); align-items: center; height: calc(var(--u) * 1.2); }
 .tb-dots i {

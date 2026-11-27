@@ -61,8 +61,11 @@ css.textContent = `
 document.head.append(css);
 
 let card = null, kind = null;
+const WAKE = { price: 'Sett prisen', bug: 'Finn feilen', clicker: 'Fjernkontrollen' };
 function open(k, html) {
+  const again = kind === k;
   close(true);
+  if (!again && WAKE[k]) window.vedWake?.(WAKE[k]); // the phone lights up: your turn
   kind = k;
   card = document.createElement('div');
   card.className = 'pl';
@@ -73,6 +76,7 @@ function open(k, html) {
 function close(now) {
   if (!card) return;
   const c = card; card = null; kind = null;
+  window.vedWakeCancel?.();
   clearInterval(c._timer);
   if (now) { c.remove(); return; }
   c.classList.add('out'); setTimeout(() => c.remove(), 450);
