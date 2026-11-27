@@ -289,6 +289,7 @@ export function createZoom(deck, stage) {
       gsap.to(particles.uniforms.uSize, { value: baseSize * 3.2, duration: 1.4 });
       stage.setBloom({ strength: 0.08, duration: 0.8 });
       gsap.to(rig, { parallax: 3, duration: 1 });
+      gsap.to(roomFade, { v: 1, duration: 1.2, delay: 0.8 });
       sel = deck.index;
     }
     if (focus != null) sel = focus;
@@ -305,6 +306,7 @@ export function createZoom(deck, stage) {
     panels.forEach((q) => { if (q !== p) gsap.to([q.mat, q.edgeMat], { opacity: 0, duration: 0.4 }); });
     labels.forEach((m) => gsap.to(m.material, { opacity: 0, duration: 0.3 }));
     gsap.to(streamMat, { opacity: 0, duration: 0.3 });
+    gsap.to(roomFade, { v: 0, duration: 0.4 });
     p.holder.visible = true;
     gsap.to(p.holder.position, { x: 0, y: 0, z: 0, duration: 1.1, ease: 'power3.inOut' });
     gsap.to(p.holder.scale, { x: 1, y: 1, z: 1, duration: 1.1, ease: 'power3.inOut' });
@@ -436,6 +438,98 @@ export function createZoom(deck, stage) {
 
   // the room picked another design: themed panels swap their pictures
   onRelay((m) => { if (m.theme) panels.forEach((p, i) => { if (defs[i].themed) loadPicture(defs[i], i, p.mesh.material); }); });
+
+  // ── the room: everyone who joined from a phone drifts in the space behind the panels, by
+  // name. They sit at different depths, so the view's pointer parallax moves them like the rest
+  // of the space; spread over the whole view in join order (a Halton sequence, so they never bunch).
+  const ROOM_C = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '#ffb25e', '#9be7b0'];
+  const roomGroup = new THREE.Group();
+  world.add(roomGroup);
+  const room = new Map(); // id → { g, glow, tag, home, ph, pop }
+  const roomFade = { v: 0 };
+  const halton = (i, b) => { let f = 1, r = 0; while (i > 0) { f /= b; r += f * (i % b); i = Math.floor(i / b); } return r; };
+  const CAMZ = 18, ZP = -8;
+  function nameSprite(name, color) {
+    const c = document.createElement('canvas');
+    const x = c.getContext('2d');
+    const font = '800 88px "Bricolage Grotesque", sans-serif';
+    x.font = font;
+    c.width = Math.ceil(x.measureText(name).width + 60); c.height = 128;
+    x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.shadowColor = color; x.shadowBlur = 18;
+    x.fillStyle = color; x.fillText(name, c.width / 2, 66);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+    sp.userData.aspect = c.width / c.height;
+    return sp;
+  }
+  function addPerson(p, burst = false) {
+    const known = room.get(p.id);
+    if (known) {
+      if (p.name && known.name !== p.name) { known.tag?.removeFromParent(); known.tag = nameSprite(p.name, known.color); known.name = p.name; known.g.add(known.tag); sizeTag(known); }
+      return;
+    }
+    const color = ROOM_C[(p.n - 1) % ROOM_C.length];
+    const z = ZP - 2 - halton(p.n, 5) * 8;              // behind the panels, at different depths
+    const dist = CAMZ - z;
+    const L = layoutAll();
+    // a spot in a gap: seen from the camera, the name must not land behind a panel
+    const k = (CAMZ - ZP) / dist, u = viewH(dist) * 0.038;
+    // (and not on a section name, or on another name: every name keeps its own patch of sky)
+    const U = u * k; // a name's height, on the panel plane
+    const boxes = [
+      ...Object.values(L.pos).map((q) => ({ x: q.x, y: q.y, hw: (W0 * q.s) / 2, hh: (H0 * q.s) / 2 })),
+      ...L.lab.map((l) => ({ x: l.x, y: l.y, hw: 3.2 * l.size, hh: 0.5 * l.size })),
+      ...[...room.values()].map((o) => ({ x: o.seen.x, y: o.seen.y, hw: U * 2.6, hh: U * 1.4 })),
+    ];
+    const seenAt = (x, y) => ({ x: x * k, y: L.cam.look[1] + (y - L.cam.look[1]) * k - U * 0.5 });
+    const clear = (x, y) => { const c = seenAt(x, y); return boxes.every((b) => Math.abs(c.x - b.x) > b.hw + U * 2.8 || Math.abs(c.y - b.y) > b.hh + U * 1.5); };
+    let hx = 0, hy = 0;
+    for (let j = 0; j < 80; j++) {
+      const i = p.n + j * 97;
+      hx = (halton(i, 2) - 0.5) * viewW(dist) * 0.92; hy = (halton(i, 3) - 0.5) * viewH(dist) * 0.84 + L.cam.look[1];
+      if (clear(hx, hy)) break;
+    }
+    const g = new THREE.Group();
+    g.position.set(hx, hy, z);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: dot, color: new THREE.Color(color), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
+    g.add(glow);
+    const m = { g, glow, tag: null, name: p.name, color, dist, seen: seenAt(hx, hy), home: new THREE.Vector3(hx, hy, z), ph: Math.random() * Math.PI * 2, pop: { v: burst ? 0 : 1 } };
+    if (p.name) { m.tag = nameSprite(p.name, color); g.add(m.tag); }
+    sizeTag(m);
+    roomGroup.add(g);
+    room.set(p.id, m);
+    if (burst) gsap.to(m.pop, { v: 1, duration: 1.2, ease: 'power2.out' });
+  }
+  function sizeTag(m) {
+    const u = viewH(m.dist) * 0.038;                      // about the same size on screen at any depth
+    m.unit = u;
+    if (m.tag) { m.tag.scale.set(u * m.tag.userData.aspect, u, 1); m.tag.position.set(0, -u * 0.95, 0); }
+  }
+  function syncRoom(list) {
+    const ids = new Set(list.map((p) => p.id));
+    room.forEach((m, id) => { if (!ids.has(id)) { m.g.removeFromParent(); room.delete(id); } });
+    list.forEach((p) => addPerson(p));
+  }
+  syncRoom(relayState.people || []);
+  onRelay((m) => {
+    if (m.type === 'joined' && m.p) addPerson(m.p, !m.again && world.visible);
+    if (m.people) syncRoom(m.people);
+  });
+  stage.tick((t) => {
+    if (!world.visible || !room.size) return;
+    room.forEach((m) => {
+      m.g.position.set(
+        m.home.x + Math.sin(t * 0.11 + m.ph) * m.unit * 2.2,
+        m.home.y + Math.cos(t * 0.09 + m.ph * 1.3) * m.unit * 1.4,
+        m.home.z);
+      const pop = m.pop.v, flash = pop < 1 ? (1 - pop) * 5 : 0;  // a newcomer flares, then settles
+      const pulse = 0.85 + Math.sin(t * 1.4 + m.ph) * 0.15;
+      m.glow.scale.setScalar(m.unit * (1.1 + flash) * pulse);
+      m.glow.material.opacity = roomFade.v * Math.min(1, pop * 1.5) * 0.95;
+      if (m.tag) m.tag.material.opacity = roomFade.v * Math.max(0, pop * 1.4 - 0.4) * 0.92;
+    });
+  });
 
   // ── keys ──
   function move(dk) {
