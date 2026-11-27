@@ -76,13 +76,19 @@ css.textContent = `
   .lobby.talk .lb-top, .lobby.talk .lb-block { opacity: .55; }
   .lb-now { display: none; flex: 1; flex-direction: column; justify-content: center; padding: 0 4px 6svh; }
   .lobby.talk .lb-now { display: flex; }
-  .lb-look { display: flex; flex-direction: column; align-items: center; gap: 22px; margin: 0; color: #8a7360; text-align: center; }
+  .lb-look { position: relative; display: flex; flex-direction: column; align-items: center; gap: 22px; margin: 0; color: #dcc4a6; text-align: center; }
+  /* a warm glow that breathes behind the screen */
+  .lb-look::before { content: ''; position: absolute; left: 50%; top: 58px; width: 340px; height: 260px; margin: -130px 0 0 -170px; pointer-events: none; z-index: -1;
+    background: radial-gradient(closest-side, rgba(255,140,60,.34), rgba(255,90,31,.14) 45%, transparent 100%); filter: blur(8px);
+    animation: lb-breathe 5.5s ease-in-out infinite; }
+  @keyframes lb-breathe { 50% { opacity: .65; transform: scale(.94); } }
   .lb-screen { width: 168px; height: auto; overflow: visible; }
   .lb-screen .sweep { animation: lb-sweep 7s cubic-bezier(.45,0,.2,1) infinite; }
   @keyframes lb-sweep { 0%, 55% { transform: translateX(-150px); } 85%, 100% { transform: translateX(170px); } }
   .lb-screen .dot { animation: lb-dot 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
   @keyframes lb-dot { 50% { opacity: .45; transform: scale(.8); } }
-  .lb-look span { font-weight: 700; font-size: 22px; letter-spacing: -.01em; }
+  .lb-look span { font-weight: 700; font-size: 22px; letter-spacing: -.01em; text-shadow: 0 0 24px rgba(255,150,70,.35); }
+  .lb-screen { filter: drop-shadow(0 0 14px rgba(255,140,60,.35)); }
   .lobby.out .lb-top, .lobby.out .lb-hero, .lobby.out .lb-foot, .lobby.out .lb-count { transition: opacity .5s, transform .7s cubic-bezier(.6,0,.4,1); opacity: 0; }
   .lobby.out .lb-hero { transform: translateY(-24px); } .lobby.out .lb-foot { transform: translateY(24px); } .lobby.out .lb-count { transform: translate(-50%, -50%) scale(.4); }
   .lb-flash { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; clip-path: circle(0% at 50% var(--cy, 56%));
@@ -114,20 +120,20 @@ function mount() {
     <div class="lb-orbit"><canvas></canvas><div class="lb-count"><b>0</b><span>i salen</span></div></div>
     <div class="lb-now"><p class="lb-look"><svg class="lb-screen" viewBox="0 0 168 120" aria-hidden="true">
       <defs>
-        <linearGradient id="lbScr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2016"/><stop offset="1" stop-color="#1c140e"/></linearGradient>
-        <radialGradient id="lbGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff7a2f" stop-opacity=".22"/><stop offset="1" stop-color="#ff7a2f" stop-opacity="0"/></radialGradient>
-        <linearGradient id="lbSweep" x1="0" x2="1"><stop offset="0" stop-color="#fff3e3" stop-opacity="0"/><stop offset=".5" stop-color="#fff3e3" stop-opacity=".09"/><stop offset="1" stop-color="#fff3e3" stop-opacity="0"/></linearGradient>
+        <linearGradient id="lbScr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2a1c"/><stop offset="1" stop-color="#241911"/></linearGradient>
+        <radialGradient id="lbGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff7a2f" stop-opacity=".3"/><stop offset="1" stop-color="#ff7a2f" stop-opacity="0"/></radialGradient>
+        <linearGradient id="lbSweep" x1="0" x2="1"><stop offset="0" stop-color="#fff3e3" stop-opacity="0"/><stop offset=".5" stop-color="#fff3e3" stop-opacity=".14"/><stop offset="1" stop-color="#fff3e3" stop-opacity="0"/></linearGradient>
         <clipPath id="lbIn"><rect x="16" y="12" width="136" height="74" rx="3"/></clipPath>
       </defs>
       <ellipse cx="84" cy="56" rx="92" ry="58" fill="url(#lbGlow)"/>
-      <path d="M74 94 L69 108 M94 94 L99 108 M56 108 H112" fill="none" stroke="#8a7360" stroke-width="3" stroke-linecap="round"/>
-      <rect x="8" y="4" width="152" height="90" rx="8" fill="#16100b" stroke="#8a7360" stroke-width="3"/>
+      <path d="M74 94 L69 108 M94 94 L99 108 M56 108 H112" fill="none" stroke="#d1b493" stroke-width="3" stroke-linecap="round"/>
+      <rect x="8" y="4" width="152" height="90" rx="8" fill="#16100b" stroke="#d1b493" stroke-width="3"/>
       <rect x="16" y="12" width="136" height="74" rx="3" fill="url(#lbScr)"/>
       <g clip-path="url(#lbIn)">
-        <rect x="26" y="22" width="56" height="8" rx="2" fill="#8a7360" opacity=".75"/>
-        <rect x="26" y="34" width="38" height="8" rx="2" fill="#8a7360" opacity=".45"/>
-        <path d="M26 74 H140" stroke="#8a7360" stroke-width="2" opacity=".35"/>
-        <path d="M30 70 L52 60 L72 64 L94 50 L112 54 L134 40" fill="none" stroke="#b8932f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
+        <rect x="26" y="22" width="56" height="8" rx="2" fill="#d1b493" opacity=".9"/>
+        <rect x="26" y="34" width="38" height="8" rx="2" fill="#d1b493" opacity=".6"/>
+        <path d="M26 74 H140" stroke="#d1b493" stroke-width="2" opacity=".35"/>
+        <path d="M30 70 L52 60 L72 64 L94 50 L112 54 L134 40" fill="none" stroke="#ffd23f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>
         <circle class="dot" cx="134" cy="40" r="4" fill="#ff7a2f"/>
         <rect class="sweep" x="0" y="0" width="60" height="100" fill="url(#lbSweep)" transform="translate(-150 0)" style="transform-box: view-box"/>
       </g>
