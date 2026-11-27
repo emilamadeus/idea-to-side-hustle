@@ -75,7 +75,8 @@ export function createZoom(deck, stage) {
     loader.load(`/thumbs/${d.id}-${relayState.theme}.jpg`, (t) => setMap(mat, t), undefined, plain);
   }
   // slides where the room takes part from their phones (def.room) wear a small phone badge on
-  // the panel's top-right corner: a dark disc, a warm rim, a cream phone
+  // the panel's top-right corner: a yellow disc with an ink rim and an ink phone. It grows as you
+  // pull back, so it still reads from the whole-talk view.
   let badgeTex = null;
   function badgeTexture() {
     if (badgeTex) return badgeTex;
@@ -83,11 +84,11 @@ export function createZoom(deck, stage) {
     c.width = c.height = 128;
     const x = c.getContext('2d');
     x.beginPath(); x.arc(64, 64, 56, 0, Math.PI * 2);
-    x.fillStyle = '#1a120c'; x.fill();
-    x.lineWidth = 7; x.strokeStyle = '#8a6a4e'; x.stroke();
-    x.beginPath(); x.roundRect(46, 30, 36, 66, 8);
-    x.lineWidth = 7; x.strokeStyle = '#f3e9da'; x.stroke();
-    x.beginPath(); x.arc(64, 84, 4.5, 0, Math.PI * 2); x.fillStyle = '#f3e9da'; x.fill();
+    x.fillStyle = '#ffd23f'; x.fill();
+    x.lineWidth = 8; x.strokeStyle = '#1a120c'; x.stroke();
+    x.beginPath(); x.roundRect(46, 28, 36, 70, 8);
+    x.lineWidth = 8; x.strokeStyle = '#1a120c'; x.stroke();
+    x.beginPath(); x.arc(64, 85, 5, 0, Math.PI * 2); x.fillStyle = '#1a120c'; x.fill();
     badgeTex = new THREE.CanvasTexture(c);
     badgeTex.colorSpace = THREE.SRGBColorSpace;
     return badgeTex;
@@ -107,7 +108,10 @@ export function createZoom(deck, stage) {
     holder.add(edge, mesh);
     let badge = null;
     if (d.room) {
-      badge = new THREE.Mesh(badgeGeo, new THREE.MeshBasicMaterial({ map: badgeTexture(), transparent: true, opacity: 0, toneMapped: false, depthWrite: false }));
+      // drawn after the panels and on top of them: transparent meshes are sorted by distance, and
+      // with the parallax the panel could otherwise be drawn over it
+      badge = new THREE.Mesh(badgeGeo, new THREE.MeshBasicMaterial({ map: badgeTexture(), transparent: true, opacity: 0, toneMapped: false, depthWrite: false, depthTest: false }));
+      badge.renderOrder = 10;
       holder.add(badge);
     }
     world.add(holder);
@@ -449,6 +453,10 @@ export function createZoom(deck, stage) {
   // ── per frame: float, lift, hover ──
   stage.tick((t) => {
     if (!world.visible) return;
+    // a panel's share of the screen width, from close (~0.3) to the whole talk (~0.06)
+    const ps0 = layout ? Object.values(layout.pos) : [];
+    const share = ps0.length ? (ps0[0].s * 14) / Math.max(1, rig.pos.z - (view?.zP ?? -8)) : 1;
+    const grow = Math.max(1, Math.min(1.8, 0.18 / share));
     panels.forEach((p) => {
       if (!p.holder.visible) return;
       const m = p.mesh;
@@ -461,19 +469,18 @@ export function createZoom(deck, stage) {
       m.position.z = p.lift.v * 0.6; p.edge.position.z = m.position.z - 0.02;
       if (p.badge) {
         // rides the panel's corner and fades with it
-        const c = Math.cos(m.rotation.z), sn = Math.sin(m.rotation.z), hx = (W0 / 2) * k - BADGE * 0.42, hy = (H0 / 2) * k - BADGE * 0.42;
+        const c = Math.cos(m.rotation.z), sn = Math.sin(m.rotation.z), hx = (W0 / 2) * k - BADGE * 0.42 * grow, hy = (H0 / 2) * k - BADGE * 0.42 * grow;
+        p.badge.scale.setScalar(grow * k);
         p.badge.position.set(hx * c - hy * sn, m.position.y + hx * sn + hy * c, m.position.z + 0.03);
         p.badge.rotation.z = m.rotation.z;
-        p.badge.material.opacity = p.mat.opacity * 0.92;
+        p.badge.material.opacity = p.mat.opacity;
       }
     });
     if (streams.length) flowStreams(t);
     // background particles fade as the panels get smaller on screen: near a panel they are
     // atmosphere, from the whole talk they would read as noise next to the streams
     if (level && layout && !busy) {
-      const ps = Object.values(layout.pos);
-      const a = ps.length ? (ps[0].s * 14) / Math.max(1, rig.pos.z - (view?.zP ?? -8)) : 1; // a panel's share of the screen width
-      const want = Math.max(0.18, Math.min(0.85, 0.12 + a * 1.9));
+      const want = Math.max(0.18, Math.min(0.85, 0.12 + share * 1.9));
       const u = particles.uniforms.uOpacity;
       u.value += (want - u.value) * 0.06;
     }
