@@ -13,6 +13,7 @@
   site. Deck: vote-open → vote-close. A tie becomes a 15-second sudden death: phones chop at the
   tied contenders and the most chops wins. The winner becomes the site's theme. No votes, or a
   tie that stays tied, keeps the default (peis) when it is in the running.
+    deck: sudden-start skips the vote: all four go straight into a 15-second sudden death.
     phone → { type: 'vote', choice } · { type: 'chop', choice }
     deck  ← { type: 'vote-state', vote } on every change · { type: 'voted', choice, prev } ·
             { type: 'chopped', choice }
@@ -153,6 +154,12 @@ export class Room {
       await this.saveVote();
     }
     if (m.type === 'vote-close' && this.vote.phase === 'open') await this.closeVote();
+    // straight to sudden death, all four in it (the presenter's choice instead of a regular vote)
+    if (m.type === 'sudden-start' && (this.vote.phase === 'idle' || this.vote.phase === 'open' || this.vote.phase === 'closed')) {
+      this.vote = { phase: 'sudden', votes: {}, chops: Object.fromEntries(THEMES.map((k) => [k, 0])), contenders: [...THEMES], endsAt: Date.now() + SUDDEN_MS, winner: null, only: true };
+      await this.ctx.storage.setAlarm(this.vote.endsAt + 200);
+      await this.saveVote();
+    }
     if (m.type === 'vote-reset') {
       this.vote = { phase: 'idle', votes: {}, chops: {}, contenders: [], endsAt: 0, winner: null };
       this.theme = DEFAULT_THEME;
@@ -187,7 +194,7 @@ export class Room {
   // what a phone (or the deck) may see: counts, never who voted for what; a phone also gets its own vote
   public(voter = null) {
     const v = this.vote;
-    return { phase: v.phase, tally: this.tally(), chops: v.chops, contenders: v.contenders, endsAt: v.endsAt, winner: v.winner, mine: voter ? v.votes[voter] ?? null : undefined, now: Date.now() };
+    return { phase: v.phase, tally: this.tally(), chops: v.chops, contenders: v.contenders, endsAt: v.endsAt, winner: v.winner, only: !!v.only, mine: voter ? v.votes[voter] ?? null : undefined, now: Date.now() };
   }
   async saveVote() {
     await this.ctx.storage.put('vote', this.vote);

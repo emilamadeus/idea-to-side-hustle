@@ -17,7 +17,8 @@ const ROWX = (k) => ROW0 + k * (CARDW + GAP), ROWY = 280, PILE_Y = 572, COUNT_Y 
   The example is the firewood subscription's landing page, and the room picks it for real.
     0. Asked for four real proposals for the site.
     1. They flip past one at a time: Skog, Nordisk enkel, Rask levering, Varm peis.
-    2. The room votes on their phones (ved.atladeus.com). Each vote is a log that arcs up from the
+    2. The room votes on their phones (ved.atladeus.com). Or press S: no vote, all four go straight
+       into a 15-second sudden death (it finishes on its own; the next click moves on). Each vote is a log that arcs up from the
        bottom edge onto a woodpile under its design; the leader glows and grows a little.
     3. Closed. A tie becomes a 15-second sudden death: phones chop, chips fly onto the piles, a
        countdown runs. Then three go in the bin and the winner is stamped VALGT. No votes (or no
@@ -48,7 +49,7 @@ export default {
   notes: [
     'Fire ekte forslag til nettsiden for ved-abonnementet, i stedet for et møte om ett.',
     'Skog, Nordisk enkel, Rask levering, Varm peis.',
-    'Nå velger dere. Stem på telefonen: den som vinner, blir den ekte siden.',
+    'Nå velger dere. Stem på telefonen: den som vinner, blir den ekte siden. (S: rett til utslagsrunde for alle fire.)',
     'Stengt. Uavgjort gir utslagsrunde: hogg i 15 sekunder. Så kastes resten.',
   ],
 
@@ -164,12 +165,12 @@ export default {
       const g = D.g(svg, { 'data-unit': '' });
       D.text(g, 800, 160, 'UTSLAGSRUNDE', 'sdl', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); letter-spacing: .22em; fill: var(--accent)' });
       const num = D.text(g, 800, 240, '15', 'sdn', { 'text-anchor': 'middle', style: 'font: 800 80px var(--font-display); fill: var(--fg)' });
-      gsap.fromTo(g, { opacity: 0, scale: 0.8, transformOrigin: '800px 200px' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' });
+      gsap.fromTo(g, { opacity: 0, scale: 0.8, svgOrigin: '800 200' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' });
       const offset = (v.now || Date.now()) - Date.now();
       let last = null;
       P.sdTimer = setInterval(() => {
         const left = Math.max(0, Math.ceil((v.endsAt - (Date.now() + offset)) / 1000));
-        if (left !== last) { num.textContent = left; gsap.fromTo(num, { scale: 1.25, transformOrigin: '800px 215px' }, { scale: 1, duration: 0.4, ease: 'power3.out' }); last = left; }
+        if (left !== last) { num.textContent = left; gsap.fromTo(num, { scale: 1.25, svgOrigin: '800 215' }, { scale: 1, svgOrigin: '800 215', duration: 0.4, ease: 'power3.out' }); last = left; }
         if (!left) clearInterval(P.sdTimer);
       }, 100);
       const live = P.piles.filter((p) => v.contenders.includes(p.key));
@@ -181,6 +182,7 @@ export default {
         gsap.to(p.g, { x: dx, duration: 0.8, delay: 0.3, ease: 'power3.inOut' });
         p.dx = dx;
         p.chops.textContent = 'HOGG 0';
+        if (v.only) gsap.to([p.count, p.unit], { opacity: 0, duration: 0.3 }); // no votes in a sudden-death-only round
       });
       gsap.to(P.qr, { opacity: 0, duration: 0.4 });
       P.sd = g;
@@ -238,12 +240,19 @@ export default {
       });
       P.await = setTimeout(go, 1800);
     }
+    // S on the vote step: skip the vote, straight to sudden death with all four
+    const onKey = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.key !== 's' && e.key !== 'S') || P.step !== 2 || P.suddenOnly) return;
+      P.suddenOnly = true;
+      relaySend({ type: 'sudden-start' }, !ctx.deck?.instant);
+    };
+    window.addEventListener('keydown', onKey);
     const offRelay = onRelay((m) => {
       if (!P.live) return;
       if (m.type === 'voted') { addLog(m.choice); if (m.prev) removeLog(m.prev); }
       if (m.type === 'chopped') chip(m.choice);
       if (m.type === 'vote-state' && m.vote.phase === 'sudden') { sudden(m.vote); chopCounts(m.vote); }
-      if (m.type === 'vote-state' && m.vote.phase === 'closed' && m.vote.winner && P.step === 3) runFinale(m.vote.winner);
+      if (m.type === 'vote-state' && m.vote.phase === 'closed' && m.vote.winner && (P.step === 3 || P.suddenOnly)) runFinale(m.vote.winner);
     });
 
     const play = (i, instant) => {
@@ -292,6 +301,7 @@ export default {
       if (i === 3) {
         // closed: the relay decides (or a sudden death does); without it, Varm peis
         P.live = true;
+        if (P.done) return tl; // a sudden-death-only round already ended on its own
         tl.call(() => relaySend({ type: 'vote-close' }, !instant && !ctx.deck?.instant), null, 0.1);
         const v = relayState.vote;
         if (instant || ctx.deck?.instant || !relayState.connected) {
@@ -307,6 +317,6 @@ export default {
     };
 
     const st = D.stepper(ctx, { reset, play });
-    return { ...st, dispose() { offRelay(); clearTimeout(P.await); clearInterval(P.sdTimer); } };
+    return { ...st, dispose() { offRelay(); window.removeEventListener('keydown', onKey); clearTimeout(P.await); clearInterval(P.sdTimer); } };
   },
 };
