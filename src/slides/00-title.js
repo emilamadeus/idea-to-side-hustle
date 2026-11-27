@@ -20,6 +20,7 @@ const SITE = import.meta.env.VITE_VED_SITE || 'https://ved.atladeus.com';
 */
 export default {
   id: 'title',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Tittel',
   steps: 2,
   notes: [

@@ -80,6 +80,7 @@ const STEPS = [
 
 export default {
   id: 'always-working',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Alltid på jobb',
   steps: STEPS.length,
   notes: [

@@ -30,6 +30,7 @@ const OK = '#8fe3a2', BAD = '#ff6f9c';
 
 export default {
   id: 'fails',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Der den feiler',
   steps: 6,
   notes: [

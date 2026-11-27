@@ -35,6 +35,7 @@ let memo = null; // the last round's winner, for going back to this slide
 
 export default {
   id: 'arena',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Arenaen',
   steps: 2,
   notes: [

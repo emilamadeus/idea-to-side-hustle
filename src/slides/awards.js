@@ -24,6 +24,7 @@ const CX = 80, CY = 300, CW = 264, CH = 340, GAP = 30;
 
 export default {
   id: 'awards',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Kveldens priser',
   steps: 2,
   notes: [

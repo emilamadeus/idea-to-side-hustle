@@ -13,7 +13,8 @@ import { relayState, onRelay } from './relay.js';
   The current slide starts as a full-size panel exactly over the 16:9 frame, so the slide
   seems to shrink into its place. Hover lifts a panel and shows its title; click flies into it
   and opens it. Pictures come from public/thumbs/<id>.jpg (npm run thumbs); a missing picture
-  falls back to a card with the title.
+  falls back to a card with the title. Slides where the room takes part (def.room) wear a small
+  phone badge on the corner.
 
     const z = createZoom(deck, stage);
     z.out() / z.in() / z.close() / z.toggle(2) / z.key(e) → handled?
@@ -73,6 +74,26 @@ export function createZoom(deck, stage) {
     if (!d.themed) return plain();
     loader.load(`/thumbs/${d.id}-${relayState.theme}.jpg`, (t) => setMap(mat, t), undefined, plain);
   }
+  // slides where the room takes part from their phones (def.room) wear a small phone badge on
+  // the panel's top-right corner: a dark disc, a warm rim, a cream phone
+  let badgeTex = null;
+  function badgeTexture() {
+    if (badgeTex) return badgeTex;
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d');
+    x.beginPath(); x.arc(64, 64, 56, 0, Math.PI * 2);
+    x.fillStyle = '#1a120c'; x.fill();
+    x.lineWidth = 7; x.strokeStyle = '#8a6a4e'; x.stroke();
+    x.beginPath(); x.roundRect(46, 30, 36, 66, 8);
+    x.lineWidth = 7; x.strokeStyle = '#f3e9da'; x.stroke();
+    x.beginPath(); x.arc(64, 84, 4.5, 0, Math.PI * 2); x.fillStyle = '#f3e9da'; x.fill();
+    badgeTex = new THREE.CanvasTexture(c);
+    badgeTex.colorSpace = THREE.SRGBColorSpace;
+    return badgeTex;
+  }
+  const BADGE = H0 * 0.2;
+  const badgeGeo = new THREE.PlaneGeometry(BADGE, BADGE);
   const panels = defs.map((d, i) => {
     const holder = new THREE.Group();
     const mat = new THREE.MeshBasicMaterial({ color: 0xe6e6e6, transparent: true, opacity: 0, toneMapped: false });
@@ -84,8 +105,13 @@ export function createZoom(deck, stage) {
     edge.scale.set(1.035, 1.06, 1);
     edge.position.z = -0.02;
     holder.add(edge, mesh);
+    let badge = null;
+    if (d.room) {
+      badge = new THREE.Mesh(badgeGeo, new THREE.MeshBasicMaterial({ map: badgeTexture(), transparent: true, opacity: 0, toneMapped: false, depthWrite: false }));
+      holder.add(badge);
+    }
     world.add(holder);
-    return { i, holder, mesh, mat, edge, edgeMat, phase: Math.random() * Math.PI * 2, lift: { v: 0 } };
+    return { i, holder, mesh, mat, edge, edgeMat, badge, phase: Math.random() * Math.PI * 2, lift: { v: 0 } };
   });
 
   // section names, as flat text in the world
@@ -286,6 +312,9 @@ export function createZoom(deck, stage) {
       stage.particles.morphTo(shapes.space(stage), { duration: 1.6, turbulence: 0.2 });
       // the field sits far back, where points come out tiny: grow them while zoomed out
       if (baseSize == null) baseSize = particles.uniforms.uSize.value;
+      // the field dims as you pull back (see the tick), so the streams between panels read
+      gsap.killTweensOf(particles.uniforms.uOpacity);
+      baseOpacity = particles.uniforms.uOpacity.value;
       gsap.to(particles.uniforms.uSize, { value: baseSize * 3.2, duration: 1.4 });
       stage.setBloom({ strength: 0.08, duration: 0.8 });
       gsap.to(rig, { parallax: 3, duration: 1 });
@@ -316,6 +345,7 @@ export function createZoom(deck, stage) {
     gsap.to(rig, { parallax: 1, duration: 1.1 });
     stage.setBloom({ strength: stage.theme.bloom.strength, duration: 1.1 });
     if (baseSize != null) gsap.to(particles.uniforms.uSize, { value: baseSize, duration: 1.1 });
+    gsap.to(particles.uniforms.uOpacity, { value: baseOpacity, duration: 1.1 });
     level = 0; hover = -1; tip.classList.remove('on');
     deck.sync?.send({ type: 'zoom', level });
     gsap.delayedCall(1.1, () => {
@@ -348,6 +378,7 @@ export function createZoom(deck, stage) {
   });
 
   // ── wheel: smooth zoom toward the pointer; past the limits, the next level ──
+  let baseOpacity = 1;
   const FMIN = 0.18, FMAX = 1.12, PUSH = 520; // range inside a level, and how hard you push past it to change level
   let acc = 0, lock = 0;
   const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -428,8 +459,24 @@ export function createZoom(deck, stage) {
       const k = 1 + p.lift.v * 0.12;
       m.scale.set(k, k, 1); p.edge.scale.set(1.035 * k, 1.06 * k, 1);
       m.position.z = p.lift.v * 0.6; p.edge.position.z = m.position.z - 0.02;
+      if (p.badge) {
+        // rides the panel's corner and fades with it
+        const c = Math.cos(m.rotation.z), sn = Math.sin(m.rotation.z), hx = (W0 / 2) * k - BADGE * 0.42, hy = (H0 / 2) * k - BADGE * 0.42;
+        p.badge.position.set(hx * c - hy * sn, m.position.y + hx * sn + hy * c, m.position.z + 0.03);
+        p.badge.rotation.z = m.rotation.z;
+        p.badge.material.opacity = p.mat.opacity * 0.92;
+      }
     });
     if (streams.length) flowStreams(t);
+    // background particles fade as the panels get smaller on screen: near a panel they are
+    // atmosphere, from the whole talk they would read as noise next to the streams
+    if (level && layout && !busy) {
+      const ps = Object.values(layout.pos);
+      const a = ps.length ? (ps[0].s * 14) / Math.max(1, rig.pos.z - (view?.zP ?? -8)) : 1; // a panel's share of the screen width
+      const want = Math.max(0.18, Math.min(0.85, 0.12 + a * 1.9));
+      const u = particles.uniforms.uOpacity;
+      u.value += (want - u.value) * 0.06;
+    }
     if (level && !busy) {
       const h = pick();
       if (h !== hover) { hover = h; document.body.style.cursor = h >= 0 ? 'pointer' : ''; paintEdges(); }

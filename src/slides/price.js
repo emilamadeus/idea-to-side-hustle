@@ -31,6 +31,7 @@ const median = (vals) => {
 
 export default {
   id: 'price',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Salen setter prisen',
   steps: 2,
   notes: [

@@ -54,6 +54,7 @@ const short = (t, n) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
 
 export default {
   id: 'go-live',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Gå live',
   themed: true, // shows the design the room picked: the zoom-out picture follows it (thumbs/<id>-<theme>.jpg)
   steps: 5,

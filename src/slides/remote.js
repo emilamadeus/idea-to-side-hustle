@@ -39,6 +39,7 @@ const DOT = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '
 
 export default {
   id: 'remote',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Varsler og fjernstyring',
   steps: 4,
   notes: [

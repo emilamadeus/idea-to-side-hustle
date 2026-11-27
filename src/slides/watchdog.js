@@ -32,6 +32,7 @@ const OK = '#8fe3a2', WARN = '#ffd23f';
 
 export default {
   id: 'watchdog',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Vakta',
   steps: 7,
   notes: [

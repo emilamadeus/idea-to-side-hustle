@@ -44,6 +44,7 @@ const CW = 840, CH = 472;
 
 export default {
   id: 'prototypes',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Prototyper',
   steps: 4,
   notes: [

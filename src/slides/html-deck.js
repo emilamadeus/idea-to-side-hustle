@@ -28,6 +28,7 @@ const IX = 620, IY = 190, IW = 840, IH = 472;
 
 export default {
   id: 'html-deck',
+  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'En nettside',
   steps: 4,
   notes: [
