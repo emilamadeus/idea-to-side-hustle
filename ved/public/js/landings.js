@@ -148,16 +148,18 @@ export function nordisk(g, x, y, w, h, { bar = true } = {}) {
 }
 
 // ---------------------------------------------------------------- Rask levering
-export function rask(g, x, y, w, h, { bar = true } = {}) {
+export function rask(g, x, y, w, h, { bar = true, art = false } = {}) {
+  // art: only the picture (truck, speed lines, sticker), for a crop where the page's own text would intrude
   const INK = '#14110c', Y = '#ffd23f';
   const { svg, p } = frame(g, x, y, w, h, Y);
-  if (bar) {
+  if (bar && !art) {
     D.el('rect', { x: 0, y: 0, width: W, height: 30, style: `fill: ${INK}` }, p);
     T(p, 20, 20, 'LEVERING I MORGEN  ·  HELE NORGE  ·  BESTILL FØR 22:00  ·  LEVERING I MORGEN  ·  HELE NORGE', `font: 700 11px var(--font-mono); letter-spacing: .14em; fill: ${Y}`);
     T(p, 40, 68, 'VED!', `font: 800 26px var(--font-display); fill: ${INK}; letter-spacing: -0.02em`);
     D.el('rect', { x: 690, y: 46, width: 110, height: 34, rx: 17, style: `fill: ${INK}` }, p);
     T(p, 745, 68, 'Bestill nå', `font: 800 13px var(--font-display); fill: ${Y}`, { 'text-anchor': 'middle' });
   }
+  if (!art) {
   T(p, 40, 166, 'VED PÅ DØRA', `font: 800 64px var(--font-display); fill: ${INK}; letter-spacing: -0.045em`);
   D.el('rect', { x: 34, y: 186, width: 312, height: 70, rx: 4, style: `fill: ${INK}` }, p);
   T(p, 48, 242, 'I MORGEN.', `font: 800 64px var(--font-display); fill: ${Y}; letter-spacing: -0.045em`);
@@ -165,6 +167,7 @@ export function rask(g, x, y, w, h, { bar = true } = {}) {
   D.el('rect', { x: 40, y: 324, width: 186, height: 54, rx: 27, style: `fill: ${INK}` }, p);
   T(p, 133, 357, 'Bestill nå  →', `font: 800 18px var(--font-display); fill: ${Y}`, { 'text-anchor': 'middle' });
   T(p, 40, 416, '★ 4,9 · 18 000 leveringer i år', `font: 600 14px var(--font-display); fill: ${INK}`, { opacity: 0.75 });
+  }
   // the picture: a black truck at speed, a round sticker
   const tx = 470;
   const ty = bar ? 150 : 120;
@@ -192,8 +195,8 @@ export function rask(g, x, y, w, h, { bar = true } = {}) {
   T(st, sx, sy + 4, '24 t', `font: 800 30px var(--font-display); fill: ${INK}`, { 'text-anchor': 'middle' });
   T(st, sx, sy + 24, 'LEVERING', `font: 800 10px var(--font-mono); letter-spacing: .14em; fill: ${INK}`, { 'text-anchor': 'middle' });
   // bottom stripe
-  D.el('rect', { x: 0, y: H - 36, width: W, height: 36, style: `fill: ${INK}` }, p);
-  T(p, 20, H - 13, 'RASK · TØRR · VED · RASK · TØRR · VED · RASK · TØRR · VED · RASK · TØRR · VED · RASK', `font: 800 15px var(--font-display); letter-spacing: .1em; fill: ${Y}`);
+  if (!art) D.el('rect', { x: 0, y: H - 36, width: W, height: 36, style: `fill: ${INK}` }, p);
+  if (!art) T(p, 20, H - 13, 'RASK · TØRR · VED · RASK · TØRR · VED · RASK · TØRR · VED · RASK · TØRR · VED · RASK', `font: 800 15px var(--font-display); letter-spacing: .1em; fill: ${Y}`);
   return p;
 }
 

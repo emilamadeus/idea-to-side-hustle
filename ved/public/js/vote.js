@@ -12,14 +12,14 @@ const byKey = Object.fromEntries(LANDINGS.map((l) => [l.key, l]));
 
 // a direction drawn into an svg: the whole page, or a crop of its picture for the hero
 // crops at the hero's own shape (about 4:3), on the part of each picture that carries it
-const CROP = { skog: '476 150 330 260', nordisk: '470 110 336 265', rask: '380 70 460 330' };
+const CROP = { skog: '476 150 330 260', nordisk: '470 110 336 265', rask: '300 30 540 425' }; // rask: the truck alone, with room on every side
 function shot(key, crop = false) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', crop ? CROP[key] : '0 0 840 472');
   svg.setAttribute('preserveAspectRatio', crop ? 'xMidYMid slice' : 'xMidYMid meet');
   const g = document.createElementNS(NS, 'g');
   svg.append(g);
-  byKey[key].draw(g, 0, 0, 840, 472, crop ? { chip: false } : undefined); // the hero has its own 'Neste levering'
+  byKey[key].draw(g, 0, 0, 840, 472, crop ? { chip: false, art: true } : undefined); // the hero: picture only, it has its own 'Neste levering'
   return svg;
 }
 
