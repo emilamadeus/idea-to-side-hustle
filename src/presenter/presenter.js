@@ -1,5 +1,6 @@
 import './presenter.css';
 import { createSync } from '../engine/sync.js';
+import { relaySend, onRelay, relayState } from '../engine/relay.js';
 
 /*
   Presenter console. Lives on the MacBook screen while the audience window
@@ -13,6 +14,10 @@ export function start(defs) {
       <div class="title"></div>
       <div class="status"></div>
       <span class="zoom-btns"><button data-z="overview" title="Zoom ut: hele foredraget (Z / O)">Zoom ut</button></span>
+      <span class="design" title="Utseendet på ved.atladeus.com og i lysbildene som viser siden">
+        <em>Design</em>${[['skog', 'Skog', '#a8d08d'], ['nordisk', 'Nordisk', '#d2693a'], ['rask', 'Rask', '#ffd23f'], ['peis', 'Peis', '#ff7a2f']]
+          .map(([k, n, c]) => `<button data-t="${k}" style="--c:${c}">${n}</button>`).join('')}
+      </span>
       <button class="timer" title="Click to start/pause, double-click to reset">00:00</button>
       <div class="clock"></div>
     </header>
@@ -48,6 +53,16 @@ export function start(defs) {
     const b = e.target.closest('button');
     if (b) sync.send({ type: 'cmd', action: 'goto', index: Number(b.dataset.i), step: 0 });
   });
+  // the design switch: sets the look for everyone (the site on the phones, and the slides that
+  // show it); the active one follows the relay, so a vote's winner lights up here too
+  const design = $('.design');
+  const markDesign = (t) => design.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.t === t));
+  design.addEventListener('click', (e) => {
+    const t = e.target.closest('button')?.dataset.t;
+    if (t) { relaySend({ type: 'theme-set', theme: t }); markDesign(t); }
+  });
+  markDesign(relayState.theme);
+  onRelay((m) => { if (m.theme) markDesign(m.theme); });
   app.querySelector('.zoom-btns').addEventListener('click', (e) => {
     const z = e.target.closest('button')?.dataset.z;
     if (z) sync.send({ type: 'cmd', action: z });

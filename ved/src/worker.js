@@ -14,6 +14,7 @@
   tied contenders and the most chops wins. The winner becomes the site's theme. No votes, or a
   tie that stays tied, keeps the default (peis) when it is in the running.
     deck: sudden-start skips the vote: all four go straight into a 15-second sudden death.
+    deck: theme-set { theme } sets the look by hand (the presenter console's Design switch).
     phone → { type: 'vote', choice } · { type: 'chop', choice }
     deck  ← { type: 'vote-state', vote } on every change · { type: 'voted', choice, prev } ·
             { type: 'chopped', choice }
@@ -159,6 +160,13 @@ export class Room {
       this.vote = { phase: 'sudden', votes: {}, chops: Object.fromEntries(THEMES.map((k) => [k, 0])), contenders: [...THEMES], endsAt: Date.now() + SUDDEN_MS, winner: null, only: true };
       await this.ctx.storage.setAlarm(this.vote.endsAt + 200);
       await this.saveVote();
+    }
+    // the presenter picks a look by hand (the console's Design switch)
+    if (m.type === 'theme-set' && THEMES.includes(m.theme)) {
+      this.theme = m.theme;
+      await this.ctx.storage.put('theme', this.theme);
+      this.send('cust', { type: 'theme', theme: this.theme });
+      this.send('deck', { type: 'theme', theme: this.theme });
     }
     if (m.type === 'vote-reset') {
       this.vote = { phase: 'idle', votes: {}, chops: {}, contenders: [], endsAt: 0, winner: null };

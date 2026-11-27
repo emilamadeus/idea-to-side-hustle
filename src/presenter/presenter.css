@@ -89,3 +89,12 @@ body.linked .nolink { display: none; }
 .zoom-btns button { all: unset; cursor: pointer; padding: 6px 12px; border-radius: 999px; border: 2px solid var(--deco, #4a3c30);
   font: 700 13px var(--font-mono, monospace); letter-spacing: .08em; color: var(--muted, #9a8a78); }
 .zoom-btns button:hover { color: var(--accent, #ff5a1f); border-color: var(--accent, #ff5a1f); }
+
+/* the design switch: four looks for the firewood site */
+.design { display: inline-flex; align-items: center; gap: 6px; }
+.design em { font: 700 11px var(--font-mono, monospace); letter-spacing: .14em; text-transform: uppercase; color: var(--muted, #9c8670); font-style: normal; margin-right: 2px; }
+.design button { all: unset; cursor: pointer; padding: 6px 11px; border-radius: 999px; border: 2px solid var(--deco, #4a3c30); font: 700 12px var(--font-mono, monospace); color: var(--muted, #9c8670); }
+.design button::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 6px; vertical-align: 1px; }
+.design button:hover { color: var(--fg, #fff3e3); border-color: var(--c); }
+.design button.on { color: #1a120c; background: var(--c); border-color: var(--c); }
+.design button.on::before { background: #1a120c; }
