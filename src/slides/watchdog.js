@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { codeApp } from '../engine/console.js';
+import { relaySend, onRelay } from '../engine/relay.js';
 
 /*
   Tip: a watchdog checks every session every 10 minutes. Shown in the Claude Code app: the
@@ -13,9 +14,15 @@ import { codeApp } from '../engine/console.js';
     5. 05:10 a helper finished without saying so; the master tells its lead.
     6. 06:00 everything done.
 
+  The room keeps watch too (live only): step 0 hands every joined phone a session
+  (Varsler, Kamera-API, Tester). At steps 1, 2 and 5 that session's phones get an alarm with
+  a Fortsett button; the card under the clock shows who answered first and how fast, or that
+  nobody did. Step 6 ends the shift.
+
   Layout zones (svg units):
     tip        x 80–540, y 110–240
     clock      x 80–520, y 470–610 (time + round)
+    room card  x 80–520, y 640–760 (live only)
     app        x 560–1480, y 150–760
 */
 
@@ -46,6 +53,37 @@ export default {
     const tip = ctx.$('.tip');
     let P = {};
 
+    // the room's watch: a card under the clock, live only
+    const SESS = ['Varsler', 'Kamera-API', 'Tester'];
+    const card = document.createElement('div');
+    card.style.cssText = `position:absolute;left:calc(var(--u)*5);top:calc(var(--u)*40);width:calc(var(--u)*27.5);padding:calc(var(--u)*1) calc(var(--u)*1.4);
+      border-radius:calc(var(--u)*0.8);border:2px solid var(--deco);background:#1d1510;font:700 calc(var(--u)*1.25)/1.35 var(--font-mono);color:var(--fg);opacity:0`;
+    card.dataset.unit = '';
+    el.append(card);
+    const W = { k: null, timer: null };
+    const say = (html, color = 'var(--deco)') => {
+      card.innerHTML = html; card.style.borderColor = color;
+      gsap.fromTo(card, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' });
+    };
+    const alarm = (k, text, live) => {
+      if (!live) return;
+      relaySend({ type: 'watch-alert', k, text });
+      W.k = k;
+      say(`<span style="color:${WARN}">● SALEN · ${SESS[k].toUpperCase()}</span><br>Vakta i salen har fått alarm …`, WARN);
+      clearTimeout(W.timer);
+      W.timer = setTimeout(() => { if (W.k === k) { W.k = null; say(`<span style="color:var(--muted)">○ ${SESS[k].toUpperCase()}</span><br>Ingen i salen svarte. Master tok den.`); } }, 15000);
+    };
+    const offRelay = onRelay((m) => {
+      if (m.type === 'watch-roster' && m.roster) {
+        const n = m.roster.reduce((a, r) => a + r.length, 0);
+        if (n) say(`<span style="color:${OK}">● SALEN HOLDER VAKT</span><br>${SESS.map((s, k) => `${s} ${m.roster[k]?.length || 0}`).join(' · ')}`, OK);
+      }
+      if (m.type === 'watch-acked' && m.k === W.k) {
+        W.k = null; clearTimeout(W.timer);
+        say(`<span style="color:${OK}">✓ ${SESS[m.k].toUpperCase()}</span><br><b style="font-family:var(--font-display);font-size:1.5em">${m.name}</b> trykket Fortsett · ${(m.ms / 1000).toFixed(1).replace('.', ',')} s`, OK);
+      }
+    });
+
     const reset = () => { svg.innerHTML = ''; P = {}; };
     const hhmm = (m) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(Math.floor(m % 60)).padStart(2, '0')}`;
     const showTime = (m) => {
@@ -58,8 +96,9 @@ export default {
       tl.call(() => showTime(ROUNDS[k]), null, at + d);
     };
 
-    const play = (i) => {
+    const play = (i, instant) => {
       const tl = gsap.timeline();
+      const live = !instant && !ctx.deck?.instant;
       const S = P.app?.sessions;
       if (i === 0) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
@@ -86,6 +125,7 @@ export default {
         v.tool(tl, 'Bash', 'npm test', '18 bestått', 0);
         v.ctx(tl, 340, 0, 0.1);
         P.app = app; P.m = m;
+        tl.call(() => relaySend({ type: 'watch-start', sessions: SESS }, live), null, 1.5);
       }
 
       if (i === 1) {
@@ -94,6 +134,7 @@ export default {
         S.varsler.state(tl, 'block', 0.8); S.kamera.state(tl, 'block', 1.0);
         P.m.fadeOld(tl, 1.4);
         P.m.say(tl, 'Runde 10: Varsler og Kamera-API venter på hverandre.', 1.6, { color: WARN });
+        tl.call(() => alarm(0, 'Venter på Kamera-API.', live), null, 1.6);
         P.m.say(tl, '→ Varsler: ta migreringen først.', 2.6);
         S.varsler.state(tl, 'work', 3.2); S.kamera.state(tl, 'work', 3.8);
       }
@@ -104,6 +145,7 @@ export default {
         S.tester.state(tl, 'idle', 0.8);
         P.m.fadeOld(tl, 1.2);
         P.m.say(tl, 'Runde 26: Tester har stått stille siden 02:14.', 1.4, { color: WARN });
+        tl.call(() => alarm(2, 'Stått stille siden 02:14.', live), null, 1.4);
         P.m.say(tl, '→ Tester: fortsett.', 2.4);
         S.tester.state(tl, 'work', 3.0);
       }
@@ -142,6 +184,7 @@ export default {
         S.kamera.state(tl, 'block', 0.9);
         P.m.fadeOld(tl, 1.2);
         P.m.say(tl, 'Runde 43: hjelperen til Kamera-API ble ferdig 04:32 uten å si fra.', 1.4, { color: WARN });
+        tl.call(() => alarm(1, 'Hjelperen ble ferdig 04:32 uten å si fra.', live), null, 1.4);
         P.m.say(tl, '→ Kamera-API: hent resultatet.', 2.6);
         S.kamera.state(tl, 'work', 3.2);
       }
@@ -153,10 +196,12 @@ export default {
         P.m.fadeOld(tl, 1.8);
         P.m.say(tl, '06:00. Alt ferdig.', 2.2, { color: OK });
         S.master.state(tl, 'done', 2.4);
+        tl.call(() => relaySend({ type: 'watch-end' }, live), null, 2.4);
       }
       return tl;
     };
 
-    return D.stepper(ctx, { reset, play });
+    const st = D.stepper(ctx, { reset, play });
+    return { ...st, dispose() { offRelay(); clearTimeout(W.timer); relaySend({ type: 'watch-end' }); } };
   },
 };

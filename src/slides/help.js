@@ -152,6 +152,10 @@ export const HELP = {
     'Alt er tekst, så AI-en kan skrive og endre alt.',
     'Prisen: alt må bygges selv.',
   ],
+  awards: [
+    'Prisene kommer fra det dere gjorde på telefonen i kveld.',
+    'Vinnerne får beskjed på telefonen.',
+  ],
   takeaways: [null],
   validate: [
     'Start med én konkret idé du kan forklare på ett ark.',

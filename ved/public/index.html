@@ -560,7 +560,7 @@
     const cta = $('#cta');
     cta.disabled = true; cta.textContent = 'Bestiller …';
     if (!pick) return;
-    const body = { navn: $('#nameInput').value.trim().slice(0, 24), adresse: pick.adresse, sted: pick.sted, lat: pick.lat, lon: pick.lon, sekker: Number(form.sekker.value || 1) };
+    const body = { voter, navn: $('#nameInput').value.trim().slice(0, 24), adresse: pick.adresse, sted: pick.sted, lat: pick.lat, lon: pick.lon, sekker: Number(form.sekker.value || 1) };
     try {
       const r = await fetch('/api/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const j = await r.json();
@@ -613,7 +613,7 @@
   const live = (on) => { $('#liveDot').classList.toggle('off', !on); $('#liveText').textContent = on ? (open ? 'Åpen nå' : 'Snart åpen') : 'Kobler til'; };
   // a stable id for this phone's vote (never shown anywhere)
   const voter = store.get('ved-voter', null) || (() => { const v = Math.random().toString(36).slice(2, 12); store.set('ved-voter', v); return v; })();
-  window.vedSend = (m) => { if (ws?.readyState === 1) ws.send(JSON.stringify(m)); };
+  window.vedSend = (m) => { if (ws?.readyState !== 1) return false; ws.send(JSON.stringify(m)); return true; };
   function connect() {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     ws = new WebSocket(`${proto}://${location.host}/api/ws?role=customer&voter=${voter}&id=${orders.map((o) => o.id).join(',')}`);
@@ -662,5 +662,6 @@
   })(0);
 </script>
 <script type="module" src="/js/vote.js"></script>
+<script type="module" src="/js/room.js"></script>
 </body>
 </html>

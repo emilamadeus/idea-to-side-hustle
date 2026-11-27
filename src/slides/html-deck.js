@@ -1,12 +1,14 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { paperCard, FILL } from '../engine/props.js';
+import { relaySend } from '../engine/relay.js';
 
 /*
   Meta: this presentation is a web page, built with Claude Code.
     0. A classic slide tries what this deck did: the 3D house is a flat picture, the live
        site is a missing plugin, the 80 % bar will not move.
-    1. Pull back: this deck, live, in a browser window (an iframe of itself).
+    1. Pull back: this deck, live, in a browser window (an iframe of itself). The room lights up:
+       every joined phone goes full-screen colour and pulses in sync, a wave in join order.
     2. Its source scrolls past: it is text, so the AI can write and change all of it.
     3. The other side, on a card: it takes some imagination, and others can't edit it as easily.
 
@@ -26,7 +28,7 @@ export default {
   steps: 4,
   notes: [
     'Et vanlig lysbilde prøver det denne har gjort.',
-    'Denne presentasjonen er en nettside. Her er den, inni seg selv.',
+    'Denne presentasjonen er en nettside. Her er den, inni seg selv. Og telefonene deres lyser nå.',
     'Og den er tekst. Claude Code skriver og endrer alt.',
     'Ulempene: alt må bygges, PowerPoint-folk kan ikke redigere, og den trenger GPU.',
   ],
@@ -111,10 +113,14 @@ export default {
         tl.fromTo(win, { opacity: 0, scale: 1.15, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.7, ease: 'power2.out' }, 0.65); // after the old slide has gone
         tl.call(() => { if (!frame.getAttribute('src')) frame.setAttribute('src', '/?view=preview#/full-scope/5'); }, null, 0.3);
         tl.to(frame, { opacity: 1, duration: 0.6 }, 1.1);
+        // so is every phone in the room: they light up together (live only, never on replays)
+        const live = !instant && !ctx.deck?.instant;
+        tl.call(() => relaySend({ type: 'light', mode: 'wave', delay: 1200, dur: 14000 }, live), null, 1.2);
         P.win = win;
       }
 
       if (i === 2) {
+        relaySend({ type: 'light-off' }, !instant && !ctx.deck?.instant);
         // it is text
         tl.call(() => { src.then((t) => { code.textContent = t; code.scrollTop = 0; }); }, null, 0);
         const box = D.g(svg, { 'data-bg': '' });
@@ -137,6 +143,6 @@ export default {
     };
 
     const s = D.stepper(ctx, { reset, play });
-    return { ...s, dispose() { frame.removeAttribute('src'); } };
+    return { ...s, dispose() { frame.removeAttribute('src'); relaySend({ type: 'light-off' }); } };
   },
 };

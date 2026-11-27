@@ -6,7 +6,7 @@
     relaySend(msg, live)                 a command to the relay (vote-open, vote-close, …)
     onRelay(fn) → off                    every message from the relay: snapshot, vote-state, voted,
                                          chopped, theme, order …
-    relayState                           the latest { theme, vote, connected }
+    relayState                           the latest { theme, vote, connected, people }
 
   Every window listens (the presenter's previews show the votes too), but only the audience
   window sends, so a command goes out once. Slides should also skip sending on instant replays
@@ -24,7 +24,7 @@ const subs = new Set();
 // ?theme=skog forces a design (the picture script uses it to draw each version); the relay's
 // theme is then ignored in this window
 const forcedTheme = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('theme') : null;
-export const relayState = { theme: forcedTheme || 'peis', vote: null, connected: false };
+export const relayState = { theme: forcedTheme || 'peis', vote: null, connected: false, people: [], awards: null };
 if (typeof window !== 'undefined') window.relayState = relayState; // handy from the devtools console (try other themes)
 
 function connect() {
@@ -38,6 +38,11 @@ function connect() {
     if (m.theme && !forcedTheme) relayState.theme = m.theme;
     if (m.theme && forcedTheme) m = { ...m, theme: forcedTheme };
     if (m.vote) relayState.vote = m.vote;
+    // the room: everyone who joined from a phone ({ id, name, n }), in join order
+    if (m.people) relayState.people = m.people;
+    if (m.type === 'awards') relayState.awards = m.list || [];
+    if (m.type === 'joined' && m.p && !relayState.people.some((p) => p.id === m.p.id)) relayState.people = [...relayState.people, m.p];
+    if (m.type === 'joined' && m.p) relayState.people = relayState.people.map((p) => (p.id === m.p.id ? m.p : p));
     subs.forEach((fn) => { try { fn(m); } catch (err) { console.error(err); } });
   };
   ws.onclose = () => { relayState.connected = false; ws = null; clearTimeout(timer); timer = setTimeout(connect, 2000); };

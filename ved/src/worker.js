@@ -18,6 +18,13 @@
     phone → { type: 'vote', choice } · { type: 'chop', choice }
     deck  ← { type: 'vote-state', vote } on every change · { type: 'voted', choice, prev } ·
             { type: 'chopped', choice }
+  The room (the talk's audience):
+    phone → { type: 'join', name }            first name, optional; a word filter keeps the screen clean
+    deck  ← { type: 'joined', p }              p = { id, name, n } (n: join order)
+    deck  → watch-start { sessions } · watch-alert { k, text } · watch-end      the room keeps watch
+    phone → { type: 'watch-ack', k }           deck ← { type: 'watch-acked', k, name, ms }
+    deck  → light { mode, delay, dur } · light-off                              the finale light-up
+    deck  → awards                             deck ← { type: 'awards', list }; winners' phones glow
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
   No payment. An order is an address (any address; it is shown on the screen) and a number of sacks.
 */
@@ -26,6 +33,18 @@ const MAX_ORDERS = 400;
 const THEMES = ['skog', 'nordisk', 'rask', 'peis'];
 const DEFAULT_THEME = 'peis';
 const SUDDEN_MS = 15000;
+const DEPOT = [10.7522, 59.9139]; // the truck's start, for "furthest away"
+// names go on a big screen: a short filter keeps it clean (anything matching becomes "Gjest")
+const BLOCK = /(faen|fitte|kuk|pikk|hore|jævl|dritt|helvete|fuck|shit|dick|cunt|puss|nigg|neger|nazi|hitler|penis|rumpe|ræv|tiss|bæsj)/i;
+const cleanName = (v) => {
+  const n = String(v ?? '').replace(/[^\p{L}\p{M} .'-]/gu, '').replace(/\s+/g, ' ').trim().slice(0, 18);
+  return n && !BLOCK.test(n) ? n : '';
+};
+const km = (a, b) => {
+  const r = Math.PI / 180, dLat = (b[1] - a[1]) * r, dLon = (b[0] - a[0]) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(h));
+};
 
 export default {
   async fetch(req, env) {
@@ -91,6 +110,9 @@ export class Room {
       this.orders = (await ctx.storage.get('orders')) ?? [];
       this.theme = (await ctx.storage.get('theme')) ?? DEFAULT_THEME;
       this.vote = (await ctx.storage.get('vote')) ?? { phase: 'idle', votes: {}, chops: {}, contenders: [], endsAt: 0, winner: null };
+      this.people = (await ctx.storage.get('people')) ?? {}; // voter → { name, n, t, chops, watch }
+      this.alert = (await ctx.storage.get('alert')) ?? null;         // survives hibernation between alarm and tap
+      this.watchNames = (await ctx.storage.get('watchNames')) ?? null;
     });
   }
 
@@ -117,7 +139,8 @@ export class Room {
     // anywhere in Norway, roughly (Svalbard included)
     if (!adresse || !(lat > 57 && lat < 81 && lon > 3 && lon < 34)) return json({ error: 'adresse' }, 400);
     this.recent.set(ip, now);
-    const o = { id: crypto.randomUUID().slice(0, 8), navn, adresse, sted, lat: +lat.toFixed(5), lon: +lon.toFixed(5), sekker, t: now };
+    const voter = String(body?.voter ?? '').replace(/[^a-z0-9]/gi, '').slice(0, 16);
+    const o = { id: crypto.randomUUID().slice(0, 8), navn, adresse, sted, lat: +lat.toFixed(5), lon: +lon.toFixed(5), sekker, t: now, voter };
     this.orders.push(o);
     await this.ctx.storage.put('orders', this.orders);
     this.send('deck', { type: 'order', order: o });
@@ -135,8 +158,8 @@ export class Room {
     this.ctx.acceptWebSocket(server, role === 'deck' ? ['deck'] : ['cust', ...ids.map((x) => `c:${x}`)]);
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
-      ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public() }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter) }));
+      ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster() }
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -176,6 +199,37 @@ export class Room {
       this.send('cust', { type: 'theme', theme: this.theme });
       this.send('deck', { type: 'theme', theme: this.theme });
     }
+    // ---- the room ----
+    if (m.type === 'watch-start' && Array.isArray(m.sessions) && m.sessions.length) {
+      const names = m.sessions.map((x) => String(x).slice(0, 24));
+      Object.entries(this.people).sort((a, b) => a[1].n - b[1].n).forEach(([v, p], i) => { p.watch = i % names.length; });
+      this.watchNames = names;
+      await this.ctx.storage.put('people', this.people);
+      await this.ctx.storage.put('watchNames', names);
+      this.eachPhone((ws, v) => { const p = this.people[v]; if (p) ws.send(JSON.stringify({ type: 'watch', k: p.watch, session: names[p.watch] })); });
+      const roster = names.map((n, k) => Object.values(this.people).filter((p) => p.watch === k).map((p) => p.name || 'Gjest'));
+      this.send('deck', { type: 'watch-roster', roster });
+    }
+    if (m.type === 'watch-alert' && Number.isInteger(m.k)) {
+      this.alert = { k: m.k, t: Date.now(), acked: false };
+      await this.ctx.storage.put('alert', this.alert);
+      const msg = JSON.stringify({ type: 'watch-alert', k: m.k, session: this.watchNames?.[m.k] || `Session ${m.k + 1}`, text: String(m.text || '').slice(0, 80) });
+      this.eachPhone((ws, v) => { if (this.people[v]?.watch === m.k) ws.send(msg); });
+    }
+    if (m.type === 'watch-end') { this.alert = null; await this.ctx.storage.delete('alert'); this.send('cust', { type: 'watch-end' }); }
+    if (m.type === 'light') {
+      // a synchronised light-up: each phone gets its place in the join order, for the wave
+      const total = Object.keys(this.people).length || 1;
+      const start = Date.now() + (Number(m.delay) || 1500);
+      this.eachPhone((ws, v) => ws.send(JSON.stringify({ type: 'light', mode: m.mode || 'wave', start, now: Date.now(), dur: Number(m.dur) || 14000, n: this.people[v]?.n || 1, total, theme: this.theme })));
+    }
+    if (m.type === 'light-off') this.send('cust', { type: 'light-off' });
+    if (m.type === 'awards') {
+      const list = this.awards();
+      this.send('deck', { type: 'awards', list });
+      this.eachPhone((ws, v) => { const won = list.filter((a) => a.voter === v); if (won.length) ws.send(JSON.stringify({ type: 'award', titles: won.map((a) => a.title) })); });
+    }
+    if (m.type === 'people-reset') { this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); }
     if (m.type === 'reset') {
       this.orders = [];
       await this.ctx.storage.put('orders', this.orders);
@@ -215,6 +269,25 @@ export class Room {
   async fromPhone(ws, m) {
     const a = ws.deserializeAttachment() || {};
     const v = this.vote;
+    if (m.type === 'join' && a.voter) {
+      const name = cleanName(m.name);
+      const known = this.people[a.voter];
+      const p = known ?? { n: Object.keys(this.people).length + 1, t: Date.now(), chops: 0 };
+      p.name = name;
+      this.people[a.voter] = p;
+      await this.ctx.storage.put('people', this.people);
+      this.send('deck', { type: 'joined', p: this.person(a.voter), again: !!known });
+      ws.send(JSON.stringify({ type: 'me', me: this.person(a.voter), total: Object.keys(this.people).length }));
+      return;
+    }
+    if (m.type === 'watch-ack' && this.alert && !this.alert.acked && m.k === this.alert.k && this.people[a.voter]?.watch === m.k) {
+      this.alert.acked = true;
+      await this.ctx.storage.put('alert', this.alert);
+      this.send('deck', { type: 'watch-acked', k: m.k, name: this.people[a.voter].name || 'Gjest', ms: Date.now() - this.alert.t });
+      const done = JSON.stringify({ type: 'watch-done', k: m.k, by: this.people[a.voter].name || 'Gjest' });
+      this.eachPhone((w, vv) => { if (this.people[vv]?.watch === m.k) w.send(done); });
+      return;
+    }
     if (m.type === 'vote' && v.phase === 'open' && a.voter && THEMES.includes(m.choice)) {
       const prev = v.votes[a.voter] ?? null;
       if (prev === m.choice) return;
@@ -229,6 +302,7 @@ export class Room {
       if (++a.chopN > 12) return;
       ws.serializeAttachment(a);
       v.chops[m.choice] = (v.chops[m.choice] || 0) + 1;
+      if (this.people[a.voter]) this.people[a.voter].chops = (this.people[a.voter].chops || 0) + 1;
       this.send('deck', { type: 'chopped', choice: m.choice });
       // the running count goes out at most every 250 ms
       if (!this.chopTimer) this.chopTimer = setTimeout(async () => { this.chopTimer = null; await this.saveVote(); }, 250);
@@ -264,6 +338,31 @@ export class Room {
     await this.saveVote();
     this.send('cust', { type: 'theme', theme: this.theme });
     this.send('deck', { type: 'theme', theme: this.theme });
+  }
+
+  // ---- the room ----
+  person(v) { const p = this.people[v]; return p && { id: v.slice(0, 6), name: p.name || '', n: p.n }; }
+  roster() { return Object.keys(this.people).map((v) => this.person(v)).sort((a, b) => a.n - b.n); }
+  eachPhone(fn) {
+    for (const ws of this.ctx.getWebSockets('cust')) { const a = ws.deserializeAttachment() || {}; try { fn(ws, a.voter); } catch {} }
+  }
+  // the evening's awards, from what the room actually did
+  awards() {
+    const P = this.people, nameOf = (v, fallback) => (P[v]?.name || fallback || 'Gjest');
+    const out = [];
+    const chop = Object.entries(P).filter(([, p]) => p.chops > 0).sort((a, b) => b[1].chops - a[1].chops)[0];
+    if (chop) out.push({ title: 'Raskeste øks', voter: chop[0], name: nameOf(chop[0]), detail: `${chop[1].chops} hogg` });
+    const first = [...this.orders].sort((a, b) => a.t - b.t)[0];
+    if (first) out.push({ title: 'Første kunde', voter: first.voter, name: nameOf(first.voter, first.navn), detail: first.sted || first.adresse });
+    const far = [...this.orders].sort((a, b) => km(DEPOT, [b.lon, b.lat]) - km(DEPOT, [a.lon, a.lat]))[0];
+    if (far) out.push({ title: 'Lengst unna', voter: far.voter, name: nameOf(far.voter, far.navn), detail: `${far.sted || far.adresse}, ${Math.round(km(DEPOT, [far.lon, far.lat])).toLocaleString('nb-NO')} km` });
+    const sacks = {};
+    this.orders.forEach((o) => { const k = o.voter || o.id; sacks[k] = (sacks[k] || { n: 0, o }); sacks[k].n += o.sekker; });
+    const most = Object.entries(sacks).sort((a, b) => b[1].n - a[1].n)[0];
+    if (most) out.push({ title: 'Mest ved', voter: most[1].o.voter, name: nameOf(most[1].o.voter, most[1].o.navn), detail: `${most[1].n} sekker` });
+    const early = Object.entries(P).sort((a, b) => a[1].n - b[1].n)[0];
+    if (early) out.push({ title: 'Først inne', voter: early[0], name: nameOf(early[0]), detail: `først av ${Object.keys(P).length}` });
+    return out;
   }
 
   webSocketClose(ws, code) { try { ws.close(code, 'bye'); } catch {} }

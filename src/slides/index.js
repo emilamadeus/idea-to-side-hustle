@@ -33,6 +33,7 @@ import htmlDeck from './html-deck.js';
 import projects from './projects.js';
 import skills from './skills.js';
 import goLive from './go-live.js';
+import awards from './awards.js';
 
 // Story order: the journey, three parts and a closing.
 //   1. The journey from idea to launch, five stages; each opens with chapter(k) and its slides get
@@ -60,6 +61,7 @@ export const slides = [
   opening, // cold open: the idea, and where it ended up
   ...STAGED.flatMap((group, k) => [chapter(k), ...group.map((s) => Object.assign(s, { stage: k }))]),
   ...PARTS.flatMap((p, k) => [part(k + 2, p.name, ['Reisen', ...PARTS.map((q) => q.name)]), ...p.slides.map((s) => Object.assign(s, { part: p.name }))]),
+  awards, // the room's own data, before the closing
   takeaways, // closing: every standalone tip on one page
 ];
 
