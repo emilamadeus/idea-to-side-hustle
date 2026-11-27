@@ -39,33 +39,54 @@ export default {
     let P = {};
 
     const reset = () => { svg.innerHTML = ''; P = {}; };
+    // the firewood order page, drawn as it really looks on a phone (ved.atladeus.com)
+    const T = (g, x, y, str, font, fill, extra = {}) => D.text(g, x, y, str, 'pg', { style: `font: ${font}; fill: ${fill}`, ...extra });
+    const DISP = 'var(--font-display)', MONO = 'var(--font-mono)';
     const button = (g, x, y, w, label, filled) => {
       const b = D.g(g, { 'data-unit': '' });
-      D.el('rect', { x, y, width: w, height: 44, rx: 8, style: filled ? 'fill: #ff5a1f; stroke: none' : 'fill: none; stroke: #ff6f9c', 'stroke-width': 2.5 }, b);
-      D.text(b, x + w / 2, y + 29, label, 'bt', { 'text-anchor': 'middle', style: `font: 700 18px var(--font-mono); fill: ${filled ? '#1a120c' : '#ff6f9c'}` });
+      D.el('rect', { x, y, width: w, height: 42, rx: 21, style: filled ? 'fill: #ff7a2f; stroke: #1a120c' : 'fill: #1d130d; stroke: #6f5848', 'stroke-width': 2 }, b);
+      T(b, x + w / 2, y + 27, label, `800 16px ${DISP}`, filled ? '#1a120c' : '#e9d6bf', { 'text-anchor': 'middle' });
       return b;
     };
-    function win(g, title) {
-      const w = D.g(g);
+    // the phone, its header (logo and the shop's open sign)
+    function win(g) {
+      const w = D.g(g, { 'data-picture': '' }); // a picture of the website: its own text may overlap (the bug)
       const bg = D.g(w, { 'data-bg': '' });
-      D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 30, style: 'fill: #1a0d07; stroke: var(--deco)', 'stroke-width': 3 }, bg);
-      D.el('rect', { x: WX + WW / 2 - 36, y: WY + 14, width: 72, height: 14, rx: 7, style: 'fill: #0f0a07' }, bg);
-      D.text(bg, WX + 28, WY + 46, 'Ved.', 'wb', { style: 'font: 800 18px var(--font-display); fill: #ff8a3d' });
-      D.text(w, WX + 28, WY + 92, title, 'wt', { style: 'font: 800 28px var(--font-display); fill: var(--fg)' });
+      D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 30, style: 'fill: #150d08; stroke: var(--deco)', 'stroke-width': 3 }, bg);
+      D.el('rect', { x: WX + WW / 2 - 36, y: WY + 14, width: 72, height: 14, rx: 7, style: 'fill: #070403' }, bg);
+      T(bg, WX + 26, WY + 58, 'Ved', `800 24px ${DISP}`, '#fff3e3', { 'letter-spacing': '-.03em' });
+      D.el('circle', { cx: WX + 76, cy: WY + 54, r: 4, style: 'fill: #ff7a2f' }, bg);
+      D.el('rect', { x: WX + 236, y: WY + 38, width: 100, height: 28, rx: 14, style: 'fill: #1d130d; stroke: #3d2d22', 'stroke-width': 2 }, bg);
+      D.el('circle', { cx: WX + 254, cy: WY + 52, r: 4, style: 'fill: #8fe3a2' }, bg);
+      T(bg, WX + 266, WY + 57, 'Åpen nå', `600 13px ${DISP}`, '#e9d6bf');
       return { w, bg };
     }
+    // the order form, scrolled to the sacks and the price. The bug: Bestill sits on top of the price.
     function settings(g) {
-      const { w, bg } = win(g, 'Bestill ved');
-      D.p(bg, `M${WX + 28} ${WY + 130} H${WX + 300} M${WX + 28} ${WY + 158} H${WX + 260}`, '', BAR);
-      [0, 1, 2].forEach((k) => {
-        const y = WY + 210 + k * 60;
-        D.p(bg, `M${WX + 28} ${y} H${WX + 180}`, '', BAR);
-        D.el('circle', { cx: WX + 296, cy: y, r: 13, style: `fill: ${k === 0 ? '#ff8a3d' : 'none'}; stroke: #d9c6b0`, 'stroke-width': 2.5 }, bg);
-        D.el('circle', { cx: WX + 220, cy: y, r: 11, ...FILL('#c9935a', 2) }, bg);
+      const { w, bg } = win(g);
+      const L = WX + 36, R = WX + WW - 36;
+      D.el('rect', { x: WX + 16, y: WY + 84, width: WW - 32, height: 424, rx: 22, style: 'fill: #22170f; stroke: #3d2d22', 'stroke-width': 2 }, bg);
+      T(bg, L, WY + 128, 'Bestill ved', `800 26px ${DISP}`, '#fff3e3', { 'letter-spacing': '-.02em' });
+      T(bg, L, WY + 152, 'Første levering i morgen.', `500 13px ${DISP}`, '#a08a74');
+      D.el('circle', { cx: L + 9, cy: WY + 186, r: 9, style: 'fill: #e9d6bf' }, bg);
+      T(bg, L + 9, WY + 190, '3', `800 11px ${DISP}`, '#1a120c', { 'text-anchor': 'middle' });
+      T(bg, L + 26, WY + 191, 'Hvor mye per levering?', `700 14px ${DISP}`, '#fff3e3');
+      const tw = (R - L - 3 * 8) / 4;
+      [1, 2, 3, 4].forEach((n, k) => {
+        const x = L + k * (tw + 8), y = WY + 206, on = k === 0;
+        D.el('rect', { x, y, width: tw, height: 66, rx: 12, style: `fill: #1d130d; stroke: ${on ? '#ff7a2f' : '#3d2d22'}`, 'stroke-width': on ? 2.5 : 2 }, bg);
+        for (let j = 0; j < n; j++) D.el('circle', { cx: x + tw / 2 + (j - (n - 1) / 2) * 9, cy: y + 15, r: 3.5, style: 'fill: #b9824e' }, bg);
+        T(bg, x + tw / 2, y + 40, String(n), `800 16px ${DISP}`, '#fff3e3', { 'text-anchor': 'middle' });
+        T(bg, x + tw / 2, y + 56, n === 1 ? 'sekk' : 'sekker', `500 10px ${DISP}`, '#a08a74', { 'text-anchor': 'middle' });
       });
-      const text = D.p(bg, `M${WX + 28} ${WY + 420} H${WX + 320} M${WX + 28} ${WY + 446} H${WX + 280}`, '', BAR);
-      const del = button(w, WX + 24, WY + 460, 150, 'Se priser', false);
-      const save = button(w, WX + 226, WY + 404, 110, 'Bestill', true);
+      D.p(bg, `M${L} ${WY + 292} H${R}`, '', { style: 'fill: none; stroke: #3d2d22; stroke-dasharray: 5 5', 'stroke-width': 2 });
+      T(bg, L, WY + 326, '1 sekk · 40 liter', `500 13px ${DISP}`, '#a08a74');
+      T(bg, R, WY + 330, '129 kr', `800 26px ${DISP}`, '#fff3e3', { 'text-anchor': 'end' });
+      T(bg, R, WY + 350, '/ levering', `500 11px ${DISP}`, '#a08a74', { 'text-anchor': 'end' });
+      const text = T(bg, WX + WW / 2, WY + 432, 'Ingen betaling i dag.', `500 12px ${DISP}`, '#a08a74', { 'text-anchor': 'middle' });
+      const del = button(w, L, WY + 452, 130, 'Se priser', false);
+      const save = button(w, WX + 206, WY + 318, 118, 'Bestill', true);
+      save.setAttribute('data-overlap-ok', '');
       return { w, text, del, save };
     }
     // tiny screenshot for the attachment chip
@@ -98,15 +119,14 @@ export default {
         P.ui = settings(svg);
         tl.fromTo(P.ui.w, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, 0.4);
         // the bug pulses
-        P.bug = D.el('rect', { x: WX + 214, y: WY + 396, width: 134, height: 60, rx: 10, style: 'fill: none; stroke: #ff6f9c', 'stroke-width': 3, opacity: 0, 'data-bg': '' }, svg);
+        P.bug = D.el('rect', { x: WX + 196, y: WY + 300, width: 138, height: 68, rx: 10, style: 'fill: none; stroke: #ff6f9c', 'stroke-width': 3, opacity: 0, 'data-bg': '' }, svg);
         tl.to(P.bug, { opacity: 1, duration: 0.25, repeat: 3, yoyo: true }, 1.0);
         P.chat.user(tl, 'Knappen nede til høyre overlapper teksten på mobil.', 2.2);
         const t = P.chat.think(tl, 2.9, 1.3);
         // the wrong button moves, confidently
-        tl.to(P.ui.del, { x: 150, duration: 0.6, ease: 'power2.inOut' }, t);
-        tl.to(P.ui.save, { y: -26, duration: 0.6, ease: 'power2.inOut' }, t);
+        tl.to(P.ui.del, { x: 158, duration: 0.6, ease: 'power2.inOut' }, t);
         P.chat.reply(tl, 'Fikset! Knappen er flyttet.', t + 0.6);
-        tl.to(P.bug, { attr: { y: WY + 370 }, opacity: 1, duration: 0.25, repeat: 3, yoyo: true }, t + 1.2);
+        tl.to(P.bug, { opacity: 1, duration: 0.25, repeat: 3, yoyo: true }, t + 1.2);
         tl.set(P.bug, { opacity: 1 }, t + 2.4);
       }
 
@@ -119,11 +139,11 @@ export default {
         tl.fromTo(P.ui2.w, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.4);
         P.chat.user(tl, 'Denne.', 0.8, { attach: shot(true) });
         const t = P.chat.think(tl, 1.6, 1.3);
-        P.chat.reply(tl, 'Bestill ligger over teksten på mobil. Flyttet den under.', t);
-        tl.to(P.ui2.save, { y: 56, duration: 0.6, ease: 'power2.inOut' }, t + 0.2);
+        P.chat.reply(tl, 'Bestill ligger over prisen på mobil. Flyttet den under.', t);
+        tl.to(P.ui2.save, { y: 52, duration: 0.6, ease: 'power2.inOut' }, t + 0.2);
         const ok = D.g(svg, { 'data-bg': '' });
-        D.el('circle', { cx: WX + WW - 30, cy: WY + 90, r: 20, style: 'fill: #1f9d63; stroke: #1a120c', 'stroke-width': 2 }, ok);
-        D.p(ok, `M${WX + WW - 40} ${WY + 90} l7 8 l14 -16`, '', { style: 'fill: none; stroke: #fff3e3', 'stroke-width': 4, 'stroke-linecap': 'round' });
+        D.el('circle', { cx: WX + WW - 52, cy: WY + 122, r: 20, style: 'fill: #1f9d63; stroke: #1a120c', 'stroke-width': 2 }, ok);
+        D.p(ok, `M${WX + WW - 62} ${WY + 122} l7 8 l14 -16`, '', { style: 'fill: none; stroke: #fff3e3', 'stroke-width': 4, 'stroke-linecap': 'round' });
         tl.fromTo(ok, { opacity: 0, scale: 0.4, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(3)' }, t + 1.0);
         P.ok = ok;
         ctx.focus(tl, [P.ui2.w, ok, P.chat.root, P.att.g], 0.4);
@@ -134,22 +154,32 @@ export default {
         P.att.show(tl, 'VANSKELIG Å FORKLARE · FERSK AGENT', 0);
         tl.to([P.ui2.w, P.ok], { opacity: 0, duration: 0.3 }, 0);
         P.chat.clear(tl, 0.1);
-        const { w, bg } = win(svg, 'Ved på døra, hele vi');
-        // three quiet problems: icons off the line, a clipped title, grey on grey
-        [0, 1, 2].forEach((k) => {
-          const y = WY + 160 + k * 66;
-          D.el('circle', { cx: WX + 41, cy: y - 5 + (k === 1 ? 9 : 0), r: 13, ...FILL('#c9935a', 2) }, bg);
-          D.p(bg, `M${WX + 72} ${y} H${WX + 250}`, '', BAR);
+        // the landing page, three quiet problems: the headline runs off the screen, the second
+        // icon sits lower than its text, the paragraph is dark on dark
+        const { w, bg } = win(svg);
+        T(bg, WX + 26, WY + 98, 'VEDLEVERING · HELE NORGE', `700 11px ${MONO}`, '#ff7a2f', { 'letter-spacing': '.16em' });
+        const cut = D.el('clipPath', { id: 'show-cut' }, bg);
+        D.el('rect', { x: WX, y: WY, width: WW, height: WH, rx: 30 }, cut);
+        const head = D.g(bg, { 'clip-path': 'url(#show-cut)' });
+        T(head, WX + 22, WY + 156, 'Ved på døra,', `800 58px ${DISP}`, '#fff3e3', { 'letter-spacing': '-.04em' });
+        T(head, WX + 22, WY + 212, 'hele vinteren.', `800 58px ${DISP}`, '#ffb25e', { 'letter-spacing': '-.04em' });
+        [['Tørr bjørk', 'Klar til fyring'], ['Stablet', 'Ved døra di'], ['Ingen binding', 'Pause når du vil']].forEach(([a, b], k) => {
+          const y = WY + 246 + k * 58, iy = y + (k === 1 ? 12 : 0);
+          D.el('circle', { cx: WX + 44, cy: iy, r: 15, ...FILL('#c9935a', 2) }, bg);
+          D.el('circle', { cx: WX + 44, cy: iy, r: 8, style: 'fill: none; stroke: #8a5a30', 'stroke-width': 2 }, bg);
+          T(bg, WX + 84, y - 2, a, `800 16px ${DISP}`, '#fff3e3');
+          T(bg, WX + 84, y + 17, b, `500 13px ${DISP}`, '#a08a74');
         });
-        D.p(bg, `M${WX + 28} ${WY + 400} H${WX + 300} M${WX + 28} ${WY + 428} H${WX + 260} M${WX + 28} ${WY + 456} H${WX + 280}`, '', { style: 'fill: none; stroke: #3a2e25', 'stroke-width': 10, 'stroke-linecap': 'round' });
+        ['Tørr bjørkeved i sekker på 40 liter.', 'Første levering i morgen, deretter', 'hver 14. dag. Ingen betaling i dag.'].forEach((l, k) =>
+          T(bg, WX + 26, WY + 432 + k * 22, l, `500 14px ${DISP}`, '#3a2b20'));
         tl.fromTo(w, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.4);
         P.chat.user(tl, 'Hva er galt her? Skriv hvert problem som en prompt.', 0.8, { attach: shot(false) });
         const t = P.chat.think(tl, 1.7, 1.4);
-        P.chat.reply(tl, '', t, { list: ['1. Ikon nr. 2 står lavere enn teksten.', '2. Overskriften kuttes på mobil.', '3. Mørk tekst på mørk bakgrunn.'] });
+        P.chat.reply(tl, '', t, { list: ['1. Ikonet ved «Stablet» står for lavt.', '2. «hele vinteren.» kuttes på mobil.', '3. Brødteksten er mørk på mørk.'] });
         const rings = [
-          ring(svg, WX + 41, WY + 236, 30, 26, 1),
-          ring(svg, WX + 170, WY + 82, 150, 34, 2),
-          ring(svg, WX + 170, WY + 428, 160, 52, 3),
+          ring(svg, WX + 42, WY + 312, 26, 26, 1),
+          ring(svg, WX + 182, WY + 172, 164, 60, 2),
+          ring(svg, WX + 180, WY + 448, 162, 50, 3),
         ];
         rings.forEach((r, k) => tl.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.3 }, t + 0.3 + k * 0.4));
         ctx.focus(tl, [w, ...rings, P.chat.root, P.att.g], 0.4);

@@ -200,11 +200,11 @@ Point: turn what you repeat into a skill. Used rarely, for very specific and rep
 - Triggered two ways: by the speaker manually, or by ChatGPT reading the order from the shared file.
 
 ## Show, don't describe [given]
-- Built: src/slides/show.js. The firewood order page on a phone.
+- Built: src/slides/show.js. The firewood order page on a phone, drawn as the real site looks (ved.atladeus.com): logo, Åpen nå, the sack picker, 129 kr, Bestill.
 Point: screenshots beat explaining. When an issue is hard to explain: paste the image into a fresh agent, ask what is wrong as prompts, feed those back.
-- Attempt 1: "Knappen nede til høyre overlapper teksten på mobil." The AI moves "Se priser" instead, "Fikset!".
-- Attempt 2 (new session): a circled screenshot, "Denne." Bestill moves below the text.
-- Hard to explain: "Ved på døra, hele vi…" page goes to a fresh agent; it circles three problems (log icon off the line, headline cut on mobile, dark text on dark) and returns them as numbered prompts.
+- Attempt 1: "Knappen nede til høyre overlapper teksten på mobil." (Bestill sits on top of the price.) The AI moves "Se priser" instead, "Fikset!".
+- Attempt 2 (new session): a circled screenshot, "Denne." Bestill moves below the price.
+- Hard to explain: the landing page ("Ved på døra, hele vinteren." running off the screen) goes to a fresh agent; it circles three problems (the Stablet icon off the line, the headline cut on mobile, dark body text on dark) and returns them as numbered prompts.
 
 ## One session per task [given]
 Point: one session per bigger task or task group. Merge candidate with "Parallel sessions with a master session".
