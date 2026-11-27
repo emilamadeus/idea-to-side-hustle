@@ -76,9 +76,10 @@ css.textContent = `
   .lobby.talk .lb-top, .lobby.talk .lb-block { opacity: .55; }
   .lb-now { display: none; flex: 1; flex-direction: column; justify-content: center; padding: 0 4px 6svh; }
   .lobby.talk .lb-now { display: flex; }
-  .lb-look { display: flex; align-items: center; gap: 12px; margin: 0; color: #8a7360; font-size: 15px; line-height: 1.35; }
-  .lb-look i { width: 26px; height: 18px; flex: none; border: 2px solid #8a7360; border-radius: 3px; position: relative; }
-  .lb-look i::after { content: ''; position: absolute; left: 50%; bottom: -7px; width: 12px; height: 2px; margin-left: -6px; background: #8a7360; }
+  .lb-look { display: flex; flex-direction: column; align-items: center; gap: 22px; margin: 0; color: #8a7360; text-align: center; }
+  .lb-look i { width: 78px; height: 52px; flex: none; border: 3px solid #8a7360; border-radius: 6px; position: relative; }
+  .lb-look i::after { content: ''; position: absolute; left: 50%; bottom: -13px; width: 30px; height: 3px; margin-left: -15px; border-radius: 2px; background: #8a7360; }
+  .lb-look span { font-weight: 700; font-size: 22px; letter-spacing: -.01em; }
   .lobby.out .lb-top, .lobby.out .lb-hero, .lobby.out .lb-foot, .lobby.out .lb-count { transition: opacity .5s, transform .7s cubic-bezier(.6,0,.4,1); opacity: 0; }
   .lobby.out .lb-hero { transform: translateY(-24px); } .lobby.out .lb-foot { transform: translateY(24px); } .lobby.out .lb-count { transform: translate(-50%, -50%) scale(.4); }
   .lb-flash { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; clip-path: circle(0% at 50% var(--cy, 56%));
@@ -108,7 +109,7 @@ function mount() {
     <div class="lb-top"><span>10.12.2026</span><span class="lb-live"><i></i><span>Kobler til</span></span></div>
     <div class="lb-hero"><p class="lb-eye">Foredrag</p><h1 class="lb-title"><span><i>Fra idé til</i></span><span><i>lansering,</i></span><span><i>med AI</i></span></h1></div>
     <div class="lb-orbit"><canvas></canvas><div class="lb-count"><b>0</b><span>i salen</span></div></div>
-    <div class="lb-now"><p class="lb-look"><i></i><span>Se på skjermen. Telefonen sier fra når det skjer noe.</span></p></div>
+    <div class="lb-now"><p class="lb-look"><i></i><span>Følg med på skjermen</span></p></div>
     <div class="lb-foot"><p class="lb-hint">Hold siden åpen. Den skifter av seg selv.</p>
       <div class="lb-block"><div class="y"><small>Ark</small><b>00</b></div><div class="w"><small>Del</small><b>Salen</b></div><div><small>Dato</small><b>10.12.26</b></div></div></div>`;
   document.body.append(el);
