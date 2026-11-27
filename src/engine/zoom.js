@@ -520,8 +520,8 @@ export function createZoom(deck, stage) {
     if (!world.visible || !room.size) return;
     room.forEach((m) => {
       m.g.position.set(
-        m.home.x + Math.sin(t * 0.11 + m.ph) * m.unit * 2.2,
-        m.home.y + Math.cos(t * 0.09 + m.ph * 1.3) * m.unit * 1.4,
+        m.home.x + (Math.sin(t * 0.38 + m.ph) * 1.7 + Math.sin(t * 0.61 + m.ph * 2.1) * 0.6) * m.unit,
+        m.home.y + (Math.cos(t * 0.31 + m.ph * 1.3) * 1.0 + Math.sin(t * 0.53 + m.ph * 0.7) * 0.4) * m.unit,
         m.home.z);
       const pop = m.pop.v, flash = pop < 1 ? (1 - pop) * 5 : 0;  // a newcomer flares, then settles
       const pulse = 0.85 + Math.sin(t * 1.4 + m.ph) * 0.15;
