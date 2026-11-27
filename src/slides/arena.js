@@ -6,7 +6,7 @@ import { onRelay, relaySend, relayState, relayControl } from '../engine/relay.js
 /*
   The arena (Bak kulissene, after the game): every phone is a controller. A joystick to move,
   a button to shoot, three lives. Last one standing wins. The TV shows the whole arena; each phone
-  shows the whole arena too, with its own player ringed in white.
+  shows the whole arena too, with its own dot labelled Du.
     0. The arena opens. Phones join as dots and can move (no shooting yet).
     1. Start: 3-2-1, then the fight. After 20 s the ring closes in; outside it you lose lives.
        The last one left is named on the left. The presenter can click on at any moment.
@@ -70,7 +70,7 @@ export default {
         x: x ?? Math.cos(a) * d, y: y ?? Math.sin(a) * d, a: Math.random() * 6.28, hp: HP, alive: true,
         sx: 0, sy: 0, inv: 0, cd: 0, ringT: 0, shake: 0, flash: 0, rank: 0,
         // the drawn position eases toward the reported one (phones report ~15 times a second)
-        dx: 0, dy: 0, tx: 0, ty: 0, wander: 0, aim: 0,
+        dx: 0, dy: 0, tx: 0, ty: 0, wander: 0, aim: 0, mode: 'run',
       };
       p.dx = p.tx = p.x; p.dy = p.ty = p.y;
       G.players.set(id, p); G.list.push(p); G.rosterDirty = true;
@@ -133,28 +133,30 @@ export default {
       showWinner(w, true);
     };
 
-    // a bot: keeps some distance from the nearest player, circles, shoots when it is roughly aimed
+    // a bot plays by the phones' rules: one stick, so it shoots where it is heading. It takes turns:
+    // a run at the nearest player (shooting when roughly lined up), then a dodge away, no shots.
+    // It turns at a limited rate and aims a little off, so a person can outplay it.
     const bot = (p, dt) => {
       const others = alive().filter((q) => q !== p);
-      let vx = 0, vy = 0;
       const t = others.sort((a, b) => Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y))[0];
       p.wander -= dt;
-      if (p.wander <= 0) { p.wander = 1 + Math.random() * 1.5; p.aim = (Math.random() - 0.5) * 2.2; }
+      if (p.wander <= 0) { p.mode = p.mode === 'run' ? 'dodge' : 'run'; p.wander = p.mode === 'run' ? 1.2 + Math.random() : 0.8 + Math.random() * 1.2; p.aim = (Math.random() - 0.5) * 0.5; }
+      let want = p.a, go = 0.5;
       if (t && G.phase === 'fight') {
         const ang = Math.atan2(t.y - p.y, t.x - p.x), d = Math.hypot(t.x - p.x, t.y - p.y);
-        const side = ang + Math.PI / 2 * Math.sign(p.aim || 1);
-        const toward = d > 260 ? 1 : d < 160 ? -1 : 0;
-        vx = Math.cos(ang) * toward + Math.cos(side) * 0.8; vy = Math.sin(ang) * toward + Math.sin(side) * 0.8;
-        p.a = ang + p.aim * 0.12;
-        if (p.cd <= 0 && d < 420 && G.t > G.start && Math.random() < dt * 2.2) fire(p, p.x, p.y, p.a);
-      } else {
-        p.a += p.aim * dt; vx = Math.cos(p.a) * 0.5; vy = Math.sin(p.a) * 0.5;
-      }
-      // stay inside the ring
+        if (p.mode === 'run') { want = ang + p.aim; go = d < 150 ? 0.25 : 0.85; }
+        else { want = ang + (p.aim > 0 ? 1 : -1) * 2.2; go = 0.85; }
+        const off = Math.abs(Math.atan2(Math.sin(ang - p.a), Math.cos(ang - p.a)));
+        if (p.mode === 'run' && off < 0.3 && p.cd <= 0 && d < 380 && G.t > G.start && Math.random() < dt * 1.6) fire(p, p.x, p.y, p.a);
+      } else want = p.a + (p.aim || 0.3) * dt * 4;
+      // stay inside the ring: head back in
       const r = Math.hypot(p.x, p.y), lim = Math.min(G.R, G.ringR) - PR * 2;
-      if (r > lim * 0.85) { vx -= p.x / r * 1.4; vy -= p.y / r * 1.4; }
-      const m = Math.hypot(vx, vy) || 1, s = Math.min(1, m) * SPEED * 0.85;
-      p.tx = p.x + (vx / m) * s * dt; p.ty = p.y + (vy / m) * s * dt;
+      if (r > lim * 0.85) want = Math.atan2(-p.y, -p.x);
+      // turn toward where it wants to go, at most ~3.5 rad a second
+      const da = Math.atan2(Math.sin(want - p.a), Math.cos(want - p.a));
+      p.a += Math.max(-3.5 * dt, Math.min(3.5 * dt, da));
+      const sp = go * SPEED;
+      p.tx = p.x + Math.cos(p.a) * sp * dt; p.ty = p.y + Math.sin(p.a) * sp * dt;
       const rr = Math.hypot(p.tx, p.ty);
       if (rr > G.R - PR) { p.tx *= (G.R - PR) / rr; p.ty *= (G.R - PR) / rr; }
       p.x = p.tx; p.y = p.ty;

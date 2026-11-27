@@ -1,5 +1,5 @@
-// The arena on the phone: a joystick, a fire button, three hearts, and the whole arena, with you
-// ringed in white. Last one standing wins; the TV shows the whole arena.
+// The arena on the phone: a joystick, a fire button, three hearts, and the whole arena, with your
+// own dot labelled Du. Last one standing wins; the TV shows the whole arena.
 //   The phone owns its own position (steering is instant here) and sends it ~15 times a second.
 //   The talk decides hits, lives, the ring and who is out, and sends the state back ~12 a second.
 //   Out: a ghost card with your place and a cheer button (sparks on the TV).
@@ -301,7 +301,6 @@ function draw(time) {
     g.save(); g.beginPath(); g.arc(x, y, pr, 0, 6.2832); g.clip();
     g.fillStyle = color; g.fillRect(x - pr, y + pr - (2 * pr * hp) / 3, pr * 2, (2 * pr * hp) / 3); g.restore();
     g.beginPath(); g.arc(x, y, pr, 0, 6.2832); g.lineWidth = 2 * u; g.strokeStyle = INK; g.stroke();
-    if (me) { g.beginPath(); g.arc(x, y, pr + (6 + Math.sin(time * 4) * 1.5) * u, 0, 6.2832); g.lineWidth = 2.5 * u; g.strokeStyle = '#fff3e3'; g.stroke(); }
     if (!me && !named) return;
     g.font = `700 ${(me ? 12 : 10) * u}px "Space Mono", monospace`; g.textAlign = 'center';
     g.lineWidth = 3.5 * u; g.strokeStyle = 'rgba(22,16,11,.9)'; g.strokeText(name, x, y - pr - 9 * u);
