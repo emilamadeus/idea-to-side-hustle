@@ -163,6 +163,11 @@ window.vedHook = (m) => {
   if (m.type === 'light') onLight(m);
   if (m.type === 'light-off') stopLight();
   if (m.type === 'award') onAward(m);
+  if (m.type === 'room-reset') { // the presenter emptied the room: forget we joined, ask again
+    store.set('ved-joined', ''); try { sessionStorage.removeItem('ved-welcomed'); } catch {}
+    joined = false; me = null; shift?.remove(); shift = null; closeAlert(); stopLight();
+    if (!document.querySelector('.room-join')) askJoin();
+  }
 };
 if (joined) { const n = store.get('ved-name'); const tryJoin = () => { if (!send({ type: 'join', name: n || '' })) setTimeout(tryJoin, 600); }; tryJoin(); const f = $('#nameInput'); if (f && n && !f.value) f.value = n; }
 else askJoin();

@@ -65,6 +65,7 @@ export function onRelay(fn) { subs.add(fn); return () => subs.delete(fn); }
 //   X  empty the shop's orders (phones go back to the shop)
 //   C  close the shop (phones show "Åpner straks")
 //   V  reset the vote and the site's look (back to Varm peis)
+//   N  empty the room: everyone who joined is gone, and open phones ask for a name again
 function toast(text) {
   const t = document.createElement('div');
   t.textContent = text;
@@ -76,7 +77,7 @@ if (control && typeof window !== 'undefined') {
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey || e.target?.closest?.('input, textarea, [contenteditable]')) return;
     const k = e.key.toLowerCase();
-    const msg = { x: [{ type: 'reset' }, 'Bestillingene er tømt'], c: [{ type: 'close' }, 'Butikken er stengt'], v: [{ type: 'vote-reset' }, 'Avstemningen er nullstilt'] }[k];
+    const msg = { x: [{ type: 'reset' }, 'Bestillingene er tømt'], c: [{ type: 'close' }, 'Butikken er stengt'], v: [{ type: 'vote-reset' }, 'Avstemningen er nullstilt'], n: [{ type: 'people-reset' }, 'Salen er tømt'] }[k];
     if (!msg) return;
     if (!KEY) { toast('Ingen kobling til ved.atladeus.com'); return; }
     relaySend(msg[0]);

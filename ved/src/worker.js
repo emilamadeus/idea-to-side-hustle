@@ -229,7 +229,7 @@ export class Room {
       this.send('deck', { type: 'awards', list });
       this.eachPhone((ws, v) => { const won = list.filter((a) => a.voter === v); if (won.length) ws.send(JSON.stringify({ type: 'award', titles: won.map((a) => a.title) })); });
     }
-    if (m.type === 'people-reset') { this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); }
+    if (m.type === 'people-reset') { this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); this.send('cust', { type: 'room-reset' }); }
     if (m.type === 'reset') {
       this.orders = [];
       await this.ctx.storage.put('orders', this.orders);
