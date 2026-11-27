@@ -6,7 +6,7 @@ import { onRelay, relaySend, relayState, relayControl } from '../engine/relay.js
 /*
   The arena (Bak kulissene, after the game): every phone is a controller. A joystick to move,
   a button to shoot, three lives. Last one standing wins. The TV shows the whole arena; each phone
-  shows a close-up around its own player.
+  shows the whole arena too, with its own player ringed in white.
     0. The arena opens. Phones join as dots and can move (no shooting yet).
     1. Start: 3-2-1, then the fight. After 20 s the ring closes in; outside it you lose lives.
        The last one left is named on the left. The presenter can click on at any moment.

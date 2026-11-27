@@ -1,10 +1,10 @@
-// The arena on the phone: a joystick, a fire button, three hearts, and a close-up of the arena
-// around you. Last one standing wins; the TV shows the whole arena.
+// The arena on the phone: a joystick, a fire button, three hearts, and the whole arena, with you
+// ringed in white. Last one standing wins; the TV shows the whole arena.
 //   The phone owns its own position (steering is instant here) and sends it ~15 times a second.
 //   The talk decides hits, lives, the ring and who is out, and sends the state back ~12 a second.
 //   Out: a ghost card with your place and a cheer button (sparks on the TV).
 // Messages come through window.vedHook (chained after play.js). The numbers match src/slides/arena.js.
-const PR = 18, SPEED = 210, BSPD = 420, BLIFE = 1.15, BR = 6, CD = 0.45, VIEW = 300;
+const PR = 18, SPEED = 210, BSPD = 420, BLIFE = 1.15, BR = 6, CD = 0.45;
 const send = (m) => window.vedSend?.(m);
 const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
 const meId = (() => { try { return JSON.parse(localStorage.getItem('ved-voter') || '""').slice(0, 6); } catch { return ''; } })();
@@ -30,9 +30,7 @@ css.textContent = `
   .ar-hearts .lost { animation: ar-crack .6s both; }
   @keyframes ar-crack { 0% { transform: scale(1.35) rotate(-8deg); } 40% { transform: scale(.9) rotate(6deg); } 100% { transform: scale(.82); opacity: .55; } }
   .ar-view { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; }
-  .ar-view canvas { width: min(100%, 100cqh); aspect-ratio: 1; max-height: 100%; border-radius: 50%; display: block;
-    box-shadow: 0 0 0 2.5px rgba(255,190,120,.5), 0 30px 60px -30px #000; }
-  .ar-view { container-type: size; }
+  .ar-view canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   .ar-msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none; padding: 0 30px; }
   .ar-msg b { font-weight: 800; font-size: 26px; letter-spacing: -.02em; line-height: 1.1; text-shadow: 0 2px 16px #000; }
   .ar-msg b.big { font-size: 110px; font-family: 'Bricolage Grotesque'; color: #fff3e3; -webkit-text-stroke: 3px ${INK}; animation: ar-tick .9s both; }
@@ -56,7 +54,7 @@ css.textContent = `
   .ar-puck.held { transition: none; }
   .ar-puck::after { content: ''; position: absolute; inset: 26%; border-radius: 50%; box-shadow: inset 0 2px 0 rgba(255,255,255,.35), inset 0 -2px 4px rgba(0,0,0,.3);
     background: radial-gradient(circle, rgba(0,0,0,.12), transparent 70%); }
-  .ar-fire { position: relative; width: min(34vw, 140px); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; touch-action: none;
+  .ar-fire { -webkit-tap-highlight-color: transparent; position: relative; width: min(34vw, 140px); aspect-ratio: 1; border-radius: 50%; border: 0; padding: 0; cursor: pointer; touch-action: none;
     background: radial-gradient(circle at 40% 30%, #ffd9a8 0 6%, #ff8a3d 30%, #ff5a1f 60%, #c23a0b 100%); color: ${INK};
     box-shadow: 0 0 0 3px ${INK}, 0 0 0 9px rgba(255,90,31,.16), inset 0 -8px 16px rgba(0,0,0,.3), 0 18px 36px -10px #ff5a1f;
     font: 800 20px 'Bricolage Grotesque', sans-serif; letter-spacing: .02em; transition: transform .08s; }
@@ -83,6 +81,29 @@ const heart = (lost) => `<svg viewBox="-17 -16 34 32"><path d="M0 13 C-14 3 -16 
   fill="${lost ? '#2a1d14' : '#ff5a1f'}" stroke="${INK}" stroke-width="2.6" stroke-linejoin="round"/>${lost ? '<path d="M1 -6 L-3 0 L2 3 L-1 10" fill="none" stroke="#6b5a48" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' : '<path d="M-8 -7 C-6 -9 -4 -9 -3 -8" fill="none" stroke="#ffd9a8" stroke-width="2.4" stroke-linecap="round"/>'}</svg>`;
 
 let A = null; // the running arena on this phone
+
+// While the arena is open the page cannot zoom: two thumbs (stick + fire) read as a pinch and
+// quick taps as a double-tap. The viewport is locked (which also snaps a zoomed page back), and
+// touches and Safari's gesture events inside the arena never reach the browser.
+const vp = document.querySelector('meta[name=viewport]');
+const vp0 = vp?.getAttribute('content') || 'width=device-width, initial-scale=1, viewport-fit=cover';
+const stop = (e) => { if (A) e.preventDefault(); };
+function noZoom(on) {
+  vp?.setAttribute('content', on ? 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover' : vp0);
+  const f = on ? 'addEventListener' : 'removeEventListener';
+  ['gesturestart', 'gesturechange', 'gestureend', 'dblclick'].forEach((t) => document[f](t, stop, { passive: false }));
+  document[f]('touchmove', stop, { passive: false });
+  document[f]('touchstart', multi, { passive: false });
+  document[f]('touchend', tapEnd, { passive: false });
+}
+const multi = (e) => { if (A && e.touches.length > 1) e.preventDefault(); };
+let lastEnd = 0;
+const tapEnd = (e) => {
+  if (!A || e.target.closest?.('.ar-cheer')) return;
+  const t = Date.now();
+  if (t - lastEnd < 350) e.preventDefault(); // a quick second tap is not a double-tap zoom
+  lastEnd = t;
+};
 const now = () => Date.now() + (A?.off || 0);
 
 function open(m) {
@@ -94,6 +115,7 @@ function open(m) {
     <div class="ar-view"><canvas></canvas><div class="ar-flash"></div><div class="ar-msg"></div></div>
     <div class="ar-pad"><div class="ar-stick"><div class="ar-puck"></div></div><button class="ar-fire" type="button"><i></i>Skyt</button></div>`;
   document.body.append(root);
+  noZoom(true);
   const a0 = Math.random() * 6.28, d0 = (m.R || 400) * (0.3 + Math.random() * 0.4);
   A = {
     root, R: m.R || 400, phase: m.phase, at: m.at || 0, off: (m.now || Date.now()) - Date.now(),
@@ -117,6 +139,7 @@ function open(m) {
 
 function close(fast) {
   if (!A) return;
+  noZoom(false);
   const r = A.root; cancelAnimationFrame(A.raf); A = null;
   if (fast) { r.remove(); return; }
   r.classList.add('out'); setTimeout(() => r.remove(), 500);
@@ -226,85 +249,79 @@ function frame(dt, time) {
   draw(time);
 }
 
-// ---------- drawing: a close-up, you in the middle ----------
+// ---------- drawing: the whole arena, fitted to the screen ----------
 function draw(time) {
   const cv = A.cv, g = A.g, dpr = Math.min(2, window.devicePixelRatio || 1);
-  const w = cv.clientWidth;
-  if (!w) return;
-  if (cv.width !== Math.round(w * dpr)) { cv.width = cv.height = Math.round(w * dpr); }
-  const C = cv.width / 2, s = C / VIEW;
+  const w = cv.clientWidth, h = cv.clientHeight;
+  if (!w || !h) return;
+  if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) { cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr); }
+  const CX = cv.width / 2, CY = cv.height / 2, s = Math.min(CX, CY) / (A.R + 8);
+  const u = dpr / s;                          // one screen pixel, in arena units
   const sh = A.shake > 0 ? Math.sin(A.shake * 80) * 6 * dpr * (A.shake / 0.3) : 0;
   g.setTransform(1, 0, 0, 1, 0, 0);
-  g.fillStyle = '#120c08'; g.fillRect(0, 0, cv.width, cv.height);
-  // world → canvas, with me (or where I fell) at the centre
-  g.setTransform(s, 0, 0, s, C - A.x * s + sh, C - A.y * s);
-  // the floor inside the wall
+  g.clearRect(0, 0, cv.width, cv.height);
+  g.setTransform(s, 0, 0, s, CX + sh, CY);
+  // the floor inside the wall, the grid, the danger zone
   g.save();
   g.beginPath(); g.arc(0, 0, A.R, 0, 6.2832); g.clip();
-  g.fillStyle = '#1f160f'; g.fillRect(A.x - VIEW, A.y - VIEW, VIEW * 2, VIEW * 2);
-  g.strokeStyle = 'rgba(255,190,120,.10)'; g.lineWidth = 2 / s * dpr;
-  for (let x = Math.floor((A.x - VIEW) / 80) * 80; x < A.x + VIEW; x += 80) { g.beginPath(); g.moveTo(x, A.y - VIEW); g.lineTo(x, A.y + VIEW); g.stroke(); }
-  for (let y = Math.floor((A.y - VIEW) / 80) * 80; y < A.y + VIEW; y += 80) { g.beginPath(); g.moveTo(A.x - VIEW, y); g.lineTo(A.x + VIEW, y); g.stroke(); }
+  g.fillStyle = '#1f160f'; g.fillRect(-A.R, -A.R, A.R * 2, A.R * 2);
+  g.strokeStyle = 'rgba(255,190,120,.10)'; g.lineWidth = 1.5 * u;
+  for (let x = -Math.floor(A.R / 80) * 80; x < A.R; x += 80) { g.beginPath(); g.moveTo(x, -A.R); g.lineTo(x, A.R); g.stroke(); }
+  for (let y = -Math.floor(A.R / 80) * 80; y < A.R; y += 80) { g.beginPath(); g.moveTo(-A.R, y); g.lineTo(A.R, y); g.stroke(); }
   if (A.ringR < A.R - 1) {
     g.beginPath(); g.arc(0, 0, A.R, 0, 6.2832); g.arc(0, 0, A.ringR, 0, 6.2832, true);
     g.fillStyle = `rgba(255,90,31,${0.18 + 0.06 * Math.sin(time * 4)})`; g.fill();
   }
   g.restore();
-  g.beginPath(); g.arc(0, 0, A.R, 0, 6.2832); g.lineWidth = 4; g.strokeStyle = 'rgba(255,190,120,.6)'; g.stroke();
+  g.beginPath(); g.arc(0, 0, A.R, 0, 6.2832); g.lineWidth = 2.5 * u; g.strokeStyle = 'rgba(255,190,120,.6)'; g.stroke();
   if (A.ringR < A.R - 1) {
-    g.save(); g.setLineDash([14, 10]); g.lineDashOffset = -time * 30;
-    g.beginPath(); g.arc(0, 0, Math.max(4, A.ringR), 0, 6.2832); g.lineWidth = 4; g.strokeStyle = '#ff5a1f'; g.stroke(); g.restore();
+    g.save(); g.setLineDash([9 * u, 6 * u]); g.lineDashOffset = -time * 20 * u;
+    g.beginPath(); g.arc(0, 0, Math.max(4, A.ringR), 0, 6.2832); g.lineWidth = 2.5 * u; g.strokeStyle = '#ff5a1f'; g.stroke(); g.restore();
   }
-  // bullets
+  // bullets: never smaller than a few pixels
+  const br = Math.max(BR, 3 * u);
   const bullet = (b, color) => {
-    g.lineCap = 'round'; g.lineWidth = BR * 1.4; g.strokeStyle = color + '66';
+    g.lineCap = 'round'; g.lineWidth = br * 1.4; g.strokeStyle = color + '66';
     g.beginPath(); g.moveTo(b.x - b.vx * 0.05, b.y - b.vy * 0.05); g.lineTo(b.x, b.y); g.stroke();
-    g.beginPath(); g.arc(b.x, b.y, BR, 0, 6.2832); g.fillStyle = color; g.fill(); g.lineWidth = 2; g.strokeStyle = INK; g.stroke();
+    g.beginPath(); g.arc(b.x, b.y, br, 0, 6.2832); g.fillStyle = color; g.fill(); g.lineWidth = 1.5 * u; g.strokeStyle = INK; g.stroke();
   };
   A.bullets.forEach((b) => bullet(b, A.roster.get(b.o)?.color || '#fff3e3'));
   const myColor = A.roster.get(A.myK)?.color || '#ff7a2f';
   A.mine.forEach((b) => bullet(b, myColor));
-  // players
+  // players: at least 8 px, so a crowded arena still reads
+  const pr = Math.max(PR, 8 * u);
+  const named = A.others.size <= 14;
   const dot = (x, y, a, hp, color, name, me) => {
     g.beginPath();
-    g.moveTo(x + Math.cos(a) * (PR + 11), y + Math.sin(a) * (PR + 11));
-    g.lineTo(x + Math.cos(a + 0.42) * (PR + 2), y + Math.sin(a + 0.42) * (PR + 2));
-    g.lineTo(x + Math.cos(a - 0.42) * (PR + 2), y + Math.sin(a - 0.42) * (PR + 2));
-    g.closePath(); g.fillStyle = '#fff3e3'; g.fill(); g.lineWidth = 2; g.strokeStyle = INK; g.stroke();
-    g.beginPath(); g.arc(x, y, PR, 0, 6.2832); g.fillStyle = '#2a1d14'; g.fill();
-    g.save(); g.beginPath(); g.arc(x, y, PR, 0, 6.2832); g.clip();
-    g.fillStyle = color; g.fillRect(x - PR, y + PR - (2 * PR * hp) / 3, PR * 2, (2 * PR * hp) / 3); g.restore();
-    g.beginPath(); g.arc(x, y, PR, 0, 6.2832); g.lineWidth = 3; g.strokeStyle = INK; g.stroke();
-    if (me) { g.beginPath(); g.arc(x, y, PR + 7 + Math.sin(time * 4) * 1.5, 0, 6.2832); g.lineWidth = 2.5; g.strokeStyle = 'rgba(255,243,227,.7)'; g.stroke(); }
-    g.font = '700 13px "Space Mono", monospace'; g.textAlign = 'center';
-    g.lineWidth = 4; g.strokeStyle = 'rgba(22,16,11,.9)'; g.strokeText(name, x, y - PR - 12);
-    g.fillStyle = '#fff3e3'; g.fillText(name, x, y - PR - 12);
+    g.moveTo(x + Math.cos(a) * pr * 1.6, y + Math.sin(a) * pr * 1.6);
+    g.lineTo(x + Math.cos(a + 0.42) * pr * 1.1, y + Math.sin(a + 0.42) * pr * 1.1);
+    g.lineTo(x + Math.cos(a - 0.42) * pr * 1.1, y + Math.sin(a - 0.42) * pr * 1.1);
+    g.closePath(); g.fillStyle = '#fff3e3'; g.fill(); g.lineWidth = 1.5 * u; g.strokeStyle = INK; g.stroke();
+    g.beginPath(); g.arc(x, y, pr, 0, 6.2832); g.fillStyle = '#2a1d14'; g.fill();
+    g.save(); g.beginPath(); g.arc(x, y, pr, 0, 6.2832); g.clip();
+    g.fillStyle = color; g.fillRect(x - pr, y + pr - (2 * pr * hp) / 3, pr * 2, (2 * pr * hp) / 3); g.restore();
+    g.beginPath(); g.arc(x, y, pr, 0, 6.2832); g.lineWidth = 2 * u; g.strokeStyle = INK; g.stroke();
+    if (me) { g.beginPath(); g.arc(x, y, pr + (6 + Math.sin(time * 4) * 1.5) * u, 0, 6.2832); g.lineWidth = 2.5 * u; g.strokeStyle = '#fff3e3'; g.stroke(); }
+    if (!me && !named) return;
+    g.font = `700 ${(me ? 12 : 10) * u}px "Space Mono", monospace`; g.textAlign = 'center';
+    g.lineWidth = 3.5 * u; g.strokeStyle = 'rgba(22,16,11,.9)'; g.strokeText(name, x, y - pr - 9 * u);
+    g.fillStyle = '#fff3e3'; g.fillText(name, x, y - pr - 9 * u);
   };
   A.others.forEach((o, k) => { const r = A.roster.get(k); if (r) dot(o.dx, o.dy, o.a, o.hp, r.color, r.name, false); });
   if (!A.dead && !A.watching) dot(A.x, A.y, A.a, A.hp, myColor, 'Du', true);
-  // hits and my fall
+  // hits and falls
   for (const f of A.fx) {
     const q = f.t / f.dur;
     g.globalAlpha = 1 - q;
-    if (f.kind === 'hit') { g.beginPath(); g.arc(f.x, f.y, PR + 4 + q * 40, 0, 6.2832); g.lineWidth = 5 * (1 - q) + 2; g.strokeStyle = f.color; g.stroke(); }
+    if (f.kind === 'hit') { g.beginPath(); g.arc(f.x, f.y, pr + (3 + q * 24) * u, 0, 6.2832); g.lineWidth = (4 * (1 - q) + 1.5) * u; g.strokeStyle = f.color; g.stroke(); }
     if (f.kind === 'die') {
       for (let i = 0; i < 6; i++) {
-        const a0 = i / 6 * 6.28, d = q * 60;
+        const a0 = i / 6 * 6.28, d = q * pr * 3;
         g.save(); g.translate(f.x + Math.cos(a0 + 0.52) * d, f.y + Math.sin(a0 + 0.52) * d); g.rotate(q * (i % 2 ? 2 : -2));
-        g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, PR, a0, a0 + 1.047); g.closePath(); g.fillStyle = f.color; g.fill(); g.lineWidth = 2.5; g.strokeStyle = INK; g.stroke(); g.restore();
+        g.beginPath(); g.moveTo(0, 0); g.arc(0, 0, pr, a0, a0 + 1.047); g.closePath(); g.fillStyle = f.color; g.fill(); g.lineWidth = 1.5 * u; g.strokeStyle = INK; g.stroke(); g.restore();
       }
     }
     g.globalAlpha = 1;
-  }
-  // where the ring is closing to, when it is getting close
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  const d = Math.hypot(A.x, A.y);
-  if (A.ringR < A.R - 1 && d > A.ringR * 0.75 && d > 1) {
-    const ang = Math.atan2(-A.y, -A.x), r = C - 22 * dpr;
-    const x = C + Math.cos(ang) * r, y = C + Math.sin(ang) * r;
-    g.save(); g.translate(x, y); g.rotate(ang); g.scale(dpr, dpr);
-    g.beginPath(); g.moveTo(12, 0); g.lineTo(-8, -10); g.lineTo(-4, 0); g.lineTo(-8, 10); g.closePath();
-    g.fillStyle = '#ff5a1f'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = INK; g.stroke(); g.restore();
   }
 }
 
