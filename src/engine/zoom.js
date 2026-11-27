@@ -194,8 +194,11 @@ export function createZoom(deck, stage) {
     const mz = (A.z + B.z) / 2;
     return [[ax, A.y, A.z], [mx, A.y, mz], [mx, B.y, mz], [bx, B.y, B.z]];
   }
+  let flowT = null;
   function flowStreams(t) {
     const m = layout ? layout.r * 2.2 : 0.1;
+    const dt = flowT == null ? 0 : Math.min(0.1, Math.max(0, t - flowT));
+    flowT = t;
     streams.forEach((st) => {
       const pts = route(box(panels[st.a]), box(panels[st.b]), m);
       const seg = [], len = [];
@@ -205,9 +208,14 @@ export function createZoom(deck, stage) {
         const l = Math.hypot(x1 - x0, y1 - y0, z1 - z0);
         seg.push([x0, y0, z0, x1, y1, z1, l]); len.push(total); total += l;
       }
+      // one pass along the stream takes 2.6 s plus a little more for longer ones: short streams no
+      // longer race, long ones no longer crawl. Progress is integrated, so a length change from the
+      // panels' float never makes the particles jump.
+      const period = 2.6 + 1.1 * Math.sqrt(Math.max(total, 0.01) / Math.max(layout?.r || 0.1, 0.01)) * 0.35;
+      st.off = ((st.off || 0) + dt / period) % 1;
       const arr = st.points.geometry.attributes.position.array;
       for (let j = 0; j < K; j++) {
-        const u = ((st.phase[j] + t * 0.55 / Math.max(total, 0.3)) % 1) * total;
+        const u = ((st.phase[j] + st.off) % 1) * total;
         let i = seg.length - 1;
         while (i > 0 && len[i] > u) i--;
         const [x0, y0, z0, x1, y1, z1, l] = seg[i];
@@ -515,16 +523,33 @@ export function createZoom(deck, stage) {
   function nameSprite(name, color) {
     const c = document.createElement('canvas');
     const x = c.getContext('2d');
-    const font = '800 88px "Bricolage Grotesque", sans-serif';
+    // drawn large and crisp: a soft glow underneath, then the letters with an ink outline on top
+    const font = '800 176px "Bricolage Grotesque", sans-serif';
     x.font = font;
-    c.width = Math.ceil(x.measureText(name).width + 60); c.height = 128;
+    c.width = Math.ceil(x.measureText(name).width + 120); c.height = 256;
     x.font = font; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.shadowColor = color; x.shadowBlur = 18;
-    x.fillStyle = color; x.fillText(name, c.width / 2, 66);
+    x.shadowColor = color; x.shadowBlur = 40; x.globalAlpha = 0.55;
+    x.fillStyle = color; x.fillText(name, c.width / 2, 132);
+    x.shadowBlur = 0; x.globalAlpha = 1;
+    x.lineJoin = 'round'; x.lineWidth = 14; x.strokeStyle = '#16100b'; x.strokeText(name, c.width / 2, 132);
+    x.fillStyle = color; x.fillText(name, c.width / 2, 132);
     const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = stage.renderer.capabilities.getMaxAnisotropy();
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
     sp.userData.aspect = c.width / c.height;
     return sp;
+  }
+  const cores = new Map();
+  function coreTex(color) {
+    if (cores.has(color)) return cores.get(color);
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d');
+    x.beginPath(); x.arc(32, 32, 24, 0, Math.PI * 2); x.fillStyle = color; x.fill();
+    x.lineWidth = 7; x.strokeStyle = '#16100b'; x.stroke();
+    x.beginPath(); x.arc(26, 26, 7, 0, Math.PI * 2); x.fillStyle = 'rgba(255,255,255,.45)'; x.fill();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    cores.set(color, t);
+    return t;
   }
   function addPerson(p, burst = false) {
     const known = room.get(p.id);
@@ -557,7 +582,10 @@ export function createZoom(deck, stage) {
     g.position.set(hx, hy, z);
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: dot, color: new THREE.Color(color), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
     g.add(glow);
-    const m = { g, glow, tag: null, name: p.name, color, dist, seen: seenAt(hx, hy), home: new THREE.Vector3(hx, hy, z), ph: Math.random() * Math.PI * 2, pop: { v: burst ? 0 : 1 } };
+    // a solid core with an ink rim, so the dot reads as a thing rather than a smudge
+    const core = new THREE.Sprite(new THREE.SpriteMaterial({ map: coreTex(color), transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+    g.add(core);
+    const m = { g, glow, core, tag: null, name: p.name, color, dist, seen: seenAt(hx, hy), home: new THREE.Vector3(hx, hy, z), ph: Math.random() * Math.PI * 2, pop: { v: burst ? 0 : 1 } };
     if (p.name) { m.tag = nameSprite(p.name, color); g.add(m.tag); }
     sizeTag(m);
     roomGroup.add(g);
@@ -589,8 +617,10 @@ export function createZoom(deck, stage) {
       const pop = m.pop.v, flash = pop < 1 ? (1 - pop) * 5 : 0;  // a newcomer flares, then settles
       const pulse = 0.85 + Math.sin(t * 1.4 + m.ph) * 0.15;
       m.glow.scale.setScalar(m.unit * (1.1 + flash) * pulse);
-      m.glow.material.opacity = roomFade.v * Math.min(1, pop * 1.5) * 0.95;
-      if (m.tag) m.tag.material.opacity = roomFade.v * Math.max(0, pop * 1.4 - 0.4) * 0.92;
+      m.glow.material.opacity = roomFade.v * Math.min(1, pop * 1.5) * 0.7;
+      m.core.scale.setScalar(m.unit * 0.42 * (1 + flash * 0.2));
+      m.core.material.opacity = roomFade.v * Math.min(1, pop * 1.5);
+      if (m.tag) m.tag.material.opacity = roomFade.v * Math.max(0, pop * 1.4 - 0.4);
     });
   });
 
