@@ -149,7 +149,8 @@ export function createZoom(deck, stage) {
   })();
   const streamMat = new THREE.PointsMaterial({ size: 0.12, map: dot, transparent: true, opacity: 0, depthWrite: false,
     blending: THREE.AdditiveBlending, vertexColors: true, sizeAttenuation: true, toneMapped: false });
-  const K = 46; // particles per stream
+  const K = 46;         // particles on the shortest stream
+  const KMAX = K * 5;   // longer streams carry more, so every stream looks equally dense
   let streams = [];
   function rebuildStreams(L) {
     streams.forEach((st) => { world.remove(st.points); st.points.geometry.dispose(); });
@@ -157,9 +158,9 @@ export function createZoom(deck, stage) {
     const warm = new THREE.Color('#ff7a2f'), cream = new THREE.Color('#ffe2b8');
     for (let k = 0; k < L.order.length - 1; k++) {
       const geom = new THREE.BufferGeometry();
-      const pos = new Float32Array(K * 3), col = new Float32Array(K * 3);
-      const phase = new Float32Array(K), wob = new Float32Array(K);
-      for (let j = 0; j < K; j++) {
+      const pos = new Float32Array(KMAX * 3), col = new Float32Array(KMAX * 3);
+      const phase = new Float32Array(KMAX), wob = new Float32Array(KMAX);
+      for (let j = 0; j < KMAX; j++) {
         phase[j] = Math.random(); wob[j] = Math.random() * Math.PI * 2;
         const c = warm.clone().lerp(cream, Math.random()).multiplyScalar(0.8 + Math.random() * 0.7);
         col.set([c.r, c.g, c.b], j * 3);
@@ -199,7 +200,8 @@ export function createZoom(deck, stage) {
     const m = layout ? layout.r * 2.2 : 0.1;
     const dt = flowT == null ? 0 : Math.min(0.1, Math.max(0, t - flowT));
     flowT = t;
-    streams.forEach((st) => {
+    // every stream's path this frame, then its particle count from its length
+    const paths = streams.map((st) => {
       const pts = route(box(panels[st.a]), box(panels[st.b]), m);
       const seg = [], len = [];
       let total = 0;
@@ -208,13 +210,22 @@ export function createZoom(deck, stage) {
         const l = Math.hypot(x1 - x0, y1 - y0, z1 - z0);
         seg.push([x0, y0, z0, x1, y1, z1, l]); len.push(total); total += l;
       }
+      return { seg, len, total };
+    });
+    const shortest = Math.max(0.01, Math.min(...paths.map((q) => q.total)));
+    streams.forEach((st, si) => {
+      const { seg, len, total } = paths[si];
+      const want = Math.min(KMAX, Math.max(K, Math.round(K * total / shortest)));
+      if (st.n == null || Math.abs(want - st.n) > 3) st.n = want; // the float nudges lengths: no flicker
+      const n = st.n;
+      st.points.geometry.setDrawRange(0, n);
       // one pass along the stream takes 2.6 s plus a little more for longer ones: short streams no
       // longer race, long ones no longer crawl. Progress is integrated, so a length change from the
       // panels' float never makes the particles jump.
       const period = 2.6 + 1.1 * Math.sqrt(Math.max(total, 0.01) / Math.max(layout?.r || 0.1, 0.01)) * 0.35;
       st.off = ((st.off || 0) + dt / period) % 1;
       const arr = st.points.geometry.attributes.position.array;
-      for (let j = 0; j < K; j++) {
+      for (let j = 0; j < n; j++) {
         const u = ((st.phase[j] + st.off) % 1) * total;
         let i = seg.length - 1;
         while (i > 0 && len[i] > u) i--;
