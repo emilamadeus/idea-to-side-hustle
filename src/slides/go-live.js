@@ -55,6 +55,7 @@ const short = (t, n) => (t.length > n ? `${t.slice(0, n - 1)}…` : t);
 export default {
   id: 'go-live',
   title: 'Gå live',
+  themed: true, // shows the design the room picked: the zoom-out picture follows it (thumbs/<id>-<theme>.jpg)
   steps: 5,
   notes: [
     'Siden er ferdig, men den ligger bare på min maskin.',

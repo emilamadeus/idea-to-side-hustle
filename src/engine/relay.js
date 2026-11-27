@@ -21,7 +21,10 @@ const control = typeof location !== 'undefined' && new URLSearchParams(location.
 let ws = null, timer = null;
 let queue = [];
 const subs = new Set();
-export const relayState = { theme: 'peis', vote: null, connected: false };
+// ?theme=skog forces a design (the picture script uses it to draw each version); the relay's
+// theme is then ignored in this window
+const forcedTheme = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('theme') : null;
+export const relayState = { theme: forcedTheme || 'peis', vote: null, connected: false };
 if (typeof window !== 'undefined') window.relayState = relayState; // handy from the devtools console (try other themes)
 
 function connect() {
@@ -32,7 +35,8 @@ function connect() {
   ws.onmessage = (e) => {
     let m;
     try { m = JSON.parse(e.data); } catch { return; }
-    if (m.theme) relayState.theme = m.theme;
+    if (m.theme && !forcedTheme) relayState.theme = m.theme;
+    if (m.theme && forcedTheme) m = { ...m, theme: forcedTheme };
     if (m.vote) relayState.vote = m.vote;
     subs.forEach((fn) => { try { fn(m); } catch (err) { console.error(err); } });
   };

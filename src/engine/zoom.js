@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
 import * as shapes from './shapes.js';
+import { relayState, onRelay } from './relay.js';
 
 /*
   Zoom-out: the slides as panels floating in the particle space, joined as a linked list by
@@ -65,11 +66,17 @@ export function createZoom(deck, stage) {
     return t;
   }
 
+  // a slide's picture; slides that show the room's design choice (def.themed) have one per design
+  const setMap = (mat, t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = stage.renderer.capabilities.getMaxAnisotropy(); mat.map = t; mat.needsUpdate = true; };
+  function loadPicture(d, i, mat) {
+    const plain = () => loader.load(`/thumbs/${d.id}.jpg`, (t) => setMap(mat, t), undefined, () => { mat.map = fallback(d, i); mat.needsUpdate = true; });
+    if (!d.themed) return plain();
+    loader.load(`/thumbs/${d.id}-${relayState.theme}.jpg`, (t) => setMap(mat, t), undefined, plain);
+  }
   const panels = defs.map((d, i) => {
     const holder = new THREE.Group();
     const mat = new THREE.MeshBasicMaterial({ color: 0xe6e6e6, transparent: true, opacity: 0, toneMapped: false });
-    loader.load(`/thumbs/${d.id}.jpg`, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = stage.renderer.capabilities.getMaxAnisotropy(); mat.map = t; mat.needsUpdate = true; },
-      undefined, () => { mat.map = fallback(d, i); mat.needsUpdate = true; });
+    loadPicture(d, i, mat);
     const mesh = new THREE.Mesh(geo, mat);
     mesh.userData.index = i;
     const edgeMat = new THREE.MeshBasicMaterial({ color: EDGE.clone(), transparent: true, opacity: 0, toneMapped: false });
@@ -426,6 +433,9 @@ export function createZoom(deck, stage) {
       if (h !== hover) { hover = h; document.body.style.cursor = h >= 0 ? 'pointer' : ''; paintEdges(); }
     }
   });
+
+  // the room picked another design: themed panels swap their pictures
+  onRelay((m) => { if (m.theme) panels.forEach((p, i) => { if (defs[i].themed) loadPicture(defs[i], i, p.mesh.material); }); });
 
   // ── keys ──
   function move(dk) {

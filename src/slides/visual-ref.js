@@ -65,6 +65,7 @@ const miniPage = (g, x, y, w, h) => targetPage(g, x, y, w, h);
 export default {
   id: 'visual-ref',
   title: 'Visuelle referanser',
+  themed: true, // shows the design the room picked: the zoom-out picture follows it (thumbs/<id>-<theme>.jpg)
   steps: 3,
   notes: [
     'En god, utfyllende beskrivelse av forsiden dere valgte. Og bildet du har i hodet.',
