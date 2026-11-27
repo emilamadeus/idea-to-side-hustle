@@ -1,11 +1,12 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { chatPhone, attempt } from '../engine/props.js';
-import { varmPeis } from '../engine/varmpeis.js';
+import { LANDINGS } from '../engine/landings.js';
+import { relayState } from '../engine/relay.js';
 
 /*
-  Tip: a picture beats a description ("Et bilde slår en beskrivelse."). The firewood subscription's front page, right after
-  "Varm peis" was picked on the prototypes slide.
+  Tip: a picture beats a description ("Et bilde slår en beskrivelse."). The firewood subscription's front page, in the
+  direction the room voted for on the prototypes slide (Varm peis if there was no vote).
     0. The prompt, and what you actually have in mind (a thought cloud: the Varm peis page).
     1. Attempt 1: a good, full description becomes a checklist and every box is ticked, but
        the page is not what you had in mind: a flat muddy brown, a clip-art brick fireplace
@@ -24,14 +25,41 @@ import { varmPeis } from '../engine/varmpeis.js';
 */
 
 // a good, full description: still not the picture you have in mind
-const REQ = ['Mørk, varm bakgrunn', 'Peis med flammer til høyre', 'Stor overskrift til venstre', 'Oransje knapp: Bestill'];
-const PROMPT = 'Lag forsiden. Mørk, varm bakgrunn, som en stue om kvelden. En peis med flammer til høyre som lyser opp rommet. Stor overskrift «Ved på døra.» til venstre, en linje om levering hver 14. dag, og en avrundet oransje knapp: Bestill.';
+// The direction the room voted for on the prototypes slide (Varm peis if none): the prompt that
+// describes it, its four requirements, and the literal, every-box-ticked first attempt.
+const THEMES = {
+  peis: {
+    prompt: 'Lag forsiden. Mørk, varm bakgrunn, som en stue om kvelden. En peis med flammer til høyre som lyser opp rommet. Stor overskrift «Ved på døra.» til venstre, en linje om levering hver 14. dag, og en avrundet oransje knapp: Bestill.',
+    req: ['Mørk, varm bakgrunn', 'Peis med flammer til høyre', 'Stor overskrift til venstre', 'Oransje knapp: Bestill'],
+    bg: '#5a2c14', head: ['Ved på døra.', 'Levering hver 14. dag!'], headFill: '#ffe9c8',
+    btn: { fill: '#ff7a00', edge: '#ffe14a', text: 'BESTILL', ink: '#ffffff' },
+  },
+  skog: {
+    prompt: 'Lag forsiden. Mørk grønn bakgrunn, som en skog om natten. Grantrær og en måne til høyre. Stor overskrift «Fra skogen, til døra di.» til venstre, en linje om levering hver 14. dag, og en avrundet lysegrønn knapp: Bestill.',
+    req: ['Mørk grønn bakgrunn', 'Grantrær og måne til høyre', 'Stor overskrift til venstre', 'Lysegrønn knapp: Bestill'],
+    bg: '#1f5a2a', head: ['Fra skogen, til døra di.', 'Levering hver 14. dag!'], headFill: '#eaffd8',
+    btn: { fill: '#7ed321', edge: '#ffffff', text: 'BESTILL', ink: '#ffffff' },
+  },
+  nordisk: {
+    prompt: 'Lag forsiden. Lys, rolig bakgrunn med mye luft. En stabel vedkubber til høyre. Stor overskrift «Ved. Enkelt.» til venstre, en linje om levering hver 14. dag, og en svart knapp: Bestill.',
+    req: ['Lys, rolig bakgrunn', 'Vedstabel til høyre', 'Stor overskrift til venstre', 'Svart knapp: Bestill'],
+    bg: '#ffffff', head: ['Ved. Enkelt.', 'Levering hver 14. dag!'], headFill: '#333333',
+    btn: { fill: '#111111', edge: '#9a9a9a', text: 'BESTILL', ink: '#ffffff' },
+  },
+  rask: {
+    prompt: 'Lag forsiden. Knallgul bakgrunn. En lastebil med ved som kjører fort, til høyre. Stor overskrift «Ved på døra i morgen.» til venstre, en linje om bestilling før 22, og en svart knapp: Bestill nå.',
+    req: ['Knallgul bakgrunn', 'Lastebil til høyre', 'Stor overskrift til venstre', 'Svart knapp: Bestill nå'],
+    bg: '#ffff00', head: ['Ved på døra i morgen.', 'Bestill før 22!'], headFill: '#222222',
+    btn: { fill: '#000000', edge: '#ff0000', text: 'BESTILL NÅ', ink: '#ffff00' },
+  },
+};
 const PX = 600, PY = 380, PW = 570, PH = 360;
 const INK = (fill, w = 2.6) => ({ style: `fill: ${fill}; stroke: #1a120c`, 'stroke-width': w, 'stroke-linejoin': 'round' });
 
 // The page you have in mind: the polished Varm peis site (engine/varmpeis.js), drawn into any
 // frame: thought cloud, polaroid, attachment chip, or the built page (plain: a little less).
-const targetPage = (g, x, y, w, h, opts = {}) => varmPeis(g, x, y, w, h, opts);
+let themeKey = 'peis';
+const targetPage = (g, x, y, w, h, opts = {}) => (LANDINGS.find((l) => l.key === themeKey) || LANDINGS[3]).draw(g, x, y, w, h, opts);
 const miniPage = (g, x, y, w, h) => targetPage(g, x, y, w, h);
 
 export default {
@@ -39,7 +67,7 @@ export default {
   title: 'Visuelle referanser',
   steps: 3,
   notes: [
-    'En god, utfyllende beskrivelse av forsiden. Og bildet du har i hodet: Varm peis.',
+    'En god, utfyllende beskrivelse av forsiden dere valgte. Og bildet du har i hodet.',
     'Alle fire krav er oppfylt. Det ligner bare ikke på det du så for deg.',
     'Forsøk 2, ny session. Bildet fra hodet ditt, laget i ChatGPT, sendt med. Nå treffer den.',
   ],
@@ -72,17 +100,61 @@ export default {
       return { g, bg, ph };
     }
 
+    // the clip-art version of each direction's picture (190 × 200 at x0, y0)
+    function clipArt(g, key, x0, y0) {
+      if (key === 'peis') {
+        D.el('rect', { x: x0, y: y0, width: 190, height: 200, style: 'fill: #b5452e; stroke: #1a120c', 'stroke-width': 2.5 }, g);
+        let bricks = '';
+        for (let r = 0; r < 8; r++) { bricks += `M${x0} ${y0 + r * 25} H${x0 + 190} `; for (let c = 0; c < 5; c++) bricks += `M${x0 + c * 40 + (r % 2) * 20} ${y0 + r * 25} v25 `; }
+        D.p(g, bricks, '', { style: 'fill: none; stroke: #7a2a1a', 'stroke-width': 2 });
+        D.el('rect', { x: x0 + 40, y: y0 + 80, width: 110, height: 120, style: 'fill: #1a120c' }, g);
+        D.p(g, `M${x0 + 70} ${y0 + 196} q-30 -6 -18 -46 q8 18 18 18 q-6 -36 24 -60 q0 30 18 42 q6 -12 0 -24 q30 24 12 66 q-12 10 -54 4 Z`, '', INK('#ff9a1f', 2));
+        [[x0 + 86, y0 + 160], [x0 + 102, y0 + 160]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 3.5, style: 'fill: #1a120c' }, g));
+        D.p(g, `M${x0 + 84} ${y0 + 172} q10 8 20 0`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2.5, 'stroke-linecap': 'round' });
+      }
+      if (key === 'skog') {
+        // three identical triangle trees and a smiling moon
+        D.el('circle', { cx: x0 + 150, cy: y0 + 30, r: 26, ...INK('#ffe14a') }, g);
+        [[x0 + 136, y0 + 26], [x0 + 156, y0 + 26]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 3, style: 'fill: #1a120c' }, g));
+        D.p(g, `M${x0 + 138} ${y0 + 38} q12 10 24 0`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2.5, 'stroke-linecap': 'round' });
+        [0, 62, 124].forEach((dx) => {
+          D.p(g, `M${x0 + dx + 33} ${y0 + 70} L${x0 + dx + 66} ${y0 + 170} H${x0 + dx} Z`, '', INK('#2ecc40'));
+          D.el('rect', { x: x0 + dx + 26, y: y0 + 170, width: 14, height: 26, ...INK('#8b4513') }, g);
+        });
+      }
+      if (key === 'nordisk') {
+        // cartoon logs: brown rectangles with spirals on the ends
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 4 - r; c++) {
+          const cx = x0 + 40 + c * 44 + r * 22, cy = y0 + 176 - r * 40;
+          D.el('circle', { cx, cy, r: 20, ...INK('#c8843c') }, g);
+          D.p(g, `M${cx} ${cy} m0 -3 a3 3 0 1 1 -3 3 a6 6 0 1 1 6 -6 a10 10 0 1 1 -11 11`, '', { style: 'fill: none; stroke: #6b3a12', 'stroke-width': 2 });
+        }
+      }
+      if (key === 'rask') {
+        // a red cartoon truck with a smile
+        D.el('rect', { x: x0, y: y0 + 80, width: 120, height: 70, rx: 12, ...INK('#e8262b') }, g);
+        D.el('rect', { x: x0 + 120, y: y0 + 100, width: 64, height: 50, rx: 12, ...INK('#e8262b') }, g);
+        D.el('rect', { x: x0 + 136, y: y0 + 108, width: 34, height: 20, rx: 4, ...INK('#a6e4ff') }, g);
+        [[x0 + 30, y0 + 154], [x0 + 150, y0 + 154]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 18, ...INK('#333333') }, g));
+        D.p(g, `M${x0 + 40} ${y0 + 110} q20 18 40 0`, '', { style: 'fill: none; stroke: #ffffff', 'stroke-width': 4, 'stroke-linecap': 'round' });
+        [[x0 + 46, y0 + 98], [x0 + 74, y0 + 98]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 4, style: 'fill: #ffffff' }, g));
+      }
+      return g;
+    }
+
     const reset = () => { svg.innerHTML = ''; P = {}; };
 
     const play = (i) => {
       const tl = gsap.timeline();
       if (i === 0) {
+        themeKey = THEMES[relayState.theme] ? relayState.theme : 'peis';
+        P.t = THEMES[themeKey];
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.chat = chatPhone(svg, 80, 262, 420, 520, { app: 'Claude' });
         tl.fromTo(P.chat.root, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
-        P.chat.user(tl, PROMPT, 0.9);
+        P.chat.user(tl, P.t.prompt, 0.9);
         P.att = attempt(svg, 560, 140);
         P.att.show(tl, 'FORSØK 1', 0.5);
         // what you actually have in mind: the Varm peis page
@@ -102,42 +174,31 @@ export default {
       if (i === 1) {
         // the list becomes a checklist; every box gets ticked; the page is the cheap version
         const t0 = P.chat.think(tl, 0.1, 1.5);
-        const list = P.chat.reply(tl, 'Krav fra prompten:', t0, { list: REQ });
+        const list = P.chat.reply(tl, 'Krav fra prompten:', t0, { list: P.t.req });
         const tick = (k, at) => tl.to(list.ticks[k], { opacity: 1, duration: 0.2 }, at);
         const at = (k) => t0 + 0.4 + k * 1.3;
         const H = cheapPage();
         tl.fromTo(H.g, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, t0);
-        // Mørk, varm bakgrunn: a flat muddy brown
-        tl.to(H.bg, { attr: { style: 'fill: #5a2c14' }, duration: 0.5 }, at(0));
+        // the background, literally: a flat colour
+        tl.to(H.bg, { attr: { style: `fill: ${P.t.bg}` }, duration: 0.5 }, at(0));
         tl.to(H.ph, { opacity: 0, duration: 0.3 }, at(0));
         tick(0, at(0) + 0.4);
-        // Peis med flammer til høyre: a clip-art brick fireplace, a flame with a face
-        const fire = D.g(H.g);
-        const fx0 = PX + 350, fy0 = PY + 120;
-        D.el('rect', { x: fx0, y: fy0, width: 190, height: 200, style: 'fill: #b5452e; stroke: #1a120c', 'stroke-width': 2.5 }, fire);
-        let bricks = '';
-        for (let r = 0; r < 8; r++) {
-          bricks += `M${fx0} ${fy0 + r * 25} H${fx0 + 190} `;
-          for (let c = 0; c < 5; c++) bricks += `M${fx0 + c * 40 + (r % 2) * 20} ${fy0 + r * 25} v25 `;
-        }
-        D.p(fire, bricks, '', { style: 'fill: none; stroke: #7a2a1a', 'stroke-width': 2 });
-        D.el('rect', { x: fx0 + 40, y: fy0 + 80, width: 110, height: 120, style: 'fill: #1a120c' }, fire);
-        D.p(fire, `M${fx0 + 70} ${fy0 + 196} q-30 -6 -18 -46 q8 18 18 18 q-6 -36 24 -60 q0 30 18 42 q6 -12 0 -24 q30 24 12 66 q-12 10 -54 4 Z`, '', INK('#ff9a1f', 2));
-        [[fx0 + 86, fy0 + 160], [fx0 + 102, fy0 + 160]].forEach(([cx, cy]) => D.el('circle', { cx, cy, r: 3.5, style: 'fill: #1a120c' }, fire));
-        D.p(fire, `M${fx0 + 84} ${fy0 + 172} q10 8 20 0`, '', { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2.5, 'stroke-linecap': 'round' });
-        tl.fromTo(fire, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, at(1));
+        // the picture, literally: clip-art
+        const art = clipArt(D.g(H.g), themeKey, PX + 350, PY + 120);
+        tl.fromTo(art, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.4 }, at(1));
         tick(1, at(1) + 0.4);
-        // Stor overskrift til venstre: big, in the default serif
+        // the headline, literally: big, in the default serif
         const head = D.g(H.g);
-        D.text(head, PX + 30, PY + 110, 'Ved på døra.', 'ch', { style: 'font: 700 40px Georgia, serif; fill: #ffe9c8' });
-        D.text(head, PX + 30, PY + 140, 'Levering hver 14. dag!', 'cs', { style: 'font: italic 400 18px Georgia, serif; fill: #ffe9c8' });
+        D.text(head, PX + 30, PY + 110, P.t.head[0], 'ch', { style: `font: 700 ${P.t.head[0].length > 14 ? 30 : 40}px Georgia, serif; fill: ${P.t.headFill}` });
+        D.text(head, PX + 30, PY + 140, P.t.head[1], 'cs', { style: `font: italic 400 18px Georgia, serif; fill: ${P.t.headFill}` });
         tl.fromTo(head, { opacity: 0 }, { opacity: 1, duration: 0.4 }, at(2));
         tick(2, at(2) + 0.4);
-        // Oransje knapp: Bestill, glossy and loud
+        // the button, literally: glossy and loud
         const btn = D.g(H.g);
-        D.el('rect', { x: PX + 30, y: PY + 236, width: 240, height: 64, rx: 32, style: 'fill: #ff7a00; stroke: #ffe14a', 'stroke-width': 5 }, btn);
+        const b = P.t.btn;
+        D.el('rect', { x: PX + 30, y: PY + 236, width: 240, height: 64, rx: 32, style: `fill: ${b.fill}; stroke: ${b.edge}`, 'stroke-width': 5 }, btn);
         D.el('rect', { x: PX + 44, y: PY + 242, width: 212, height: 22, rx: 11, style: 'fill: #ffffff', opacity: 0.35 }, btn);
-        D.text(btn, PX + 150, PY + 278, 'BESTILL', 'bt', { 'text-anchor': 'middle', style: 'font: 900 28px Impact, var(--font-display); fill: #ffffff' });
+        D.text(btn, PX + 150, PY + 278, b.text, 'bt', { 'text-anchor': 'middle', style: `font: 900 ${b.text.length > 8 ? 24 : 28}px Impact, var(--font-display); fill: ${b.ink}` });
         tl.fromTo(btn, { opacity: 0, scale: 0.7, transformOrigin: '50% 50%' }, { opacity: 1, scale: 1, duration: 0.35, ease: 'back.out(2.5)' }, at(3));
         tick(3, at(3) + 0.4);
         P.chat.reply(tl, 'Alle krav oppfylt.', at(3) + 1.2);

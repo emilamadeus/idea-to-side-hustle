@@ -21,8 +21,8 @@ import { liveMap } from '../engine/livemap.js';
   Live data: a websocket to the relay (ved/src/worker.js) as the deck. URL and key come from
   .env.local (VITE_VED_WS, VITE_VED_KEY, VITE_VED_SITE); without them it stays offline.
   Only the audience window sends commands; preview iframes and audits only listen.
-  Keys on this slide: R plays a recorded batch of orders (fallback if the network fails),
-  X empties the shop (rehearsal), C closes it again.
+  Keys on this slide: R plays a recorded batch of orders (fallback if the network fails).
+  X (empty the shop), C (close it) and V (reset the vote) work on every slide (src/engine/relay.js).
 
   Layout zones (svg units):
     tip       x 80–540, y 110–240
@@ -99,8 +99,6 @@ export default {
     const onKey = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || !control) return;
       if (e.key === 'r' || e.key === 'R') replay();
-      if (e.key === 'x' || e.key === 'X') { if (ws?.readyState === 1) ws.send(JSON.stringify({ type: 'reset' })); orders.length = 0; if (step >= 2) redrawOrders(); }
-      if (e.key === 'c' || e.key === 'C') { if (ws?.readyState === 1) ws.send(JSON.stringify({ type: 'close' })); }
     };
     window.addEventListener('keydown', onKey);
 

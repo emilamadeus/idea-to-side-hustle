@@ -11,14 +11,15 @@ const ACC = { skog: '#a8d08d', nordisk: '#d2693a', rask: '#ffd23f', peis: '#ff7a
 const byKey = Object.fromEntries(LANDINGS.map((l) => [l.key, l]));
 
 // a direction drawn into an svg: the whole page, or a crop of its picture for the hero
-const CROP = { skog: '476 92 330 340', nordisk: '470 96 336 336', rask: '380 60 460 330' };
+// crops at the hero's own shape (about 4:3), on the part of each picture that carries it
+const CROP = { skog: '476 150 330 260', nordisk: '470 110 336 265', rask: '380 70 460 330' };
 function shot(key, crop = false) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('viewBox', crop ? CROP[key] : '0 0 840 472');
   svg.setAttribute('preserveAspectRatio', crop ? 'xMidYMid slice' : 'xMidYMid meet');
   const g = document.createElementNS(NS, 'g');
   svg.append(g);
-  byKey[key].draw(g, 0, 0, 840, 472);
+  byKey[key].draw(g, 0, 0, 840, 472, crop ? { chip: false } : undefined); // the hero has its own 'Neste levering'
   return svg;
 }
 

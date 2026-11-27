@@ -41,7 +41,7 @@ function clipRect(p, x, y, w, h, r) {
 }
 
 // ---------------------------------------------------------------- Skog
-export function skog(g, x, y, w, h, { bar = true } = {}) {
+export function skog(g, x, y, w, h, { bar = true, chip = true } = {}) {
   const CREAM = '#eef3e6', SAGE = '#a8d08d', MOSS = '#6f9a5c', SOFT = '#b9c7b0';
   const f = frame(g, x, y, w, h, grad(g.ownerSVGElement || g, 'sk-bg', [[0, '#0d1a12'], [1, '#1b3023']]));
   const { svg, p } = f;
@@ -93,10 +93,10 @@ export function skog(g, x, y, w, h, { bar = true } = {}) {
   D.el('circle', { cx: ix + 173, cy: iy + 274, r: 18, style: `fill: ${grad(svg, 'sk-win', [[0, '#ffcf6a', 0.5], [1, '#ffcf6a', 0]], [0.5, 0.5, 0.5], true)}` }, pic);
   D.p(pic, `M${ix + 200} ${iy + 240} q-8 -14 2 -26 q10 -12 0 -26`, '', { style: 'fill: none; stroke: #9fb4a6; stroke-width: 3; stroke-linecap: round', opacity: 0.6 });
   [[-10, 300, 280], [80, 316, 300], [190, 300, 260], [280, 320, 290]].forEach(([dx, b, hh]) => pine(ix + dx, iy + b + 40, hh, '#0e1d14'));
-  // a frosted chip: the next delivery
-  D.el('rect', { x: ix + 18, y: iy + 18, width: 150, height: 48, rx: 14, style: 'fill: #ffffff; stroke: #ffffff; stroke-width: 1; fill-opacity: .1; stroke-opacity: .25' }, pic);
-  T(pic, ix + 34, iy + 38, 'Neste levering', `font: 500 11px var(--font-display); fill: ${SOFT}`);
-  T(pic, ix + 34, iy + 57, 'Torsdag 12. des', `font: 700 14px var(--font-display); fill: ${CREAM}`);
+  // a frosted chip: the next delivery (left out when the site shows its own)
+  if (chip) D.el('rect', { x: ix + 18, y: iy + 18, width: 150, height: 48, rx: 14, style: 'fill: #ffffff; stroke: #ffffff; stroke-width: 1; fill-opacity: .1; stroke-opacity: .25' }, pic);
+  if (chip) T(pic, ix + 34, iy + 38, 'Neste levering', `font: 500 11px var(--font-display); fill: ${SOFT}`);
+  if (chip) T(pic, ix + 34, iy + 57, 'Torsdag 12. des', `font: 700 14px var(--font-display); fill: ${CREAM}`);
   D.el('rect', { x: ix, y: iy, width: iw, height: ih, rx: 22, style: 'fill: none; stroke: #ffffff; stroke-width: 1.5; stroke-opacity: .12' }, p);
   return p;
 }

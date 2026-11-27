@@ -8,7 +8,9 @@ import { relaySend, onRelay, relayState } from '../engine/relay.js';
 const SITE = import.meta.env.VITE_VED_SITE || 'https://ved.atladeus.com';
 const KEYS = ['skog', 'nordisk', 'rask', 'peis'];
 const ACC = { skog: '#a8d08d', nordisk: '#d2693a', rask: '#ffd23f', peis: '#ff7a2f' };
-const ROWX = (k) => 600 + k * 222, ROWY = 300, S = 0.24;
+// the vote row: four cards at 0.32 (269 × 151), centred; piles under each
+const S = 0.32, CARDW = 840 * S, GAP = 22, ROW0 = (1600 - (4 * CARDW + 3 * GAP)) / 2;
+const ROWX = (k) => ROW0 + k * (CARDW + GAP), ROWY = 280, PILE_Y = 572, COUNT_Y = 612;
 
 /*
   Tip: build several throwaway versions and pick one, instead of debating one.
@@ -23,10 +25,10 @@ const ROWX = (k) => 600 + k * 222, ROWY = 300, S = 0.24;
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
-    chat       x 80–520, y 262–560 · QR x 80–200, y 600–720 (step 2–3)
+    chat       x 80–520, y 262–560 (gone in step 2) · QR x 1336–1486, y 104–254, text to its left (step 2)
     card       x 620–1460, y 160–632 (one direction at a time); label y 680
-    vote row   cards y 300–420, names y 440; piles grow up from y 550; counts y 580
-    countdown  x 1040–1360, y 160–270 (sudden death)
+    vote row   cards x 225–1375, y 280–431, names y 446; piles grow up from y 582; counts y 612
+    countdown  centred, x 660–940, y 140–250 (sudden death)
     bin        x 1360–1460, y 600–760
 */
 
@@ -77,10 +79,12 @@ export default {
     // a woodpile under each design: logs stack in rows (9, 8, 7 …) from y 610 up
     function pile(key, k) {
       const g = D.g(svg, { 'data-unit': '', 'data-overlap-ok': '' });
-      const cx = ROWX(k) + 100;
-      const count = D.text(g, cx, 580, '0', 'pc', { 'text-anchor': 'middle', style: 'font: 700 22px var(--font-mono); fill: var(--fg)' });
+      const cx = ROWX(k) + CARDW / 2;
+      const count = D.text(g, cx, COUNT_Y, '0', 'pc', { 'text-anchor': 'middle', style: 'font: 700 26px var(--font-mono); fill: var(--fg)' });
+      const unit = D.text(g, cx, COUNT_Y + 24, 'STEMMER', 'pu', { 'text-anchor': 'middle', style: 'font: 700 12px var(--font-mono); letter-spacing: .18em; fill: var(--muted)' });
+      const chops = D.text(g, cx, COUNT_Y + 56, '', 'ph', { 'text-anchor': 'middle', style: `font: 800 22px var(--font-display); fill: ${ACC[key]}` });
       const glow = D.el('rect', { x: ROWX(k) - 8, y: ROWY - 8, width: 840 * S + 16, height: 472 * S + 16, rx: 10, style: `fill: none; stroke: ${ACC[key]}; stroke-width: 4`, opacity: 0, 'data-bg': '' }, g); // a halo around the card
-      return { g, key, k, cx, count, glow, logs: [], n: 0 };
+      return { g, key, k, cx, count, unit, chops, glow, logs: [], n: 0 };
     }
     // logs fill each row from the middle out, so even two votes look like a little pile
     const slot = (i) => {
@@ -93,7 +97,7 @@ export default {
       const p = P.piles?.find((q) => q.key === key);
       if (!p) return;
       const { dx, dy } = slot(p.n++);
-      const x = p.cx + dx, y = 540 + dy;
+      const x = p.cx + dx, y = PILE_Y + dy;
       const l = D.g(p.g);
       D.el('circle', { cx: 0, cy: 0, r: 9, style: `fill: #c9935a; stroke: #1a120c; stroke-width: 2.4` }, l);
       D.el('circle', { cx: 0, cy: 0, r: 3.4, style: 'fill: none; stroke: #8a5a34; stroke-width: 2' }, l);
@@ -131,7 +135,7 @@ export default {
     }
     // the leader glows and grows a little (ties: all of the top ones)
     function leader(animate = true) {
-      if (!P.piles) return;
+      if (!P.piles || P.sd) return; // in the sudden death the contenders hold their places
       const max = Math.max(...P.piles.map((p) => p.n));
       P.piles.forEach((p) => {
         const lead = max > 0 && p.n === max;
@@ -142,40 +146,55 @@ export default {
     // the QR code beside the chat: join here
     function joinCode() {
       const g = D.g(svg, { 'data-unit': '' });
-      const x = 80, y = 600, size = 124, pad = 10;
+      const x = 1336, y = 104, size = 150, pad = 11; // top right, above the row
       D.el('rect', { x, y, width: size, height: size, rx: 8, style: 'fill: #fff3e3' }, g);
       const code = QRCode.create(SITE, { errorCorrectionLevel: 'M' }).modules;
       const n = code.size, m = (size - pad * 2) / n;
       let d = '';
       for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (code.data[r * n + c]) d += `M${(x + pad + c * m).toFixed(2)} ${(y + pad + r * m).toFixed(2)}h${m.toFixed(2)}v${m.toFixed(2)}h-${m.toFixed(2)}z`;
       D.p(g, d, '', { style: 'fill: #1a120c; stroke: none', 'shape-rendering': 'crispEdges' });
-      D.text(g, x + size + 20, y + 52, 'Stem på telefonen', 'qj', { style: 'font: 800 24px var(--font-display); fill: var(--fg)' });
-      D.text(g, x + size + 20, y + 82, SITE.replace(/^https?:\/\//, ''), 'qs', { style: 'font: 700 15px var(--font-mono); fill: var(--accent)' });
+      D.text(g, x - 24, y + 70, 'Stem på telefonen', 'qj', { 'text-anchor': 'end', style: 'font: 800 32px var(--font-display); fill: var(--fg)' });
+      D.text(g, x - 24, y + 104, SITE.replace(/^https?:\/\//, ''), 'qs', { 'text-anchor': 'end', style: 'font: 700 18px var(--font-mono); fill: var(--accent)' });
       return g;
     }
-    // sudden death: a big countdown; the contenders stay lit, the rest step back
+    // sudden death: only the contenders stay, slid to the middle; their votes stay on show and
+    // the chops count up under them; a big countdown above
     function sudden(v) {
       if (P.sd) return;
       const g = D.g(svg, { 'data-unit': '' });
-      D.text(g, 1200, 182, 'UTSLAGSRUNDE', 'sdl', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); letter-spacing: .22em; fill: var(--accent)' });
-      const num = D.text(g, 1200, 262, '15', 'sdn', { 'text-anchor': 'middle', style: 'font: 800 84px var(--font-display); fill: var(--fg)' });
-      gsap.fromTo(g, { opacity: 0, scale: 0.8, transformOrigin: '1200px 220px' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' });
+      D.text(g, 800, 160, 'UTSLAGSRUNDE', 'sdl', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); letter-spacing: .22em; fill: var(--accent)' });
+      const num = D.text(g, 800, 240, '15', 'sdn', { 'text-anchor': 'middle', style: 'font: 800 80px var(--font-display); fill: var(--fg)' });
+      gsap.fromTo(g, { opacity: 0, scale: 0.8, transformOrigin: '800px 200px' }, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' });
       const offset = (v.now || Date.now()) - Date.now();
       let last = null;
       P.sdTimer = setInterval(() => {
         const left = Math.max(0, Math.ceil((v.endsAt - (Date.now() + offset)) / 1000));
-        if (left !== last) { num.textContent = left; gsap.fromTo(num, { scale: 1.25, transformOrigin: '1200px 240px' }, { scale: 1, duration: 0.4, ease: 'power3.out' }); last = left; }
+        if (left !== last) { num.textContent = left; gsap.fromTo(num, { scale: 1.25, transformOrigin: '800px 215px' }, { scale: 1, duration: 0.4, ease: 'power3.out' }); last = left; }
         if (!left) clearInterval(P.sdTimer);
       }, 100);
-      P.piles.forEach((p) => { if (!v.contenders.includes(p.key)) gsap.to([p.g, P.cards[p.k]], { opacity: 0.25, duration: 0.5 }); });
+      const live = P.piles.filter((p) => v.contenders.includes(p.key));
+      const span = live.length * CARDW + (live.length - 1) * 60, x0 = (1600 - span) / 2;
+      P.piles.forEach((p) => {
+        if (!v.contenders.includes(p.key)) { gsap.to([p.g, P.cards[p.k]], { opacity: 0, duration: 0.45 }); return; }
+        const to = x0 + live.indexOf(p) * (CARDW + 60), dx = to - ROWX(p.k);
+        gsap.to(P.cards[p.k], { x: to, y: ROWY, scale: S, duration: 0.8, delay: 0.3, ease: 'power3.inOut' });
+        gsap.to(p.g, { x: dx, duration: 0.8, delay: 0.3, ease: 'power3.inOut' });
+        p.dx = dx;
+        p.chops.textContent = 'HOGG 0';
+      });
+      gsap.to(P.qr, { opacity: 0, duration: 0.4 });
       P.sd = g;
+    }
+    // the chops so far, from the relay's running count
+    function chopCounts(v) {
+      (P.piles || []).forEach((p) => { if (v.contenders?.includes(p.key)) p.chops.textContent = `HOGG ${v.chops?.[p.key] || 0}`; });
     }
     // a chop in the sudden death: a chip flies onto that pile
     function chip(key) {
       const p = P.piles?.find((q) => q.key === key);
       if (!p) return;
       const c = D.el('rect', { x: -5, y: -3, width: 10, height: 6, rx: 2, style: 'fill: #d9b27a; stroke: #1a120c; stroke-width: 1.6', 'data-bg': '' }, svg);
-      const sx = 300 + Math.random() * 1000, tx = p.cx + (Math.random() - 0.5) * 120, ty = 560 - Math.random() * 60;
+      const sx = 300 + Math.random() * 1000, tx = p.cx + (p.dx || 0) + (Math.random() - 0.5) * 120, ty = PILE_Y - 20 - Math.random() * 60;
       gsap.fromTo(c, { x: sx, y: 880, rotation: 0 }, { x: tx, y: ty, rotation: (Math.random() - 0.5) * 720, duration: 0.7, ease: 'power2.out', onComplete: () => gsap.to(c, { opacity: 0, duration: 0.6, delay: 0.4, onComplete: () => c.remove() }) });
     }
     // the end: three in the bin, the winner grows back and is stamped
@@ -190,6 +209,7 @@ export default {
       let n = 0;
       P.cards.forEach((c, k) => {
         if (k === pick) return;
+        if (!instantly && gsap.getProperty(c, 'opacity') < 0.1) return; // already gone (the sudden death hid it)
         const at = 0.9 + n++ * 0.3;
         tl.to(c, { opacity: 1, duration: 0.01 }, at - 0.05);
         tl.to(c, { scale: 0.02, x: `+=${100}`, y: `+=${56}`, rotation: 20, opacity: 0, duration: 0.45, ease: 'power2.in' }, at);
@@ -209,13 +229,20 @@ export default {
       if (P.done) return;
       P.done = true;
       clearTimeout(P.await);
-      ctx.track(finale(KEYS.indexOf(key in ACC ? key : 'peis')));
+      const go = () => ctx.track(finale(KEYS.indexOf(key in ACC ? key : 'peis')));
+      if (P.sd) { go(); return; }
+      // a straight win: the counts get a moment on their own first
+      (P.piles || []).forEach((p) => {
+        gsap.fromTo(p.count, { scale: 1 }, { scale: 1.5, transformOrigin: '50% 50%', duration: 0.35, yoyo: true, repeat: 1, ease: 'power2.out' });
+        if (p.key === key) gsap.to(p.count, { fill: ACC[key], duration: 0.3 });
+      });
+      P.await = setTimeout(go, 1800);
     }
     const offRelay = onRelay((m) => {
       if (!P.live) return;
       if (m.type === 'voted') { addLog(m.choice); if (m.prev) removeLog(m.prev); }
       if (m.type === 'chopped') chip(m.choice);
-      if (m.type === 'vote-state' && m.vote.phase === 'sudden') sudden(m.vote);
+      if (m.type === 'vote-state' && m.vote.phase === 'sudden') { sudden(m.vote); chopCounts(m.vote); }
       if (m.type === 'vote-state' && m.vote.phase === 'closed' && m.vote.winner && P.step === 3) runFinale(m.vote.winner);
     });
 
@@ -250,7 +277,7 @@ export default {
           if (k === P.cards.length - 1) tl.to(c, { x: ROWX(k), y: ROWY, scale: S, rotation: 0, opacity: 1, duration: 0.6, ease: 'power2.inOut' }, 0);
           else { tl.set(c, { x: ROWX(k), y: ROWY, scale: S, rotation: 0, opacity: 0 }, 0); tl.to(c, { opacity: 1, duration: 0.3 }, 0.6 + k * 0.1); }
         });
-        tl.to(P.chat.root, { opacity: 0.35, duration: 0.4 }, 0);
+        tl.to(P.chat.root, { opacity: 0, x: -20, duration: 0.4 }, 0); // the chat steps out: the room has the floor
         P.piles = KEYS.map((key, k) => pile(key, k));
         P.qr = joinCode();
         tl.fromTo([...P.piles.map((p) => p.g), P.qr], { opacity: 0 }, { opacity: 1, duration: 0.5, stagger: 0.05 }, 0.8);

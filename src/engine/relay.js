@@ -22,6 +22,7 @@ let ws = null, timer = null;
 let queue = [];
 const subs = new Set();
 export const relayState = { theme: 'peis', vote: null, connected: false };
+if (typeof window !== 'undefined') window.relayState = relayState; // handy from the devtools console (try other themes)
 
 function connect() {
   if (!KEY) return null;
@@ -50,4 +51,27 @@ export function phones({ app = 'claude', title = 'Claude Code', text = '' }, liv
   relaySend({ type: 'broadcast', app, title, text }, live);
 }
 export function onRelay(fn) { subs.add(fn); return () => subs.delete(fn); }
+
+// Rehearsal keys, on every slide (audience window only), with a small confirmation on screen:
+//   X  empty the shop's orders (phones go back to the shop)
+//   C  close the shop (phones show "Åpner straks")
+//   V  reset the vote and the site's look (back to Varm peis)
+function toast(text) {
+  const t = document.createElement('div');
+  t.textContent = text;
+  t.style.cssText = 'position:fixed;left:50%;top:24px;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:99px;background:rgba(20,12,8,.92);border:1.5px solid rgba(255,190,120,.55);color:#fff3e3;font:700 15px var(--font-mono,monospace);letter-spacing:.06em;pointer-events:none;transition:opacity .4s';
+  document.body.append(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 450); }, 1600);
+}
+if (control && typeof window !== 'undefined') {
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey || e.target?.closest?.('input, textarea, [contenteditable]')) return;
+    const k = e.key.toLowerCase();
+    const msg = { x: [{ type: 'reset' }, 'Bestillingene er tømt'], c: [{ type: 'close' }, 'Butikken er stengt'], v: [{ type: 'vote-reset' }, 'Avstemningen er nullstilt'] }[k];
+    if (!msg) return;
+    if (!KEY) { toast('Ingen kobling til ved.atladeus.com'); return; }
+    relaySend(msg[0]);
+    toast(relayState.connected ? msg[1] : `${msg[1]} (sendes når koblingen er oppe)`);
+  });
+}
 export const relayControl = control;

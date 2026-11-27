@@ -258,6 +258,10 @@
   html[data-theme="nordisk"] .hearth, html[data-theme="rask"] .hearth, html[data-theme="skog"] .hearth { background: none; box-shadow: 0 30px 70px -30px rgba(0,0,0,.45); }
   html[data-theme="rask"] h1 { text-transform: uppercase; letter-spacing: -.05em; }
   .hearth .alt-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+  /* the price line never breaks; in Skog the delivery label moves left, off the moon */
+  .sum b { white-space: nowrap; }
+  .sum small { min-width: 0; padding-right: 10px; }
+  html[data-theme="skog"] .hearth .chip { right: auto; left: 16px; }
   body, .card, .bydeler span, .seg span { transition: background-color .8s, color .8s, border-color .8s; }
 
   /* ---------- the vote ---------- */
