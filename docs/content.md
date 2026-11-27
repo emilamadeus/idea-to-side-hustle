@@ -141,7 +141,7 @@ Point: being this productive with AI means you are always working. Notifications
   4. The week: calendar fills with "jobb (litt)".
 - Twists [built]:
   - Meeting: after his reply the lights dim and every phone in the room glows: both colleagues under the table, the presenter's in her blazer pocket. Rubber duck and stickered laptop on the table.
-  - Dinner, last click: she stands up with her phone; her screen zooms in: she is asking Claude "Hvordan får jeg kjæresten til å legge vekk telefonen?" (Claude typing). Then she leaves.
+  - Dinner, last click: she stands up with her phone; her screen zooms in: she is asking Claude "Hvordan får jeg dama til å legge vekk telefonen?" (Claude typing). Then she leaves.
   - Night: an energy can appears on the floor per wake-up; at 06:00, two minutes after the last "Ja.", the alarm clock rings.
   - Calendar: one green FERIE block on Sunday appears last, then flips to "jobb (litt)".
 - Phone moment candidate: "When did you last approve something from an AI at an odd time?"
@@ -254,7 +254,8 @@ The audience joins from the title slide's QR (ved.atladeus.com) and stays on the
 - The remote goes to the room (remote.js step 3): one random named phone gets a big Neste button; its tap moves the deck on. The presenter can still click at any time.
 - The room is the watchdog (watchdog.js): step 0 gives each phone a session (Varsler, Kamera-API, Tester). At steps 1, 2 and 5 that session's phones get an alarm with a Fortsett button; the card under the clock shows who answered and how fast, or "Ingen i salen svarte".
 - The room lights up (html-deck.js step 1): every phone goes full-screen colour in the site's design and pulses on the relay's clock, a wave in join order, for 14 s. A mirror ball drops in on each phone, turning, with beams and light spots. On the slide, the free left column gets a mirror ball, sweeping beams and a DJ table with spinning records and a level meter (src/engine/disco.js); they make way for the code at step 2.
-- Kveldens priser (awards.js, before the takeaways): five face-down cards turn one by one: Først inne, Første kunde, Lengst unna, Mest ved, Raskeste øks. Only real data; an unearned award shows "Ingen". Winners' phones show a gold medal.
+- Kveldens priser (awards.js, before the takeaways): six medals hang from a rail on ribbons, face down. One by one a light comes down, the medal turns gold, the ribbon fills, sparks fly and the winner's name rises in their colour: Først inne, Skarpeste øye (fastest bug finder), Første kunde, Lengst unna, Mest ved, Sist igjen (the arena). Only real data; an unearned award shows "Ingen". Winners' phones show a gold medal.
+- Grepene (takeaways.js, last): the journey drawn as a route; the firewood truck drives it, each station lights and its tips drop in as numbered tags; a strip below holds the tips from Arbeidsflyt and Bak kulissene.
 - Later: tips ready to use on the phone (copy buttons).
 
 ## Rejected topics

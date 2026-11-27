@@ -2,6 +2,7 @@ import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { figure } from '../engine/characters.js';
 import { chatPhone, attempt, FILL } from '../engine/props.js';
+import { relayState } from '../engine/relay.js';
 
 /*
   Tip: let the AI check its own work. The founder is out delivering firewood while the AI
@@ -106,7 +107,7 @@ export default {
       D.text(c, x + 20, y + 38, 'Ved.', 'pv', { style: 'font: 800 20px var(--font-display); fill: #fff3e3' });
       D.text(c, x + 20, y + 80, 'Bestill ved', 'pt', { style: 'font: 800 24px var(--font-display); fill: #fff3e3' });
       D.text(c, x + 20, y + 118, '40 L sekk', 'pr', { style: 'font: 600 18px var(--font-display); fill: #d9c6b0' });
-      D.text(c, x + 20, y + 150, flaw === 'price' ? '0 kr' : '590 kr', 'pr', { style: `font: 700 18px var(--font-display); fill: ${flaw === 'price' ? BAD : '#d9c6b0'}` });
+      D.text(c, x + 20, y + 150, flaw === 'price' ? '0 kr' : `${relayState.price || 129} kr`, 'pr', { style: `font: 700 18px var(--font-display); fill: ${flaw === 'price' ? BAD : '#d9c6b0'}` });
       D.text(c, x + 20, y + 182, flaw === 'day' ? 'Søndag 15. des' : 'Torsdag 12. des', 'pr', { style: `font: 700 18px var(--font-display); fill: ${flaw === 'day' ? BAD : '#d9c6b0'}` });
       const bx = flaw === 'btn' ? x + 172 : x + 20;
       D.el('rect', { x: bx, y: y + 210, width: 220, height: 44, rx: 22, style: 'fill: #ff8a3d' }, c);

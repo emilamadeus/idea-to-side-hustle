@@ -187,8 +187,9 @@ export default {
         // the AI asks what it needs to know before it plans
         let t = P.chat.think(tl, 1.8, 1.2);
         P.tok.set(tl, 6, t, 1.0);
-        P.chat.reply(tl, 'Skal kundene kunne pause abonnementet?', t);
-        P.chat.user(tl, 'Ja.', t + 1.0);
+        // only what the spec doesn't answer (pause is in it already)
+        P.chat.reply(tl, 'Hvor mange bydeler først?', t);
+        P.chat.user(tl, 'Én.', t + 1.0);
         P.chat.reply(tl, 'Betaler de per levering eller per måned?', t + 1.8);
         P.chat.user(tl, 'Per levering.', t + 2.8);
         // ready: it decides the build order itself

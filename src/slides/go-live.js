@@ -12,7 +12,8 @@ import { liveMap } from '../engine/livemap.js';
     1. Live: the address flips to ved.atladeus.com, the shop opens (for real, through the
        relay), the window steps aside and a big QR code appears. "Bestill ved."
     2. A live map of Norway. Every real order lands as a pin on its address (the camera eases
-       to frame them all) and as a card in the feed. A small QR stays for latecomers.
+       to frame them all) and as a card in the feed. A small QR stays for latecomers. The order's
+       phone gets the SMS from the bug hunt, now on the right day: "Veden kommer i morgen."
     3. "Kjør": a route along real roads (OSRM, through the relay) through every address, drawn
        as the truck drives it. Phones get "Bilen er på vei", then "Levert" at their stop.
     4. The income: tonight's revenue from the room's own orders counts up over the map.
@@ -88,7 +89,11 @@ export default {
       ws.onmessage = (e) => {
         const m = JSON.parse(e.data);
         if (m.type === 'snapshot') { orders.length = 0; m.orders.filter((o) => Number.isFinite(o.lat)).forEach((o) => orders.push(o)); if (step >= 2) redrawOrders(); }
-        if (m.type === 'order') add(m.order);
+        if (m.type === 'order') {
+          add(m.order);
+          // the SMS from the bug hunt (Kvalitet), now on the right day: the order's own phone gets it
+          if (m.order?.id) send({ type: 'notify', ids: [m.order.id], title: 'Ved.', text: 'Veden kommer i morgen.' });
+        }
       };
       ws.onclose = () => { live = false; status(); clearTimeout(wsTimer); if (!closed) wsTimer = setTimeout(connect, 2000); };
     }

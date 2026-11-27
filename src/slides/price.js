@@ -86,8 +86,10 @@ export default {
       });
       // the room's price, live
       const med = median([...votes.values()].map((v) => v.kr));
-      const shown = med ?? relayState.price ?? 129;
+      // before anyone answers: no number (an old run's price would look like an answer)
+      const shown = med ?? (closed ? relayState.price || 129 : '–');
       P.num.textContent = shown;
+      P.kr.style.opacity = shown === '–' ? 0 : 1;
       P.count.textContent = votes.size ? `${votes.size} ${votes.size === 1 ? 'svar' : 'svar'} · midten av salen` : 'Venter på svar';
       if (med != null) {
         const x = xOf(med);
@@ -119,7 +121,7 @@ export default {
     const offRelay = onRelay((m) => {
       if (m.type === 'price-vote' && m.p && !closed) vote(m.p, m.kr);
       if (m.type === 'price-state') { votes.forEach((v) => v.dot.remove()); votes.clear(); layout(false); }
-      if (m.type === 'price-set' && P.num) { P.num.textContent = m.price; }
+      if (m.type === 'price-set' && P.num) { P.num.textContent = m.price; P.kr.style.opacity = 1; }
     });
 
     const play = (i, instant) => {
@@ -132,8 +134,8 @@ export default {
         // the price, big, on the left
         const left = D.g(svg, { 'data-unit': '' });
         D.text(left, 80, 280, 'EN SEKK VED, LEVERT', 'pl', { style: 'font: 700 16px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
-        P.num = D.text(left, 80, 470, String(relayState.price || 129), 'pn', { style: 'font: 700 150px var(--font-mono); letter-spacing: -.05em; fill: var(--accent-2)' });
-        D.text(left, 372, 470, 'kr', 'pu', { style: 'font: 800 34px var(--font-display); fill: var(--fg)' });
+        P.num = D.text(left, 80, 470, '–', 'pn', { style: 'font: 700 150px var(--font-mono); letter-spacing: -.05em; fill: var(--accent-2)' });
+        P.kr = D.text(left, 372, 470, 'kr', 'pu', { style: 'font: 800 34px var(--font-display); fill: var(--fg); opacity: 0' });
         P.count = D.text(left, 80, 560, 'Venter på svar', 'pc', { style: 'font: 700 17px var(--font-mono); fill: var(--muted)' });
         tl.fromTo(left, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 }, 0.4);
         // the chart: an axis in kroner, the dots stack over it
@@ -158,6 +160,7 @@ export default {
       }
       if (i === 1) {
         closed = true;
+        layout(false); // no answers: the price it opens with
         if (live) { relaySend({ type: 'price-close' }); opened = false; }
         P.stamp = D.g(svg, { 'data-bg': '' });
         D.stamp(P.stamp, 455, 392, 'SATT', { size: 40, rotate: -8 });

@@ -538,8 +538,9 @@ export class Room {
   awards() {
     const P = this.people, nameOf = (v, fallback) => (P[v]?.name || fallback || 'Gjest');
     const out = [];
-    const chop = Object.entries(P).filter(([, p]) => p.chops > 0).sort((a, b) => b[1].chops - a[1].chops)[0];
-    if (chop) out.push({ title: 'Raskeste øks', voter: chop[0], name: nameOf(chop[0]), detail: `${chop[1].chops} hogg` });
+    // the bug hunt (Kvalitet): the fastest to find the SMS on the wrong day
+    const bug = Object.entries(P).filter(([, p]) => p.bugMs > 0).sort((a, b) => a[1].bugMs - b[1].bugMs)[0];
+    if (bug) out.push({ title: 'Skarpeste øye', voter: bug[0], name: nameOf(bug[0]), detail: `fant feilen på ${(bug[1].bugMs / 1000).toFixed(1).replace('.', ',')} s` });
     const first = [...this.orders].sort((a, b) => a.t - b.t)[0];
     if (first) out.push({ title: 'Første kunde', voter: first.voter, name: nameOf(first.voter, first.navn), detail: first.sted || first.adresse });
     const far = [...this.orders].sort((a, b) => km(DEPOT, [b.lon, b.lat]) - km(DEPOT, [a.lon, a.lat]))[0];
@@ -549,7 +550,7 @@ export class Room {
     const most = Object.entries(sacks).sort((a, b) => b[1].n - a[1].n)[0];
     if (most) out.push({ title: 'Mest ved', voter: most[1].o.voter, name: nameOf(most[1].o.voter, most[1].o.navn), detail: `${most[1].n} sekker` });
     const arena = Object.entries(P).filter(([, p]) => p.arenaWin).sort((a, b) => b[1].arenaT - a[1].arenaT)[0];
-    if (arena) out.push({ title: 'Sist igjen', voter: arena[0], name: nameOf(arena[0]), detail: 'arenaen' });
+    if (arena) out.push({ title: 'Sist igjen', voter: arena[0], name: nameOf(arena[0]), detail: 'vant arenaen' });
     const early = Object.entries(P).sort((a, b) => a[1].n - b[1].n)[0];
     if (early) out.push({ title: 'Først inne', voter: early[0], name: nameOf(early[0]), detail: `først av ${Object.keys(P).length}` });
     return out;

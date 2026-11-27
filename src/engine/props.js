@@ -284,3 +284,21 @@ export function tokenMeter(parent, x, y, w, { max = 50, label = 'TOKENS' } = {})
     reset(tl, at) { tl.to(state, { v: 0, duration: 0.3, onUpdate: paint, onComplete: paint }, at); },
   };
 }
+
+/**
+ * The firewood truck: an orange cab, a flatbed with logs, ink outlines. Faces right; its origin is
+ * where the rear of the wheels meets the road, about 80 wide and 48 tall. load: logs on the bed
+ * (0–6). Returns the group.
+ */
+export function vedTruck(parent, attrs = {}, { load = 5 } = {}) {
+  const INK = '#1a120c';
+  const g = group(parent, attrs);
+  const f = (fill) => ({ style: `fill: ${fill}; stroke: ${INK}; stroke-linejoin: round`, 'stroke-width': 2.5 });
+  el('rect', { x: 2, y: -24, width: 48, height: 14, rx: 2, ...f('#7a4a2a') }, g);
+  [[10, -30], [22, -30], [34, -30], [42, -30], [16, -40], [28, -40]].slice(0, load).forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 6.5, ...f('#b07a4a') }, g));
+  path(g, 'M50 -10 V-34 H68 L76 -22 V-10 Z', '', f('#ff7a2f'));
+  path(g, 'M55 -29 H66 L71 -22 H55 Z', '', f('#7fd0ff'));
+  el('rect', { x: 0, y: -12, width: 78, height: 6, rx: 2, ...f('#3a2a1e') }, g);
+  [14, 62].forEach((x) => { el('circle', { cx: x, cy: -4, r: 7, ...f('#2a1d14') }, g); el('circle', { cx: x, cy: -4, r: 2.5, style: 'fill: #9b8f83' }, g); });
+  return g;
+}

@@ -197,8 +197,8 @@ export const HELP = {
     'Publisert, og den selger.',
   ],
   'ready-to-build': [
-    'Planen er ferdig.',
-    'Nå starter vi på første del av produktet.',
+    'Alt fra Idé og Plan, samlet på ett ark.',
+    'Godkjent plan: AI-en bygger i riktig rekkefølge.',
   ],
   opening: [
     'Det startet med et ønske om å få ett prosjekt i mål.',

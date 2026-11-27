@@ -1,18 +1,35 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { relaySend } from '../engine/relay.js';
+import { FILL, vedTruck } from '../engine/props.js';
 
 /*
-  Stage divider: the journey from idea to launch as a line with five stations. The line
-  draws up to the current station, which lights up; earlier stations are filled, later ones
-  wait. One slide per stage, made by chapter(k).
+  Stage divider: the journey from idea to launch as a road with five stations, each with a small
+  drawing of its stage. The road draws up to the current station, which lights up; earlier
+  stations are filled, later ones wait in outline. The firewood truck drives from the last
+  station to just before this one, carrying a bigger load at every stage.
+  One slide per stage, made by chapter(k).
 
   Layout zones (svg units):
-    stage name   centred, y 250–420 (DOM)
-    journey line x 240–1360, y 560; station labels y 620
+    stage name   centred, y 250–480 (DOM)
+    icons        above each station, centred y 500 (about 60 tall)
+    journey line x 240–1360, y 560; station labels y 622
+    truck        on the road between the previous station and this one (never over a station)
 */
 
 export const STAGES = ['Idé', 'Plan', 'Bygg', 'Kvalitet', 'Lansering'];
+const INK = '#1a120c';
+// a small working drawing per stage: a bulb, a drawing sheet, stacked blocks, a magnifier, a flag.
+// on: filled, in ink; off: outline only
+function icon(g, j, x, y, on) {
+  const fill = (c, w = 2.5) => (on ? FILL(c, w) : { style: 'fill: none; stroke: #6b5a48', 'stroke-width': w });
+  const ln = { style: `fill: none; stroke: ${on ? INK : '#6b5a48'}; stroke-linecap: round; stroke-linejoin: round`, 'stroke-width': 2.5 };
+  if (j === 0) { D.el('circle', { cx: x, cy: y - 6, r: 13, ...fill('#ffd23f') }, g); D.el('rect', { x: x - 7, y: y + 7, width: 14, height: 10, rx: 2, ...fill('#9b8f83') }, g); D.p(g, `M${x - 4} ${y - 6} l4 6 l4 -6`, '', ln); }
+  if (j === 1) { D.p(g, `M${x - 14} ${y - 20} H${x + 8} L${x + 15} ${y - 13} V${y + 18} H${x - 14} Z`, '', fill('#fff3e3')); [-8, -1, 6, 12].forEach((d) => D.p(g, `M${x - 8} ${y + d} H${x + 8}`, '', ln)); }
+  if (j === 2) { [[-14, 4, '#c4562a'], [0, 4, '#2f5b5a'], [-7, -12, '#55603a']].forEach(([dx, dy, c]) => D.el('rect', { x: x + dx, y: y + dy, width: 14, height: 14, rx: 2, ...fill(c) }, g)); }
+  if (j === 3) { D.el('circle', { cx: x - 3, cy: y - 3, r: 11, ...fill('#7fd0ff') }, g); D.p(g, `M${x + 5} ${y + 5} L${x + 15} ${y + 15}`, '', { ...ln, 'stroke-width': 5 }); }
+  if (j === 4) { D.p(g, `M${x - 10} ${y + 18} V${y - 20}`, '', { ...ln, 'stroke-width': 3 }); D.p(g, `M${x - 10} ${y - 20} H${x + 14} L${x + 8} ${y - 12} L${x + 14} ${y - 4} H${x - 10} Z`, '', fill('#ff5a1f')); }
+}
 const X0 = 240, X1 = 1360, Y = 560;
 const sx = (k) => X0 + (k * (X1 - X0)) / (STAGES.length - 1);
 
@@ -47,6 +64,11 @@ export function chapter(k) {
         const done = D.p(svg, `M${X0} ${Y} H${sx(k)}`, '', { style: 'fill: none; stroke: var(--accent)', 'stroke-width': 6, 'stroke-linecap': 'round', 'data-bg': '' });
         if (k > 0) tl.add(D.drawOn(done, { duration: 0.4 + k * 0.25 }), 0.2);
         STAGES.forEach((s, j) => {
+          // the stage's drawing above its station: full colour behind us, outline ahead
+          const ic = D.g(svg, { 'data-bg': '', opacity: j <= k ? 1 : 0.35 });
+          icon(ic, j, sx(j), Y - 60, j <= k);
+          ic.setAttribute('transform', `translate(${sx(j)} ${Y - 60}) scale(1.45) translate(${-sx(j)} ${-(Y - 60)})`);
+          tl.fromTo(ic, { opacity: 0 }, { opacity: j <= k ? 1 : 0.35, duration: 0.35 }, j <= k ? 0.25 + j * 0.25 : 0.5 + k * 0.25);
           const g = D.g(svg, { 'data-unit': '' });
           const past = j < k, cur = j === k;
           D.el('circle', { cx: sx(j), cy: Y, r: cur ? 20 : 13, style: `fill: ${cur || past ? 'var(--accent)' : '#16100b'}; stroke: ${cur || past ? 'var(--accent)' : 'var(--deco)'}`, 'stroke-width': 4 }, g);
@@ -55,6 +77,11 @@ export function chapter(k) {
           tl.fromTo(g, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.35 }, at);
           if (cur) tl.fromTo(g.querySelector('circle'), { scale: 0.3, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.5, ease: 'back.out(3)', immediateRender: false }, at + 0.1);
         });
+        // the truck: from the last station to just short of this one, a bigger load every stage
+        const truck = vedTruck(svg, { 'data-bg': '' }, { load: Math.min(6, k + 2) });
+        const from = k === 0 ? X0 - 210 : sx(k - 1) + 36, to = sx(k) - 128;
+        tl.fromTo(truck, { x: from, y: Y - 4, opacity: 0 }, { opacity: 1, duration: 0.3 }, 0.3);
+        tl.fromTo(truck, { x: from }, { x: to, duration: 1.1 + k * 0.1, ease: 'power2.inOut', immediateRender: false }, 0.35);
         return tl;
       };
 

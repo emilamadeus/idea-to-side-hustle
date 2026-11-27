@@ -114,7 +114,7 @@ export default {
       const lock = D.g(g);
       D.el('rect', { x: PX + PW / 2 - 7, y: PY + 62, width: 14, height: 11, rx: 2, style: 'fill: #f3e9da' }, lock);
       D.p(lock, `M${PX + PW / 2 - 4.5} ${PY + 62} v-4 a4.5 4.5 0 0 1 9 0 v4`, '', { style: 'fill: none; stroke: #f3e9da', 'stroke-width': 2 });
-      D.text(lock, PX + PW / 2, PY + 98, 'tirsdag 10. desember', 'pd', { 'text-anchor': 'middle', style: 'font: 600 15px var(--font-display); fill: #e6d8c6' });
+      D.text(lock, PX + PW / 2, PY + 98, 'torsdag 10. desember', 'pd', { 'text-anchor': 'middle', style: 'font: 600 15px var(--font-display); fill: #e6d8c6' });
       const time = D.text(lock, PX + PW / 2, PY + 164, '14:05', 'pt', { 'text-anchor': 'middle', style: 'font: 800 66px var(--font-display); fill: #f3e9da' });
       [[PX + 46, 'M-5 -8 h10 l-2 6 v10 h-6 v-10 Z'], [PX + PW - 46, 'M-9 -5 h4 l2 -3 h6 l2 3 h4 v12 h-18 Z']].forEach(([cx, d]) => {
         D.el('circle', { cx, cy: PY + PH - 62, r: 21, style: 'fill: #2c2119' }, lock);
