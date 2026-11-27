@@ -2,7 +2,7 @@
 // (Arbeidstegning: warm grid, crop marks, a title block, one pencil note) and shows the room
 // itself: every phone that joined orbits the count in the middle, yours marked.
 // Once the talk starts (the title slide's first click), the page dims: the orbit shrinks to a faint
-// strip, the sheet the talk is on sits small and muted, and one line says to watch the screen.
+// strip, one line says to watch the screen, and the title block shows the sheet the talk is on.
 // Nothing here asks for attention; a room activity lights the phone up (js/wake.js) when it is time.
 // The relay still collects the talk's tips (def.pocket) for the end of the talk.
 // When the shop opens, the orbit collapses into one point, the point flashes in the winning
@@ -76,11 +76,7 @@ css.textContent = `
   .lobby.talk .lb-top, .lobby.talk .lb-block { opacity: .55; }
   .lb-now { display: none; flex: 1; flex-direction: column; justify-content: center; padding: 0 4px 6svh; }
   .lobby.talk .lb-now { display: flex; }
-  .lb-now .lb-eye { color: #8a5a3c; }
-  .lb-now h2 { font-weight: 800; font-size: clamp(26px, 8vw, 34px); line-height: 1.02; letter-spacing: -.035em; margin: 12px 0 0; color: #7d6a58; }
-  .lb-now h2.new { animation: lb-tip .8s cubic-bezier(.2,.8,.2,1) both; }
-  @keyframes lb-tip { from { opacity: 0; transform: translateY(12px); } }
-  .lb-look { display: flex; align-items: center; gap: 12px; margin-top: 28px; padding-top: 18px; border-top: 1.5px dashed rgba(255,190,120,.16); color: #8a7360; font-size: 15px; line-height: 1.35; }
+  .lb-look { display: flex; align-items: center; gap: 12px; margin: 0; color: #8a7360; font-size: 15px; line-height: 1.35; }
   .lb-look i { width: 26px; height: 18px; flex: none; border: 2px solid #8a7360; border-radius: 3px; position: relative; }
   .lb-look i::after { content: ''; position: absolute; left: 50%; bottom: -7px; width: 12px; height: 2px; margin-left: -6px; background: #8a7360; }
   .lobby.out .lb-top, .lobby.out .lb-hero, .lobby.out .lb-foot, .lobby.out .lb-count { transition: opacity .5s, transform .7s cubic-bezier(.6,0,.4,1); opacity: 0; }
@@ -112,7 +108,7 @@ function mount() {
     <div class="lb-top"><span>10.12.2026</span><span class="lb-live"><i></i><span>Kobler til</span></span></div>
     <div class="lb-hero"><p class="lb-eye">Foredrag</p><h1 class="lb-title"><span><i>Fra idé til</i></span><span><i>lansering,</i></span><span><i>med AI</i></span></h1></div>
     <div class="lb-orbit"><canvas></canvas><div class="lb-count"><b>0</b><span>i salen</span></div></div>
-    <div class="lb-now"><p class="lb-eye">Nå</p><h2></h2><p class="lb-look"><i></i><span>Se på skjermen. Telefonen sier fra når det skjer noe.</span></p></div>
+    <div class="lb-now"><p class="lb-look"><i></i><span>Se på skjermen. Telefonen sier fra når det skjer noe.</span></p></div>
     <div class="lb-foot"><p class="lb-hint">Hold siden åpen. Den skifter av seg selv.</p>
       <div class="lb-block"><div class="y"><small>Ark</small><b>00</b></div><div class="w"><small>Del</small><b>Salen</b></div><div><small>Dato</small><b>10.12.26</b></div></div></div>`;
   document.body.append(el);
@@ -147,10 +143,6 @@ function renderTalk(fresh) {
   el.classList.toggle('talk', talk);
   if (was !== talk) requestAnimationFrame(size);
   if (!sheet) return;
-  $('.lb-now .lb-eye', el).textContent = `Nå · Ark ${pad(sheet.n)}${sheet.part ? ` · ${sheet.part}` : ''}`;
-  const h = $('.lb-now h2', el);
-  h.textContent = sheet.title || '';
-  if (fresh) { h.classList.remove('new'); void h.offsetWidth; h.classList.add('new'); }
   $('.lb-block .y b', el).textContent = pad(sheet.n);
 }
 
