@@ -62,14 +62,14 @@ Point: scope changes the core implementation. Step-by-step on a big task means e
   3. REV 1 from the customer: "Kan bassenget være i kjelleren?" The 3D house cracks down the middle and the pool drops out.
 
 ## The living spec file [given]
-- Built: src/slides/spec.js.
+- Built: src/slides/spec.js. The example spec is the firewood subscription (Vedabonnement): order page, summer pause, an SMS the day before delivery (blocked on the route plan per district), Vipps.
 Point: for bigger work, the AI keeps an HTML spec up to date as it works: titles, expandable detail, hidden agent-only instructions, done/blocked/dependencies with reasons, a copy-status button per task.
 - Storyboard [proposed]:
   1. The real spec of this presentation, live on screen. A task expands, a dependency line lights up the task it blocks.
   2. X-ray mode: the page slides apart to show the hidden layer only agents read (the instruction comment and agent notes).
-  3. A colleague asks for status. "Kopier status" drops a short, readable summary into the reply (Opptaksregler: ferdig. Privacy mode: i arbeid. Offline-varsel: venter på gateway build 412.); they react with a thumbs up.
+  3. A colleague asks for status. "Kopier status" drops a short, readable summary into the reply (Bestillingsside: ferdig. Sommerpause: i arbeid. SMS før levering: venter på ruteplanen.); they react with a thumbs up.
   4. They ask about one task. That row's own copy button drops everything about it: status, why it is blocked, what it waits for, the plan.
-  5. Each task also has a "✻ prompt" button: one line with the task id, "Sjekk status på K3 i spec.html og fortsett derfra." Claude reads the spec itself: "K3 venter på G7. Build 412 er ute nå, så jeg starter på K3."
+  5. Each task also has a "✻ prompt" button: one line with the task id, "Sjekk status på V3 i spec.html og fortsett derfra." Claude reads the spec itself: "V3 venter på R2. Ruteplanen er klar nå, så jeg starter på V3."
   6. The page becomes this talk's own spec, live.
 
 ## Parallel sessions with a master session [given]

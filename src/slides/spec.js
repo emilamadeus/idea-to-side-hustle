@@ -22,11 +22,11 @@ import { chatPhone, FILL } from '../engine/props.js';
 
 const PX = 600, PY = 130, PW = 880, PH = 640;
 const ROWS = [
-  { id: 'K1', name: 'Innstillinger → opptaksregler', st: 'aktiv', to: 'ferdig' },
-  { id: 'K2', name: 'Privacy mode', st: 'todo', to: 'aktiv' },
-  { id: 'K3', name: 'Varsel når kamera går offline', st: 'blokkert' },
-  { id: 'K4', name: 'Opptak i appen', st: 'todo' },
-  { id: 'G7', name: 'Gateway build 412', st: 'venter' },
+  { id: 'V1', name: 'Bestillingsside', st: 'aktiv', to: 'ferdig' },
+  { id: 'V2', name: 'Pause om sommeren', st: 'todo', to: 'aktiv' },
+  { id: 'V3', name: 'SMS dagen før levering', st: 'blokkert' },
+  { id: 'V4', name: 'Betaling med Vipps', st: 'todo' },
+  { id: 'R2', name: 'Ruteplan per bydel', st: 'venter' },
 ];
 const ST = { ferdig: '#8fe3a2', aktiv: '#ff7a2f', todo: '#9b8f83', blokkert: '#ff6f9c', venter: '#ffd23f' };
 const HIDDEN = [
@@ -49,7 +49,7 @@ export default {
     'Røntgen: det skjulte laget som bare agentene leser.',
     'Kollega spør om status. Kopier, lim inn.',
     'Spør de om én oppgave, kopierer du den: status, hvorfor, hva den venter på, planen.',
-    'Hver oppgave har også en prompt-knapp: «Sjekk status på K3 og fortsett derfra.» Claude leser specen selv.',
+    'Hver oppgave har også en prompt-knapp: «Sjekk status på V3 og fortsett derfra.» Claude leser specen selv.',
     'Og dette er specen for denne presentasjonen.',
   ],
 
@@ -92,9 +92,9 @@ export default {
       D.el('rect', { x: PX, y: PY, width: PW, height: 46, rx: 12, style: 'fill: #2a1f17' }, chrome);
       [0, 1, 2].forEach((k) => D.el('circle', { cx: PX + 24 + k * 22, cy: PY + 23, r: 7, style: `fill: ${['#ff6f9c', '#ffd23f', '#8fe3a2'][k]}` }, chrome));
       D.el('rect', { x: PX + 110, y: PY + 10, width: 420, height: 26, rx: 13, style: 'fill: #16100b' }, chrome);
-      P.url = D.text(chrome, PX + 128, PY + 29, 'kamera-tjenesten/spec.html', 'url', { style: 'font: 400 15px var(--font-mono); fill: var(--muted)' });
+      P.url = D.text(chrome, PX + 128, PY + 29, 'vedabonnement/spec.html', 'url', { style: 'font: 400 15px var(--font-mono); fill: var(--muted)' });
       const body = D.g(g);
-      D.text(body, PX + 40, PY + 96, 'Kamera-tjenesten', 'pt', { style: 'font: 800 34px var(--font-display); fill: var(--fg)' });
+      D.text(body, PX + 40, PY + 96, 'Vedabonnement', 'pt', { style: 'font: 800 34px var(--font-display); fill: var(--fg)' });
       P.copy = D.g(body, { 'data-unit': '' });
       D.el('rect', { x: PX + PW - 230, y: PY + 70, width: 190, height: 38, rx: 8, style: 'fill: var(--accent); stroke: none' }, P.copy);
       D.text(P.copy, PX + PW - 135, PY + 95, 'Kopier status', 'cp', { 'text-anchor': 'middle', style: 'font: 700 17px var(--font-mono); fill: #1a120c' });
@@ -144,8 +144,8 @@ export default {
         tl.to(below, { y: 104, duration: 0.4, ease: 'power2.inOut' }, 0);
         const det = D.g(P.page.body, { 'data-unit': '' });
         D.el('rect', { x: PX + 30, y: r.y + 30, width: PW - 60, height: 96, rx: 8, style: 'fill: #1a120c; stroke: #ff6f9c', 'stroke-width': 2, 'data-bg': '' }, det);
-        D.text(det, PX + 50, r.y + 66, 'Gatewayen sender ingen hendelse når et kamera faller ut.', 'd1', { style: 'font: 400 18px var(--font-mono); fill: var(--fg)' });
-        D.text(det, PX + 50, r.y + 102, 'Avhenger av: G7 Gateway build 412', 'd2', { style: 'font: 700 18px var(--font-mono); fill: #ffd23f' });
+        D.text(det, PX + 50, r.y + 66, 'SMS-en trenger leveringsdagen, og den kommer fra ruteplanen.', 'd1', { style: 'font: 400 18px var(--font-mono); fill: var(--fg)' });
+        D.text(det, PX + 50, r.y + 102, 'Avhenger av: R2 Ruteplan per bydel', 'd2', { style: 'font: 700 18px var(--font-mono); fill: #ffd23f' });
         tl.fromTo(det, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.35 }, 0.35);
         const g7 = P.rows[4];
         const line = D.p(P.page.body, `M${PX + 30} ${r.y + 94} C${PX - 20} ${r.y + 94} ${PX - 20} ${g7.y + 104} ${PX + 30} ${g7.y + 104}`, '', { style: 'fill: none; stroke: #ffd23f', 'stroke-width': 4, 'stroke-dasharray': '2 10', 'stroke-linecap': 'round', 'data-bg': '' });
@@ -169,7 +169,7 @@ export default {
         tl.to(cr, { attr: { height: PH - 50 }, duration: 1.6, ease: 'power1.inOut' }, 0.1);
         tl.to(bar, { opacity: 0, duration: 0.2 }, 1.7);
         tl.set(P.page.body, { opacity: 0 }, 1.7);
-        tl.call(() => { P.url.textContent = 'kamera-tjenesten/spec.html  ·  kildekode'; }, null, 0.1);
+        tl.call(() => { P.url.textContent = 'vedabonnement/spec.html  ·  kildekode'; }, null, 0.1);
         P.xr = xr; P.cr = cr;
       }
 
@@ -178,17 +178,17 @@ export default {
         tl.to(P.cr, { attr: { height: 0 }, duration: 0.6, ease: 'power1.inOut' }, 0);
         tl.set(P.xr, { opacity: 0 }, 0.6);
         tl.set(P.page.body, { opacity: 1 }, 0);
-        tl.call(() => { P.url.textContent = 'kamera-tjenesten/spec.html'; }, null, 0);
+        tl.call(() => { P.url.textContent = 'vedabonnement/spec.html'; }, null, 0);
         tl.to([P.det, P.line], { opacity: 0, duration: 0.3 }, 0.1);
         tl.to(P.rows.slice(3).map((x) => x.g), { y: 0, duration: 0.4 }, 0.2);
         const chat = chatPhone(svg, 80, 280, 440, 440, { app: 'Meldinger', size: 18 });
         tl.fromTo(chat.root, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
-        chat.reply(tl, 'Hvordan ligger kamera-tjenesten an?', 0.8);
+        chat.reply(tl, 'Hvordan ligger vedabonnementet an?', 0.8);
         // copy status: a cursor clicks, the text drops into the reply
         const cur = cursor(svg);
         tl.fromTo(cur, { x: PX + 500, y: PY + 400, opacity: 0 }, { x: PX + PW - 140, y: PY + 92, opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 1.5);
         tl.to(P.copy, { scale: 0.92, transformOrigin: '50% 50%', duration: 0.08, yoyo: true, repeat: 1 }, 2.35);
-        const lines = ['Opptaksregler: ferdig.', 'Privacy mode: i arbeid.', 'Offline-varsel: venter på', 'gateway build 412.'];
+        const lines = ['Bestillingsside: ferdig.', 'Sommerpause: i arbeid.', 'SMS før levering: venter', 'på ruteplanen.'];
         const fly = D.g(svg, { 'data-bg': '' });
         D.el('rect', { x: PX + PW - 230, y: PY + 70, width: 190, height: 38, rx: 8, style: 'fill: #e7dccb' }, fly);
         tl.fromTo(fly, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 2.5);
@@ -208,7 +208,7 @@ export default {
       if (i === 4) {
         // one task in depth: that row's own copy button
         const chat = P.chat;
-        chat.reply(tl, 'Hva venter offline-varselet på?', 0.3);
+        chat.reply(tl, 'Hva venter SMS-en på?', 0.3);
         const r = P.rows[2];
         const cur = cursor(svg);
         tl.fromTo(cur, { x: PX + 500, y: PY + 500, opacity: 0 }, { x: PX + PW - 200, y: r.y - 8, opacity: 1, duration: 0.8, ease: 'power2.inOut' }, 1.0);
@@ -219,7 +219,7 @@ export default {
         tl.fromTo(fly, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 2.0);
         tl.to(fly, { x: -720, y: 180, scale: 2, opacity: 0, duration: 0.6, ease: 'power2.in' }, 2.1);
         tl.to(cur, { opacity: 0, duration: 0.3 }, 2.3);
-        chat.user(tl, ['Varsel når kamera går offline:', 'blokkert. Gatewayen sender ingen', 'hendelse når et kamera faller ut.', 'Venter på gateway build 412.', 'Plan: varsle innen ett minutt.'], 2.6);
+        chat.user(tl, ['SMS dagen før levering:', 'blokkert. SMS-en trenger', 'leveringsdagen fra ruteplanen.', 'Venter på R2 Ruteplan per bydel.', 'Plan: sende kl. 18 dagen før.'], 2.6);
         ctx.focus(tl, [chat.root, r.g, cur, fly], 0.3);
       }
 
@@ -237,9 +237,9 @@ export default {
         tl.fromTo(fly, { opacity: 0 }, { opacity: 1, duration: 0.1 }, 1.7);
         tl.to(fly, { x: -640, y: 160, opacity: 0, duration: 0.6, ease: 'power2.in' }, 1.8);
         tl.to(cur, { opacity: 0, duration: 0.3 }, 2.0);
-        claude.user(tl, ['Sjekk status på K3 i spec.html', 'og fortsett derfra.'], 2.3);
+        claude.user(tl, ['Sjekk status på V3 i spec.html', 'og fortsett derfra.'], 2.3);
         const t = claude.think(tl, 3.1, 1.0);
-        claude.reply(tl, 'K3 venter på G7. Build 412 er ute nå, så jeg starter på K3.', t);
+        claude.reply(tl, 'V3 venter på R2. Ruteplanen er klar nå, så jeg starter på V3.', t);
         ctx.focus(tl, [claude.root, r.g, cur, fly], 0.3);
         P.chat = claude;
       }
