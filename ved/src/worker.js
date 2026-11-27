@@ -21,6 +21,7 @@
   The room (the talk's audience):
     phone → { type: 'join', name }            first name, optional; a word filter keeps the screen clean
     deck  ← { type: 'joined', p }              p = { id, name, n } (n: join order)
+    phone ← state.room (the roster) · { type: 'room-joined', p }   the lobby's orbit
     deck  → watch-start { sessions } · watch-alert { k, text } · watch-end      the room keeps watch
     phone → { type: 'watch-ack', k }           deck ← { type: 'watch-acked', k, name, ms }
     deck  → light { mode, delay, dur } · light-off                              the finale light-up
@@ -159,7 +160,7 @@ export class Room {
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
       ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster() }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null }));
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster() }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -277,6 +278,7 @@ export class Room {
       this.people[a.voter] = p;
       await this.ctx.storage.put('people', this.people);
       this.send('deck', { type: 'joined', p: this.person(a.voter), again: !!known });
+      this.send('cust', { type: 'room-joined', p: this.person(a.voter) }); // the lobby on every phone
       ws.send(JSON.stringify({ type: 'me', me: this.person(a.voter), total: Object.keys(this.people).length }));
       return;
     }

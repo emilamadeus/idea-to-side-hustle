@@ -155,7 +155,8 @@ const prev = window.vedHook;
 window.vedHook = (m) => {
   prev?.(m);
   if (m.type === 'state' && joined) send({ type: 'join', name: store.get('ved-name') || '' }); // every (re)connect
-  if (m.type === 'me') { const first = !me; me = m.me; if (first && sessionStorage.getItem('ved-welcomed') !== '1') { sessionStorage.setItem('ved-welcomed', '1'); welcome(m.me); } }
+  // the lobby greets you itself, so the welcome card is only for phones past it
+  if (m.type === 'me') { const first = !me; me = m.me; if (first && sessionStorage.getItem('ved-welcomed') !== '1' && !document.documentElement.classList.contains('lobby-on')) { sessionStorage.setItem('ved-welcomed', '1'); welcome(m.me); } }
   if (m.type === 'watch') onShift(m);
   if (m.type === 'watch-alert') onAlert(m);
   if (m.type === 'watch-done') closeAlert(m.by);
