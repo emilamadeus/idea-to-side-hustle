@@ -6,6 +6,7 @@ import readyToBuild from './ready-to-build.js';
 import opening from './opening.js';
 import launch from './launch.js';
 import validate from './validate.js';
+import price from './price.js';
 import title from './00-title.js';
 import mdFiles from './md-files.js';
 import goal from './goal.js';
@@ -45,7 +46,7 @@ import awards from './awards.js';
 // Callbacks that depend on order: full-scope "Alt fungerer." → fails "Fikset!"; helpers → watchdog;
 //   watchdog 03:12 → always-working; side-quest's 80 % → asset-loop (right after it).
 const STAGED = [
-  [validate],                                   // Idé
+  [validate, price],                            // Idé (the room sets the price)
   [spec, fullScope, planning, mdFiles],         // Plan
   [readyToBuild, prototypes, visualRef, goal, commits],  // Bygg
   [selfCheck, show, fails],                     // Kvalitet

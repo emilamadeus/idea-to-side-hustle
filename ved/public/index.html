@@ -459,7 +459,7 @@
 </div>
 
 <script>
-  const PRICE = 129; // a 40 L sack of dry birch, delivered
+  let PRICE = 129; // a 40 L sack of dry birch, delivered; the room can set it (js/play.js, the relay's price)
   const $ = (s) => document.querySelector(s);
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
@@ -609,6 +609,8 @@
       const m = JSON.parse(e.data);
       if (Array.isArray(m.room)) window.vedRoomNow = m.room;
       if (typeof m.where === 'string') window.vedWhereNow = m.where;
+      if (m.price) { PRICE = m.price; update(); }
+      if (m.type === 'price-set') { PRICE = m.price; update(); }
       if (m.type === 'state') { open = m.open; live(true); show(); }
       if (m.type === 'notify') notify(m);
       if (m.type === 'reset') { store.del('ved-orders'); store.del('ved-order'); store.del('ved-msgs'); location.reload(); }
@@ -619,7 +621,7 @@
     ws.onclose = () => { live(false); clearTimeout(wsTimer); wsTimer = setTimeout(connect, 1500); };
   }
   function reconnect() { if (ws) { ws.onclose = null; ws.close(); } connect(); }
-  fetch('/api/state').then((r) => r.json()).then((s) => { open = s.open; show(); window.vedHook?.({ theme: s.theme }); }).catch(() => show());
+  fetch('/api/state').then((r) => r.json()).then((s) => { open = s.open; if (s.price) { PRICE = s.price; update(); } show(); window.vedHook?.({ theme: s.theme }); }).catch(() => show());
   // keep the screen awake while the page is open, so the phone is still here when the talk needs it
   const awake = async () => { try { if (document.visibilityState === 'visible') await navigator.wakeLock?.request('screen'); } catch {} };
   document.addEventListener('visibilitychange', awake);
@@ -653,5 +655,6 @@
 <script type="module" src="/js/vote.js"></script>
 <script type="module" src="/js/lobby.js"></script>
 <script type="module" src="/js/room.js"></script>
+<script type="module" src="/js/play.js"></script>
 </body>
 </html>

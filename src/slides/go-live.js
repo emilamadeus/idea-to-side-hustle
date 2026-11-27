@@ -321,7 +321,7 @@ export default {
 
       if (i === 4) {
         // the income: what the room just bought, counted up
-        const total = orders.reduce((n, o) => n + o.sekker * PRICE, 0);
+        const total = orders.reduce((n, o) => n + o.sekker * (relayState.price || PRICE), 0);
         const bags = orders.reduce((n, o) => n + o.sekker, 0);
         const num = revEl.querySelector('.rev-n');
         revEl.querySelector('.rev-sub').textContent = orders.length

@@ -28,6 +28,7 @@ export const HELP = {
     'AI-en vil forsøke å tilpasse seg det du allerede har.',
     'Til slutt kaller den noe som ikke henger sammen for ferdig.',
     'Alle krav i én prompt: kjernen designes for hele omfanget.',
+    'Hele omfanget kjent: alle kan bygge hver sin del samtidig.',
     'Samme krav, én ren konstruksjon, og færre tokens.',
     'Endres omfanget sent, er det kjernen som sprekker.',
   ],
@@ -84,6 +85,7 @@ export const HELP = {
     'Uten varsel står jobben stille til du tilfeldigvis sjekker.',
     'Med varsel tar en beslutning sekunder, uansett hvor du er.',
     'Claude tilbyr cloud-jobbing direkte fra telefonen.',
+    'Fjernstyring virker begge veier. Nå er det salen som klikker.',
   ],
   'always-working': [
     'Bivirkningen av sessions som alltid sier fra.',
@@ -96,6 +98,7 @@ export const HELP = {
     'Den finner feilene selv. Du avbrytes én gang.',
   ],
   fails: [
+    'Finn feilen før AI-en får prøve.',
     'Lange sessions lapper gjerne symptomer.',
     '«Fikset!» uten at den har sjekket.',
     'Hver lapp gjør sessionen lengre og konteksten tyngre.',
@@ -157,6 +160,10 @@ export const HELP = {
     'Vinnerne får beskjed på telefonen.',
   ],
   takeaways: [null],
+  price: [
+    'Spør markedet før du setter prisen. Her er markedet salen.',
+    'Midten av salen er prisen butikken åpner med.',
+  ],
   validate: [
     'Start med én konkret idé du kan forklare på ett ark.',
     'Fire spørsmål før du bruker en time på å bygge.',

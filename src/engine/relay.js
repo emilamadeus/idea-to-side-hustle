@@ -24,7 +24,7 @@ const subs = new Set();
 // ?theme=skog forces a design (the picture script uses it to draw each version); the relay's
 // theme is then ignored in this window
 const forcedTheme = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('theme') : null;
-export const relayState = { theme: forcedTheme || 'peis', vote: null, connected: false, people: [], awards: null };
+export const relayState = { theme: forcedTheme || 'peis', vote: null, connected: false, people: [], awards: null, price: 129 };
 if (typeof window !== 'undefined') window.relayState = relayState; // handy from the devtools console (try other themes)
 
 function connect() {
@@ -41,6 +41,7 @@ function connect() {
     // the room: everyone who joined from a phone ({ id, name, n }), in join order
     if (m.people) relayState.people = m.people;
     if (m.type === 'awards') relayState.awards = m.list || [];
+    if (typeof m.price === 'number' && (m.type === 'snapshot' || m.type === 'price-set')) relayState.price = m.price; // the room's price for a sack
     if (m.type === 'joined' && m.p && !relayState.people.some((p) => p.id === m.p.id)) relayState.people = [...relayState.people, m.p];
     if (m.type === 'joined' && m.p) relayState.people = relayState.people.map((p) => (p.id === m.p.id ? m.p : p));
     subs.forEach((fn) => { try { fn(m); } catch (err) { console.error(err); } });

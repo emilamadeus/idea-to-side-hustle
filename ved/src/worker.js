@@ -25,6 +25,14 @@
     deck  → watch-start { sessions } · watch-alert { k, text } · watch-end      the room keeps watch
     phone → { type: 'watch-ack', k }           deck ← { type: 'watch-acked', k, name, ms }
     deck  → light { mode, delay, dur } · light-off                              the finale light-up (runs until light-off; capped at 10 min)
+    deck  → price-open · price-close         phone ← price-open · price-set { price, mine }   phone → price { kr }
+            deck ← price-state · price-vote { p, kr } · price-set { price, count }
+    deck  → build-start · build-end          phone ← build { N, mine, left, extra } · build-end   phone → build-place
+            deck ← build-ready { N, phones } · built { k, p } · build-light { p }
+    deck  → bug-start · bug-end              phone ← bug-start · bug-ok { ms, rank } · bug-wrong   phone → bug-tap { card }
+            deck ← bug-found { p, ms, rank }
+    deck  → clicker-start · clicker-end      phone ← clicker · clicker-done · clicker-end   phone → clicker-next
+            deck ← clicker-holder { p } · clicker-next { p }
     deck  → where { label }                    phone ← where { label }       the talk's current part, shown in the lobby
     deck  → awards                             deck ← { type: 'awards', list }; winners' phones glow
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
@@ -115,13 +123,15 @@ export class Room {
       this.people = (await ctx.storage.get('people')) ?? {}; // voter → { name, n, t, chops, watch }
       this.alert = (await ctx.storage.get('alert')) ?? null;         // survives hibernation between alarm and tap
       this.watchNames = (await ctx.storage.get('watchNames')) ?? null;
-      this.where = (await ctx.storage.get('where')) ?? '';            // the talk's current part, for the phones' lobby
+      this.where = (await ctx.storage.get('where')) ?? '';
+      this.g = (await ctx.storage.get('game')) ?? null;               // the running room game (price, build, bug, clicker)
+      this.price = (await ctx.storage.get('price')) ?? 129;          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
     });
   }
 
   async fetch(req) {
     const url = new URL(req.url);
-    if (url.pathname === '/api/state') return json({ open: this.open, theme: this.theme });
+    if (url.pathname === '/api/state') return json({ open: this.open, theme: this.theme, price: this.price });
     if (url.pathname === '/api/order' && req.method === 'POST') return this.order(req);
     if (url.pathname === '/api/ws') return this.connect(url);
     return json({ error: 'not found' }, 404);
@@ -161,8 +171,8 @@ export class Room {
     this.ctx.acceptWebSocket(server, role === 'deck' ? ['deck'] : ['cust', ...ids.map((x) => `c:${x}`)]);
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
-      ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster() }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where }));
+      ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster(), price: this.price }
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, game: this.gameFor(voter) }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -227,6 +237,7 @@ export class Room {
       this.eachPhone((ws, v) => ws.send(JSON.stringify({ type: 'light', mode: m.mode || 'wave', start, now: Date.now(), dur: Math.min(Number(m.dur) || 14000, 600000), n: this.people[v]?.n || 1, total, theme: this.theme })));
     }
     if (m.type === 'light-off') this.send('cust', { type: 'light-off' });
+    if (['price-open', 'price-close', 'build-start', 'build-end', 'bug-start', 'bug-end', 'clicker-start', 'clicker-end'].includes(m.type)) await this.deckGame(m);
     if (m.type === 'where') { this.where = String(m.label || '').slice(0, 40); await this.ctx.storage.put('where', this.where); this.send('cust', { type: 'where', label: this.where }); }
     if (m.type === 'awards') {
       const list = this.awards();
@@ -236,6 +247,7 @@ export class Room {
     if (m.type === 'people-reset') { this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); this.send('cust', { type: 'room-reset' }); }
     if (m.type === 'reset') {
       this.orders = [];
+      this.price = 129; await this.ctx.storage.put('price', this.price);
       await this.ctx.storage.put('orders', this.orders);
       this.send('cust', { type: 'reset' });
       this.send('deck', { type: 'snapshot', open: this.open, orders: [] });
@@ -285,6 +297,7 @@ export class Room {
       ws.send(JSON.stringify({ type: 'me', me: this.person(a.voter), total: Object.keys(this.people).length }));
       return;
     }
+    if (['price', 'build-place', 'bug-tap', 'clicker-next'].includes(m.type) && a.voter) return this.phoneGame(ws, a.voter, m);
     if (m.type === 'watch-ack' && this.alert && !this.alert.acked && m.k === this.alert.k && this.people[a.voter]?.watch === m.k) {
       this.alert.acked = true;
       await this.ctx.storage.put('alert', this.alert);
@@ -343,6 +356,127 @@ export class Room {
     await this.saveVote();
     this.send('cust', { type: 'theme', theme: this.theme });
     this.send('deck', { type: 'theme', theme: this.theme });
+  }
+
+  // ---- room games: one runs at a time, kept in storage (the object sleeps between messages) ----
+  //   price   the room sets the price of a sack: a slider on every phone, the median wins
+  //   build   the room builds the house: parts dealt to the phones, each tap places one
+  //   bug     spot the bug: the first to tap the wrong card, with times
+  //   clicker one random phone gets the deck's next button for a single click
+  async saveGame() { if (this.g) await this.ctx.storage.put('game', this.g); else await this.ctx.storage.delete('game'); }
+  // the phones on the line now, in join order (named people first, then the rest)
+  connected() {
+    const seen = new Set();
+    for (const ws of this.ctx.getWebSockets('cust')) { const a = ws.deserializeAttachment() || {}; if (a.voter) seen.add(a.voter); }
+    const n = (v) => this.people[v]?.n ?? 1e9;
+    return [...seen].sort((x, y) => n(x) - n(y));
+  }
+  who(v) { const p = this.people[v]; return { id: v.slice(0, 6), name: p?.name || 'Gjest', n: p?.n || 0 }; }
+  gameFor(v) {
+    const g = this.g;
+    if (!g || !v) return null;
+    if (g.kind === 'price') return { type: 'price-open', mine: g.votes[v] ?? null, price: this.price };
+    if (g.kind === 'build') return this.buildFor(v);
+    if (g.kind === 'bug') return g.found[v] ? null : { type: 'bug-start' };
+    if (g.kind === 'clicker' && g.holder === v) return { type: 'clicker' };
+    return null;
+  }
+  buildFor(v) {
+    const g = this.g;
+    const mine = Object.entries(g.owner).filter(([, o]) => o === v).map(([k]) => +k);
+    return { type: 'build', N: g.N, mine, left: mine.filter((k) => !g.placed[k]).length, extra: !mine.length };
+  }
+  async deckGame(m) {
+    if (m.type === 'price-open') {
+      this.g = { kind: 'price', votes: {} };
+      await this.saveGame();
+      this.send('cust', { type: 'price-open', mine: null, price: this.price });
+      this.send('deck', { type: 'price-state', votes: [] });
+    }
+    if (m.type === 'price-close' && this.g?.kind === 'price') {
+      const vals = Object.values(this.g.votes).sort((a, b) => a - b);
+      if (vals.length) {
+        const mid = vals.length >> 1;
+        this.price = vals.length % 2 ? vals[mid] : Math.round((vals[mid - 1] + vals[mid]) / 20) * 10;
+        await this.ctx.storage.put('price', this.price);
+      }
+      const votes = this.g.votes;
+      this.g = null; await this.saveGame();
+      this.eachPhone((ws, v) => ws.send(JSON.stringify({ type: 'price-set', price: this.price, mine: votes[v] ?? null })));
+      this.send('deck', { type: 'price-set', price: this.price, count: vals.length });
+    }
+    if (m.type === 'build-start') {
+      // the house is sized to the room: a cabin for a few, a bigger house for many
+      const phones = this.connected(), c = phones.length;
+      const N = c <= 7 ? 12 : c <= 24 ? 24 : 48;
+      const owner = {};
+      if (c) for (let k = 0; k < N; k++) owner[k] = phones[k % c];
+      this.g = { kind: 'build', N, owner, placed: {}, t: Date.now() };
+      await this.saveGame();
+      this.eachPhone((ws, v) => { if (v) ws.send(JSON.stringify(this.buildFor(v))); });
+      this.send('deck', { type: 'build-ready', N, phones: c });
+    }
+    if (m.type === 'bug-start') {
+      this.g = { kind: 'bug', t: Date.now(), found: {} };
+      await this.saveGame();
+      this.send('cust', { type: 'bug-start' });
+    }
+    if (m.type === 'clicker-start') {
+      const phones = this.connected();
+      const named = phones.filter((v) => this.people[v]?.name);
+      const pool = named.length ? named : phones;
+      const holder = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+      this.g = holder ? { kind: 'clicker', holder } : null;
+      await this.saveGame();
+      if (holder) this.send('cust', { type: 'clicker-pick', holder: holder.slice(0, 6) });
+      this.eachPhone((ws, v) => { if (v === holder) ws.send(JSON.stringify({ type: 'clicker' })); });
+      this.send('deck', { type: 'clicker-holder', p: holder ? this.who(holder) : null });
+    }
+    if (m.type.endsWith('-end')) {
+      const kind = m.type.slice(0, -4);
+      if (this.g?.kind === kind) { this.g = null; await this.saveGame(); }
+      this.send('cust', { type: m.type });
+    }
+  }
+  async phoneGame(ws, v, m) {
+    const g = this.g;
+    if (!g) return;
+    if (m.type === 'price' && g.kind === 'price') {
+      const kr = Math.max(50, Math.min(300, Math.round(Number(m.kr) / 10) * 10 || 130));
+      if (g.votes[v] === kr) return;
+      g.votes[v] = kr;
+      this.send('deck', { type: 'price-vote', p: this.who(v), kr });
+      if (!this.priceTimer) this.priceTimer = setTimeout(async () => { this.priceTimer = null; await this.saveGame(); }, 400);
+    }
+    if (m.type === 'build-place' && g.kind === 'build') {
+      const k = Object.keys(g.owner).map(Number).find((x) => g.owner[x] === v && !g.placed[x]);
+      if (k !== undefined) {
+        g.placed[k] = v;
+        await this.saveGame();
+        this.send('deck', { type: 'built', k, p: this.who(v) });
+        ws.send(JSON.stringify(this.buildFor(v)));
+      } else {
+        // nothing (left) to place: this phone lights a window instead, at most once a second
+        const a = ws.deserializeAttachment() || {};
+        if (Date.now() - (a.lightT || 0) < 1000) return;
+        a.lightT = Date.now(); ws.serializeAttachment(a);
+        this.send('deck', { type: 'build-light', p: this.who(v) });
+      }
+    }
+    if (m.type === 'bug-tap' && g.kind === 'bug' && !g.found[v]) {
+      if (m.card !== 'sms-grunerlokka') { ws.send(JSON.stringify({ type: 'bug-wrong' })); return; }
+      const ms = Date.now() - g.t, rank = Object.keys(g.found).length + 1;
+      g.found[v] = { ms, rank };
+      if (this.people[v] && (!this.people[v].bugMs || ms < this.people[v].bugMs)) { this.people[v].bugMs = ms; await this.ctx.storage.put('people', this.people); }
+      await this.saveGame();
+      ws.send(JSON.stringify({ type: 'bug-ok', ms, rank }));
+      this.send('deck', { type: 'bug-found', p: this.who(v), ms, rank });
+    }
+    if (m.type === 'clicker-next' && g.kind === 'clicker' && g.holder === v) {
+      this.g = null; await this.saveGame();
+      ws.send(JSON.stringify({ type: 'clicker-done' }));
+      this.send('deck', { type: 'clicker-next', p: this.who(v) });
+    }
   }
 
   // ---- the room ----

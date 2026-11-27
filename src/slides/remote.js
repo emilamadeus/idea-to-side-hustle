@@ -2,6 +2,7 @@ import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { attempt, rr, wrap } from '../engine/props.js';
 import { codeApp } from '../engine/console.js';
+import { onRelay, relaySend, relayControl } from '../engine/relay.js';
 
 /*
   Tip: let it notify you, and reach it from anywhere. Shown in the Claude Code app on the
@@ -14,6 +15,9 @@ import { codeApp } from '../engine/console.js';
        The cloud works through five slow stages: klon (ping to GitHub, pong back), rett, test,
        commit (ping to GitHub, the commit lands), varsle (ping to the phone, which wakes and
        vibrates). Then the cloud idles, its spinner still turning.
+    3. The remote goes to the room: one random phone gets a big Neste button. When that person
+       taps it, the deck moves on by itself. The presenter can still click on at any time.
+       card x 560–1480, y 230–620: label y 300, name y 420, line y 480, status y 560
 
   Layout zones (svg units):
     tip        x 80–540, y 110–240
@@ -30,15 +34,18 @@ const PX = 130, PY = 248, PW = 260, PH = 520;
 const OK = '#8fe3a2', WARN = '#ffd23f', FG = '#f3e9da', MUTED = '#9a8a78';
 const TIP0 = 'Remote sessions<br>med <em>notifikasjoner</em>.';
 const TIP2 = '<em>Cloud sessions</em> når<br>maskinen ikke kjører.';
+const TIP3 = 'Fjernkontrollen<br>til <em>salen</em>.';
+const DOT = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '#ffb25e', '#9be7b0'];
 
 export default {
   id: 'remote',
   title: 'Varsler og fjernstyring',
-  steps: 3,
+  steps: 4,
   notes: [
     'Uten varsler: sessionen spør om noe og venter. Du er et annet sted. To timer og førti minutter.',
     'Med varsler: telefonen lyser opp, du svarer ja derfra, sessionen går videre.',
     'Maskinen er av? Start en cloud session fra telefonen og lås den. Den kloner, retter, tester, committer, og varselet vekker telefonen.',
+    'Nå får en av dere fjernkontrollen. Du bestemmer når vi går videre. (Klikk selv om det drøyer.)',
   ],
 
   create(ctx) {
@@ -52,6 +59,29 @@ export default {
     let loops = [];
 
     const reset = () => { loops.forEach((l) => l.kill()); loops = []; svg.innerHTML = ''; P = {}; tip.innerHTML = TIP0; gsap.set(tip, { opacity: 1 }); };
+    // step 3: one phone in the room holds the next button
+    let holding = false;
+    const endClicker = () => { if (holding) { holding = false; relaySend({ type: 'clicker-end' }); } };
+    const offRelay = onRelay((m) => {
+      if (!P.rc) return;
+      if (m.type === 'clicker-holder') {
+        if (m.p) {
+          P.rc.name.textContent = m.p.name;
+          P.rc.name.setAttribute('style', `font: 800 96px var(--font-display); letter-spacing: -.04em; fill: ${DOT[((m.p.n || 1) - 1) % DOT.length]}`);
+          P.rc.line.textContent = 'har neste klikk.';
+          gsap.fromTo(P.rc.name, { opacity: 0, scale: 0.7, svgOrigin: '1020 400' }, { opacity: 1, scale: 1, duration: 0.6, ease: 'back.out(2)' });
+        } else {
+          P.rc.name.textContent = 'Ingen telefoner';
+          P.rc.line.textContent = 'er koblet til.';
+        }
+      }
+      if (m.type === 'clicker-next' && holding && relayControl) {
+        holding = false;
+        P.rc.status.textContent = `${m.p?.name || 'Salen'} klikket.`;
+        gsap.fromTo(P.rc.status, { opacity: 0 }, { opacity: 1, duration: 0.25 });
+        setTimeout(() => { if (P.rc) ctx.deck?.next?.(); }, 900);
+      }
+    });
     const mono = (wt, sz, c) => ({ style: `font: ${wt} ${sz}px var(--font-mono); fill: ${c}` });
 
     // your phone: lock screen, notifications, and the session opened remotely
@@ -127,7 +157,7 @@ export default {
       return { app, k, ask };
     }
 
-    const play = (i) => {
+    const play = (i, instant) => {
       const tl = gsap.timeline();
       if (i === 0) {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
@@ -325,10 +355,25 @@ export default {
           } }));
         }, null, END);
       }
+      if (i === 3) {
+        const live = !instant && !ctx.deck?.instant;
+        tl.to(tip, { opacity: 0, duration: 0.25 }, 0);
+        tl.call(() => { tip.innerHTML = TIP3; }, null, 0.25);
+        tl.to(tip, { opacity: 1, duration: 0.35 }, 0.3);
+        tl.to([...svg.children], { opacity: 0, duration: 0.4 }, 0);
+        const g = D.g(svg, { 'data-unit': '' });
+        D.text(g, 1020, 300, 'FJERNKONTROLLEN', 'rl', { 'text-anchor': 'middle', style: 'font: 700 18px var(--font-mono); letter-spacing: .22em; fill: #9a8a78' });
+        const name = D.text(g, 1020, 420, live ? 'Velger …' : 'Salen', 'rn', { 'text-anchor': 'middle', style: 'font: 800 96px var(--font-display); letter-spacing: -.04em; fill: #ffd23f' });
+        const line = D.text(g, 1020, 480, live ? '' : 'har neste klikk.', 'rk', { 'text-anchor': 'middle', style: 'font: 700 30px var(--font-display); fill: #f3e9da' });
+        const status = D.text(g, 1020, 560, '', 'rs', { 'text-anchor': 'middle', style: `font: 700 20px var(--font-mono); fill: ${OK}` });
+        P.rc = { g, name, line, status };
+        tl.fromTo(g, { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5 }, 0.4);
+        if (live) { holding = true; tl.call(() => relaySend({ type: 'clicker-start' }), null, 0.6); }
+      }
       return tl;
     };
 
     const st = D.stepper(ctx, { reset, play });
-    return { ...st, dispose() { loops.forEach((l) => l.kill()); } };
+    return { ...st, dispose() { loops.forEach((l) => l.kill()); offRelay(); endClicker(); } };
   },
 };
