@@ -160,6 +160,10 @@ export const HELP = {
     'Vinnerne får beskjed på telefonen.',
   ],
   takeaways: [null],
+  arena: [
+    'Telefonen er kontrollen. TV-en viser hele banen.',
+    'Tre liv hver. Ringen krymper, så runden får en slutt.',
+  ],
   price: [
     'Spør markedet før du setter prisen. Her er markedet salen.',
     'Midten av salen er prisen butikken åpner med.',

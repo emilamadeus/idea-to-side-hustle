@@ -12,6 +12,7 @@ import mdFiles from './md-files.js';
 import goal from './goal.js';
 import visualRef from './visual-ref.js';
 import gameRef from './game-ref.js';
+import arena from './arena.js';
 import commits from './commits.js';
 import fullScope from './full-scope.js';
 import sideQuest from './side-quest.js';
@@ -54,7 +55,7 @@ const STAGED = [
 ];
 const PARTS = [
   { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, skills, gateway] },
-  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, alwaysWorking] },
+  { name: 'Bak kulissene', slides: [sideQuest, assetLoop, gameRef, arena, alwaysWorking] },
   { name: 'Ekte prosjekter', slides: [projects, knowAGuy, launch, htmlDeck] },
 ];
 export const slides = [

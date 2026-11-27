@@ -33,6 +33,10 @@
             deck ← bug-found { p, ms, rank }
     deck  → clicker-start · clicker-end      phone ← clicker · clicker-done · clicker-end   phone → clicker-next
             deck ← clicker-holder { p } · clicker-next { p }
+    deck  → arena-open { R } · arena-go { delay } · arena-out { id, rank, total, by } · arena-end { winner, name }
+            arena-roster { list } · arena-state { … } (passed straight to the phones)
+            phone ← arena { phase, R, at, now } · the deck's arena-* messages        phone → apos { x, y, a } · afire { x, y, a } · acheer
+            deck ← apos / afire { id, x, y, a } · acheer { id }
     deck  → where { label }                    phone ← where { label }       the talk's current part, shown in the lobby
     deck  → awards                             deck ← { type: 'awards', list }; winners' phones glow
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
@@ -238,6 +242,7 @@ export class Room {
     }
     if (m.type === 'light-off') this.send('cust', { type: 'light-off' });
     if (['price-open', 'price-close', 'build-start', 'build-end', 'bug-start', 'bug-end', 'clicker-start', 'clicker-end'].includes(m.type)) await this.deckGame(m);
+    if (typeof m.type === 'string' && m.type.startsWith('arena-')) await this.arenaDeck(m, raw);
     if (m.type === 'where') { this.where = String(m.label || '').slice(0, 40); await this.ctx.storage.put('where', this.where); this.send('cust', { type: 'where', label: this.where }); }
     if (m.type === 'awards') {
       const list = this.awards();
@@ -298,6 +303,7 @@ export class Room {
       return;
     }
     if (['price', 'build-place', 'bug-tap', 'clicker-next'].includes(m.type) && a.voter) return this.phoneGame(ws, a.voter, m);
+    if (['apos', 'afire', 'acheer'].includes(m.type) && a.voter && this.g?.kind === 'arena') return this.arenaPhone(ws, a, m);
     if (m.type === 'watch-ack' && this.alert && !this.alert.acked && m.k === this.alert.k && this.people[a.voter]?.watch === m.k) {
       this.alert.acked = true;
       await this.ctx.storage.put('alert', this.alert);
@@ -379,6 +385,7 @@ export class Room {
     if (g.kind === 'build') return this.buildFor(v);
     if (g.kind === 'bug') return g.found[v] ? null : { type: 'bug-start' };
     if (g.kind === 'clicker' && g.holder === v) return { type: 'clicker' };
+    if (g.kind === 'arena') return { type: 'arena', phase: g.phase, R: g.R, at: g.at, now: Date.now(), out: g.out?.[v.slice(0, 6)] || null };
     return null;
   }
   buildFor(v) {
@@ -479,6 +486,54 @@ export class Room {
     }
   }
 
+  // ---- the arena: last one standing. The deck runs the game; the relay only passes things along.
+  //   Phones own their position (so steering is instant there) and send it ~15 times a second;
+  //   the deck decides every hit and sends the whole state back ~12 times a second.
+  //   Inputs are never stored: only the phase changes are (the object may sleep between rounds).
+  async arenaDeck(m, raw) {
+    if (m.type === 'arena-open') {
+      this.g = { kind: 'arena', phase: 'lobby', R: Number(m.R) || 400, at: 0, out: {} };
+      await this.saveGame();
+      this.send('cust', { type: 'arena', phase: 'lobby', R: this.g.R, now: Date.now() });
+      return;
+    }
+    if (this.g?.kind !== 'arena') return;
+    if (m.type === 'arena-go') {
+      this.g.phase = 'fight'; this.g.at = Date.now() + (Number(m.delay) || 3000);
+      await this.saveGame();
+      this.send('cust', { type: 'arena', phase: 'fight', R: this.g.R, at: this.g.at, now: Date.now() });
+      return;
+    }
+    if (m.type === 'arena-out') {
+      // one phone is out: its place, for the ghost card (kept, for a phone that reloads)
+      const id = String(m.id || '').slice(0, 6);
+      this.g.out[id] = { rank: m.rank, total: m.total, by: String(m.by || '').slice(0, 18) };
+      this.eachPhone((ws, v) => { if (v && v.slice(0, 6) === id) ws.send(raw); });
+      if (!this.outTimer) this.outTimer = setTimeout(async () => { this.outTimer = null; await this.saveGame(); }, 500);
+      return;
+    }
+    if (m.type === 'arena-end') {
+      const id = String(m.winner || '').slice(0, 6);
+      const v = id && Object.keys(this.people).find((x) => x.slice(0, 6) === id);
+      if (v) { this.people[v].arenaWin = (this.people[v].arenaWin || 0) + 1; this.people[v].arenaT = Date.now(); await this.ctx.storage.put('people', this.people); }
+      this.g = null; await this.saveGame();
+      this.send('cust', raw);
+      return;
+    }
+    // the roster, the state, the cheers: straight through to every phone
+    this.send('cust', raw);
+  }
+  arenaPhone(ws, a, m) {
+    const id = a.voter.slice(0, 6);
+    if (m.type === 'acheer') {
+      const now = Date.now();
+      if (now - (a.cheerT || 0) < 300) return;
+      a.cheerT = now; ws.serializeAttachment(a);
+    }
+    const n = (x) => Math.round(Number(x) || 0);
+    this.send('deck', m.type === 'acheer' ? { type: 'acheer', id } : { type: m.type, id, x: n(m.x), y: n(m.y), a: n(m.a) });
+  }
+
   // ---- the room ----
   person(v) { const p = this.people[v]; return p && { id: v.slice(0, 6), name: p.name || '', n: p.n }; }
   roster() { return Object.keys(this.people).map((v) => this.person(v)).sort((a, b) => a.n - b.n); }
@@ -499,6 +554,8 @@ export class Room {
     this.orders.forEach((o) => { const k = o.voter || o.id; sacks[k] = (sacks[k] || { n: 0, o }); sacks[k].n += o.sekker; });
     const most = Object.entries(sacks).sort((a, b) => b[1].n - a[1].n)[0];
     if (most) out.push({ title: 'Mest ved', voter: most[1].o.voter, name: nameOf(most[1].o.voter, most[1].o.navn), detail: `${most[1].n} sekker` });
+    const arena = Object.entries(P).filter(([, p]) => p.arenaWin).sort((a, b) => b[1].arenaT - a[1].arenaT)[0];
+    if (arena) out.push({ title: 'Sist igjen', voter: arena[0], name: nameOf(arena[0]), detail: 'arenaen' });
     const early = Object.entries(P).sort((a, b) => a[1].n - b[1].n)[0];
     if (early) out.push({ title: 'Først inne', voter: early[0], name: nameOf(early[0]), detail: `først av ${Object.keys(P).length}` });
     return out;
@@ -507,7 +564,7 @@ export class Room {
   webSocketClose(ws, code) { try { ws.close(code, 'bye'); } catch {} }
 
   send(tag, msg) {
-    const s = JSON.stringify(msg);
+    const s = typeof msg === 'string' ? msg : JSON.stringify(msg);
     for (const ws of this.ctx.getWebSockets(tag)) { try { ws.send(s); } catch {} }
   }
 }
