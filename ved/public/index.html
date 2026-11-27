@@ -608,12 +608,18 @@
     ws.onmessage = (e) => {
       const m = JSON.parse(e.data);
       if (Array.isArray(m.room)) window.vedRoomNow = m.room;
+      if (typeof m.roomGen === 'number') window.vedRoomGen = m.roomGen; // the room's reset counter (js/room.js may load later)
       if (typeof m.where === 'string') window.vedWhereNow = m.where;
       if (typeof m.talk === 'boolean') window.vedTalkNow = { on: m.talk, tips: m.tips || [], sheet: m.sheet || null }; // the tip list (js/lobby.js may load later)
       if (m.price) { PRICE = m.price; update(); }
       if (m.type === 'price-set') { PRICE = m.price; update(); }
       if (m.type === 'state') { open = m.open; live(true); show(); }
       if (m.type === 'notify') notify(m);
+      // the shop was emptied while this phone was away: drop the old orders, as on a live reset
+      if (typeof m.shopGen === 'number' && store.get('ved-shop-gen', 0) !== m.shopGen) {
+        store.set('ved-shop-gen', m.shopGen);
+        if (m.type !== 'reset' && orders.length) { store.del('ved-orders'); store.del('ved-order'); store.del('ved-msgs'); location.reload(); return; }
+      }
       if (m.type === 'reset') { store.del('ved-orders'); store.del('ved-order'); store.del('ved-msgs'); location.reload(); }
       // the vote and the look (js/vote.js, which may load after the first message: it replays vedLast)
       if (m.vote || m.theme) window.vedLast = { ...(window.vedLast || {}), ...(m.vote ? { vote: m.vote } : {}), ...(m.theme ? { theme: m.theme } : {}) };

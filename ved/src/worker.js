@@ -133,6 +133,10 @@ export class Room {
       this.price = (await ctx.storage.get('price')) ?? 129;
       this.talk = (await ctx.storage.get('talk')) ?? false;           // the talk has started: phones show the tip list
       this.tips = (await ctx.storage.get('tips')) ?? [];              // the tips so far, one per slide, in talk order
+      // reset counters: N (people-reset) bumps room, X (reset) bumps shop. A phone that missed the
+      // reset (locked, closed) sees an older number when it reconnects and forgets its join or orders
+      this.roomGen = (await ctx.storage.get('roomGen')) ?? 0;
+      this.shopGen = (await ctx.storage.get('shopGen')) ?? 0;
       this.sheet = (await ctx.storage.get('sheet')) ?? null;          // the slide the talk is on { n, total, part, title }          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
     });
   }
@@ -180,7 +184,7 @@ export class Room {
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
       ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster(), price: this.price }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, talk: this.talk, tips: this.tips, sheet: this.sheet, game: this.gameFor(voter) }));
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, talk: this.talk, tips: this.tips, sheet: this.sheet, game: this.gameFor(voter), roomGen: this.roomGen, shopGen: this.shopGen }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -276,12 +280,14 @@ export class Room {
       this.talk = false; this.tips = [];
       await this.ctx.storage.put('talk', false); await this.ctx.storage.put('tips', []);
       this.send('cust', { type: 'talk', on: false, tips: [] });
-      this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); this.send('cust', { type: 'room-reset' }); }
+      this.roomGen++; await this.ctx.storage.put('roomGen', this.roomGen);
+      this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); this.send('cust', { type: 'room-reset', roomGen: this.roomGen }); }
     if (m.type === 'reset') {
       this.orders = [];
+      this.shopGen++; await this.ctx.storage.put('shopGen', this.shopGen);
       this.price = 129; await this.ctx.storage.put('price', this.price);
       await this.ctx.storage.put('orders', this.orders);
-      this.send('cust', { type: 'reset' });
+      this.send('cust', { type: 'reset', shopGen: this.shopGen });
       this.send('deck', { type: 'snapshot', open: this.open, orders: [] });
     }
     // a message to every open phone: { type: 'broadcast', app, title, text } (the talk's own buzzes)
@@ -318,6 +324,8 @@ export class Room {
     const a = ws.deserializeAttachment() || {};
     const v = this.vote;
     if (m.type === 'join' && a.voter) {
+      // joined before the room was emptied: ask for a name again instead of coming back
+      if (typeof m.gen === 'number' && m.gen !== this.roomGen) { ws.send(JSON.stringify({ type: 'room-reset', roomGen: this.roomGen })); return; }
       const name = cleanName(m.name);
       const known = this.people[a.voter];
       const p = known ?? { n: Object.keys(this.people).length + 1, t: Date.now(), chops: 0 };

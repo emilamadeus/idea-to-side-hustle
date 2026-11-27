@@ -52,11 +52,14 @@ document.head.append(css);
 // ---------- joining ----------
 let joined = store.get('ved-joined') === '1';
 let me = null;
+// the room's reset counter this phone joined under (the relay bumps it when the room is emptied)
+const gen = () => Number(store.get('ved-room-gen') || 0);
 function join(name) {
+  if (typeof window.vedRoomGen === 'number') store.set('ved-room-gen', String(window.vedRoomGen)); // joining now, under the current counter
   store.set('ved-name', name || '');
   store.set('ved-joined', '1');
   joined = true;
-  const tryJoin = () => { if (!send({ type: 'join', name: name || '' })) setTimeout(tryJoin, 500); };
+  const tryJoin = () => { if (!send({ type: 'join', name: name || '', gen: gen() })) setTimeout(tryJoin, 500); };
   tryJoin();
   const f = $('#nameInput'); if (f && name && !f.value) f.value = name; // the order form gets the name too
 }
@@ -263,7 +266,12 @@ function onAward(m) {
 const prev = window.vedHook;
 window.vedHook = (m) => {
   prev?.(m);
-  if (m.type === 'state' && joined) send({ type: 'join', name: store.get('ved-name') || '' }); // every (re)connect
+  // the room was emptied while this phone was away (locked, closed): forget the join, as on a live reset
+  if (typeof m.roomGen === 'number') {
+    if (joined && m.roomGen !== gen()) forget();
+    store.set('ved-room-gen', String(m.roomGen));
+  }
+  if (m.type === 'state' && joined) send({ type: 'join', name: store.get('ved-name') || '', gen: gen() }); // every (re)connect
   // the lobby greets you itself, so the welcome card is only for phones past it
   if (m.type === 'me') { const first = !me; me = m.me; if (first && sessionStorage.getItem('ved-welcomed') !== '1' && !document.documentElement.classList.contains('lobby-on')) { sessionStorage.setItem('ved-welcomed', '1'); welcome(m.me); } }
   if (m.type === 'watch') onShift(m);
@@ -273,11 +281,15 @@ window.vedHook = (m) => {
   if (m.type === 'light') onLight(m);
   if (m.type === 'light-off') stopLight();
   if (m.type === 'award') onAward(m);
-  if (m.type === 'room-reset') { // the presenter emptied the room: forget we joined, ask again
-    store.set('ved-joined', ''); try { sessionStorage.removeItem('ved-welcomed'); } catch {}
-    joined = false; me = null; shift?.remove(); shift = null; closeAlert(); stopLight();
-    if (!document.querySelector('.room-join')) askJoin();
-  }
+  if (m.type === 'room-reset' && joined) forget(); // the presenter emptied the room
 };
-if (joined) { const n = store.get('ved-name'); const tryJoin = () => { if (!send({ type: 'join', name: n || '' })) setTimeout(tryJoin, 600); }; tryJoin(); const f = $('#nameInput'); if (f && n && !f.value) f.value = n; }
+// forget we joined, and ask for a name again
+function forget() {
+  store.set('ved-joined', ''); try { sessionStorage.removeItem('ved-welcomed'); } catch {}
+  joined = false; me = null; shift?.remove(); shift = null; closeAlert(); stopLight();
+  if (!document.querySelector('.room-join')) askJoin();
+}
+// the first state may have come before this script loaded
+if (joined && typeof window.vedRoomGen === 'number' && window.vedRoomGen !== gen()) { store.set('ved-room-gen', String(window.vedRoomGen)); joined = false; store.set('ved-joined', ''); }
+if (joined) { const n = store.get('ved-name'); const tryJoin = () => { if (!joined) return; if (!send({ type: 'join', name: n || '', gen: gen() })) setTimeout(tryJoin, 600); }; tryJoin(); const f = $('#nameInput'); if (f && n && !f.value) f.value = n; }
 else askJoin();
