@@ -47,6 +47,7 @@ function house3d() {
 
 export default {
   id: 'full-scope',
+  pocket: true, // its tip goes to the phones' list (see deck.js)
   title: 'Hele omfanget først',
   steps: 7,
   notes: [

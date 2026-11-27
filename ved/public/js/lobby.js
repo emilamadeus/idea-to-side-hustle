@@ -1,6 +1,9 @@
 // The lobby: what a phone shows before the talk opens the shop. It wears the talk's look
 // (Arbeidstegning: warm grid, crop marks, a title block, one pencil note) and shows the room
 // itself: every phone that joined orbits the count in the middle, yours marked.
+// Once the talk starts (the title slide's first click), the hero and hint give way to the tip
+// list: the orbit shrinks to a strip at the top, the current slide's tip sits large under it, and
+// the tips so far collect below, newest first. The audience takes the list home.
 // When the shop opens, the orbit collapses into one point, the point flashes in the winning
 // design's colour, and the shop appears out of it.
 const $ = (s, r = document) => r.querySelector(s);
@@ -60,6 +63,31 @@ css.textContent = `
   .lb-block b { display: block; font-weight: 700; font-size: 12px; color: #fff3e3; letter-spacing: .04em; white-space: nowrap; }
   .lb-block .y b { color: #ffd23f; }
   .lb-block .w { min-width: 0; } .lb-block .w b { overflow: hidden; text-overflow: ellipsis; }
+  /* the talk has started: the tip list */
+  .lobby.talk .lb-hero, .lobby.talk .lb-hint { display: none; }
+  .lobby.talk .lb-orbit { flex: none; height: clamp(110px, 17svh, 150px); min-height: 0; margin-top: 2px; }
+  .lobby.talk .lb-count b { font-size: 34px; text-shadow: 0 0 24px rgba(255,160,40,.4); }
+  .lobby.talk .lb-count span { font-size: 9px; letter-spacing: .2em; }
+  .lb-tips { display: none; flex: 1; min-height: 0; overflow-y: auto; margin: 4px -22px 12px; padding: 0 26px 30px;
+    -webkit-mask-image: linear-gradient(#000 82%, transparent); mask-image: linear-gradient(#000 82%, transparent); scrollbar-width: none; }
+  .lb-tips::-webkit-scrollbar { display: none; }
+  .lobby.talk .lb-tips { display: block; }
+  .lb-now { padding: 18px 0 22px; border-bottom: 2px solid rgba(255,190,120,.22); }
+  .lb-now h2 { font-weight: 800; font-size: clamp(32px, 10vw, 44px); line-height: .98; letter-spacing: -.04em; margin: 12px 0 0; }
+  .lb-now h2 em { font-style: normal; color: #ff7a2f; }
+  .lb-now p { margin: 12px 0 0; color: #c9ad92; font-size: 15px; }
+  .lb-now.new h2 { animation: lb-tip .8s cubic-bezier(.2,.8,.2,1) both; }
+  .lb-now.new .lb-eye { animation: lb-tip .6s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes lb-tip { from { opacity: 0; transform: translateY(18px); } }
+  .lb-so { font: 700 10.5px 'Space Mono', monospace; letter-spacing: .2em; text-transform: uppercase; color: #8a7360; margin: 20px 0 6px; }
+  .lb-list { list-style: none; margin: 0; padding: 0; }
+  .lb-list li { display: grid; grid-template-columns: 34px 1fr 18px; gap: 10px; align-items: baseline; padding: 12px 0; border-bottom: 1.5px dashed rgba(255,190,120,.16); }
+  .lb-list li.new { animation: lb-tip .7s .15s cubic-bezier(.2,.8,.2,1) both; }
+  .lb-list b { font: 700 12px 'Space Mono', monospace; color: #ffd23f; }
+  .lb-list span { font-weight: 700; font-size: 18px; line-height: 1.2; letter-spacing: -.015em; color: #f0dfca; }
+  .lb-list span em { font-style: normal; color: #ffb25e; }
+  .lb-list i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #8fe3a2; position: relative; top: 2px; }
+  .lb-list i::after { content: ''; position: absolute; left: 3px; top: 0; width: 4px; height: 7px; border: solid #8fe3a2; border-width: 0 2px 2px 0; transform: rotate(40deg); }
   .lobby.out .lb-top, .lobby.out .lb-hero, .lobby.out .lb-foot, .lobby.out .lb-count { transition: opacity .5s, transform .7s cubic-bezier(.6,0,.4,1); opacity: 0; }
   .lobby.out .lb-hero { transform: translateY(-24px); } .lobby.out .lb-foot { transform: translateY(24px); } .lobby.out .lb-count { transform: translate(-50%, -50%) scale(.4); }
   .lb-flash { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; clip-path: circle(0% at 50% var(--cy, 56%));
@@ -89,11 +117,12 @@ function mount() {
     <div class="lb-top"><span>10.12.2026</span><span class="lb-live"><i></i><span>Kobler til</span></span></div>
     <div class="lb-hero"><p class="lb-eye">Foredrag</p><h1 class="lb-title"><span><i>Fra idé til</i></span><span><i>lansering,</i></span><span><i>med AI</i></span></h1></div>
     <div class="lb-orbit"><canvas></canvas><div class="lb-count"><b>0</b><span>i salen</span></div></div>
+    <div class="lb-tips"></div>
     <div class="lb-foot"><p class="lb-hint">Hold siden åpen. Den skifter av seg selv.</p>
       <div class="lb-block"><div class="y"><small>Ark</small><b>00</b></div><div class="w"><small>Del</small><b>Salen</b></div><div><small>Dato</small><b>10.12.26</b></div></div></div>`;
   document.body.append(el);
   cv = $('canvas', el); cx = cv.getContext('2d');
-  size(); live(liveOn); setWhere(where);
+  size(); live(liveOn); setWhere(where); renderTalk(false);
   document.title = TITLE;
   $('meta[name="theme-color"]')?.setAttribute('content', '#16100b');
   document.documentElement.classList.add('lobby-on');
@@ -108,6 +137,41 @@ function size() {
 }
 addEventListener('resize', size);
 function setWhere(label) { where = label || ''; if (el) $('.lb-block .w b', el).textContent = where || 'Salen'; }
+
+// ---------- the tip list ----------
+let talk = false, tips = [], nowId = null;
+const esc = (v) => String(v ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const withEm = (t) => { const s = esc(t.text), e = esc(t.em); return e && s.includes(e) ? s.replace(e, `<em>${e}</em>`) : s; };
+const pad = (n) => String(n || 0).padStart(2, '0');
+function setTalk(on, list) {
+  talk = !!on;
+  if (Array.isArray(list)) { tips = list; nowId = list.length ? list[list.length - 1].id : null; }
+  renderTalk(false);
+}
+function addTip(t) {
+  if (!t?.id) return;
+  tips = [...tips.filter((x) => x.id !== t.id), t].sort((a, b) => a.n - b.n);
+  const fresh = nowId !== t.id;
+  nowId = t.id;
+  talk = true;
+  renderTalk(fresh);
+  if (fresh && el) navigator.vibrate?.(15);
+}
+function renderTalk(fresh) {
+  if (!el) return;
+  const was = el.classList.contains('talk');
+  el.classList.toggle('talk', talk);
+  if (was !== talk) requestAnimationFrame(size);
+  const box = $('.lb-tips', el);
+  if (!talk) { box.innerHTML = ''; return; }
+  const now = tips.find((t) => t.id === nowId);
+  const rest = tips.filter((t) => t.id !== nowId).sort((a, b) => b.n - a.n);
+  box.innerHTML = (now
+    ? `<div class="lb-now${fresh ? ' new' : ''}"><p class="lb-eye">Nå · Ark ${pad(now.n)}${now.part ? ` · ${esc(now.part)}` : ''}</p><h2>${withEm(now)}</h2></div>`
+    : `<div class="lb-now"><p class="lb-eye">Grepene</p><h2>Grepene fra foredraget samles <em>her</em>.</h2><p>Ett for ett, mens vi går. Listen er din etterpå.</p></div>`)
+    + (rest.length ? `<p class="lb-so">Så langt · ${tips.length}</p><ul class="lb-list">${rest.map((t, k) => `<li class="${fresh && k === 0 ? 'new' : ''}"><b>${pad(t.n)}</b><span>${withEm(t)}</span><i></i></li>`).join('')}</ul>` : '');
+  if (now) $('.lb-block .y b', el).textContent = pad(now.n);
+}
 function live(on) { liveOn = on; if (!el) return; $('.lb-live', el).classList.toggle('on', on); $('.lb-live span', el).textContent = on ? 'Live' : 'Kobler til'; }
 
 // ---------- the room ----------
@@ -208,7 +272,7 @@ function frame(now) {
     cx.beginPath(); cx.arc(x, y, r, 0, 7); cx.fill(); cx.stroke();
     if (p.me) { cx.strokeStyle = '#fff3e3'; cx.lineWidth = 2; cx.globalAlpha = al * (0.55 + 0.45 * Math.sin(t * 3)); cx.beginPath(); cx.arc(x, y, r + 5, 0, 7); cx.stroke(); }
     // the name: below the dot in front, above it behind
-    if (p.name && k < 0.3) {
+    if (p.name && k < 0.3 && !talk) {
       cx.globalAlpha = al * (1 - k / 0.3) * Math.min(1, pop * 1.5);
       cx.font = `${p.me ? 800 : 700} ${Math.round((p.me ? 15 : 13) * (0.85 + 0.25 * depth))}px 'Bricolage Grotesque', sans-serif`;
       cx.textAlign = 'center'; cx.textBaseline = depth > 0.5 ? 'top' : 'bottom';
@@ -218,7 +282,7 @@ function frame(now) {
     }
     cx.globalAlpha = 1;
     // the pencil note: which dot is yours
-    if (p.me && pop >= 1 && k === 0) pencil(x, y, r, depth);
+    if (p.me && pop >= 1 && k === 0 && !talk) pencil(x, y, r, depth);
   }
 
   // the count eases toward the room
@@ -303,7 +367,11 @@ window.vedHook = (m) => {
   if (m.type === 'room-joined' && m.p) addPerson(m.p);
   if (m.type === 'me' && m.me) addPerson(m.me);
   if (m.type === 'room-reset') setRoom([]);
+  if (typeof m.talk === 'boolean') setTalk(m.talk, m.tips);
+  if (m.type === 'talk') setTalk(m.on, m.tips);
+  if (m.type === 'tip') addTip(m.tip);
   if (el && m.theme) $('meta[name="theme-color"]')?.setAttribute('content', '#16100b'); // vote.js recolours the bar for the shop
 };
 if (window.vedRoomNow) setRoom(window.vedRoomNow);
 if (window.vedWhereNow != null) setWhere(window.vedWhereNow);
+if (window.vedTalkNow) setTalk(window.vedTalkNow.on, window.vedTalkNow.tips);

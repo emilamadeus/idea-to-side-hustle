@@ -35,6 +35,8 @@
             arena-roster { list } · arena-state { … } (passed straight to the phones)
             phone ← arena { phase, R, at, now } · the deck's arena-* messages        phone → apos { x, y, a } · afire { x, y, a } · acheer
             deck ← apos / afire { id, x, y, a } · acheer { id }
+    deck  → talk { on } · tip { id, n, total, part, text, em }   phone ← talk { on, tips } · tip { tip } · state.talk/tips
+                                               the tip list that replaces the waiting room once the talk starts
     deck  → where { label }                    phone ← where { label }       the talk's current part, shown in the lobby
     deck  → awards                             deck ← { type: 'awards', list }; winners' phones glow
   One Durable Object ("Room") holds the state, so every connection sees the same shop.
@@ -127,7 +129,9 @@ export class Room {
       this.watchNames = (await ctx.storage.get('watchNames')) ?? null;
       this.where = (await ctx.storage.get('where')) ?? '';
       this.g = (await ctx.storage.get('game')) ?? null;               // the running room game (price, bug, clicker, arena)
-      this.price = (await ctx.storage.get('price')) ?? 129;          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
+      this.price = (await ctx.storage.get('price')) ?? 129;
+      this.talk = (await ctx.storage.get('talk')) ?? false;           // the talk has started: phones show the tip list
+      this.tips = (await ctx.storage.get('tips')) ?? [];              // the tips so far, one per slide, in talk order          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
     });
   }
 
@@ -174,7 +178,7 @@ export class Room {
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
       ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster(), price: this.price }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, game: this.gameFor(voter) }));
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, talk: this.talk, tips: this.tips, game: this.gameFor(voter) }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -241,13 +245,30 @@ export class Room {
     if (m.type === 'light-off') this.send('cust', { type: 'light-off' });
     if (['price-open', 'price-close', 'bug-start', 'bug-end', 'clicker-start', 'clicker-end'].includes(m.type)) await this.deckGame(m);
     if (typeof m.type === 'string' && m.type.startsWith('arena-')) await this.arenaDeck(m, raw);
+    // the tip list on the phones: the talk starts (title's first click), then each tip slide adds one
+    if (m.type === 'talk') {
+      this.talk = !!m.on; await this.ctx.storage.put('talk', this.talk);
+      this.send('cust', { type: 'talk', on: this.talk, tips: this.tips });
+    }
+    if (m.type === 'tip' && m.id) {
+      const clean = (v, n) => String(v ?? '').slice(0, n);
+      const t = { id: clean(m.id, 40), n: Number(m.n) || 0, total: Number(m.total) || 0, part: clean(m.part, 30), text: clean(m.text, 140), em: clean(m.em, 60) };
+      this.tips = [...this.tips.filter((x) => x.id !== t.id), t].sort((a, b) => a.n - b.n);
+      await this.ctx.storage.put('tips', this.tips);
+      this.send('cust', { type: 'tip', tip: t });
+    }
     if (m.type === 'where') { this.where = String(m.label || '').slice(0, 40); await this.ctx.storage.put('where', this.where); this.send('cust', { type: 'where', label: this.where }); }
     if (m.type === 'awards') {
       const list = this.awards();
       this.send('deck', { type: 'awards', list });
       this.eachPhone((ws, v) => { const won = list.filter((a) => a.voter === v); if (won.length) ws.send(JSON.stringify({ type: 'award', titles: won.map((a) => a.title) })); });
     }
-    if (m.type === 'people-reset') { this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); this.send('cust', { type: 'room-reset' }); }
+    if (m.type === 'people-reset') {
+      // a new run: the room, the talk's start and the tip list all go
+      this.talk = false; this.tips = [];
+      await this.ctx.storage.put('talk', false); await this.ctx.storage.put('tips', []);
+      this.send('cust', { type: 'talk', on: false, tips: [] });
+      this.people = {}; await this.ctx.storage.put('people', this.people); this.send('deck', { type: 'roster', people: [] }); this.send('cust', { type: 'room-reset' }); }
     if (m.type === 'reset') {
       this.orders = [];
       this.price = 129; await this.ctx.storage.put('price', this.price);

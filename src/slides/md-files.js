@@ -38,6 +38,7 @@ const CSS = `
 
 export default {
   id: 'md-files',
+  pocket: true, // its tip goes to the phones' list (see deck.js)
   title: 'Instruksjonsfiler',
   steps: 7,
   notes: [

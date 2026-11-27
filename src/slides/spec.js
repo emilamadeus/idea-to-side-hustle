@@ -40,6 +40,7 @@ const HIDDEN = [
 
 export default {
   id: 'spec',
+  pocket: true, // its tip goes to the phones' list (see deck.js)
   title: 'Levende spec',
   steps: 7,
   notes: [

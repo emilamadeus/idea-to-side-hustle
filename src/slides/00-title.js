@@ -197,7 +197,11 @@ export default {
         if (step >= 1) start(true);
         else { arrive(true); gsap.set(bigText, { opacity: 0 }); ctx.track(gsap.to(bigText, { opacity: 1, duration: 0.8, delay: 0.6 })); ctx.track(fx.rise(mini, { stagger: 0.015, duration: 1, y: 60 })); }
       },
-      step(n) { if (n >= 1) start(false); else arrive(false); },
+      // the first click starts the talk: the phones leave the waiting room for the tip list
+      step(n) {
+        if (n >= 1) start(false); else arrive(false);
+        if (!ctx.deck?.instant) relaySend({ type: 'talk', on: n >= 1 });
+      },
       dispose() { offRelay(); },
     };
   },

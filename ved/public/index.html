@@ -609,6 +609,7 @@
       const m = JSON.parse(e.data);
       if (Array.isArray(m.room)) window.vedRoomNow = m.room;
       if (typeof m.where === 'string') window.vedWhereNow = m.where;
+      if (typeof m.talk === 'boolean') window.vedTalkNow = { on: m.talk, tips: m.tips || [] }; // the tip list (js/lobby.js may load later)
       if (m.price) { PRICE = m.price; update(); }
       if (m.type === 'price-set') { PRICE = m.price; update(); }
       if (m.type === 'state') { open = m.open; live(true); show(); }

@@ -1,4 +1,5 @@
 import { createZoom } from './zoom.js';
+import { relaySend } from './relay.js';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { createStage } from './stage.js';
@@ -194,9 +195,24 @@ class Deck {
     el.classList.toggle('settled', step > 0);
     this.emit();
 
+    const tipHtml = def.pocket ? el.querySelector('.tip')?.innerHTML : null; // before enter: its text effects split the markup
     if (inst.enter) inst.enter({ step, dir });
     else gsap.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.8 });
     this.setHelp(); // after enter, so it can wait for the step's animation
+    this.pocket(def, tipHtml, index);
+  }
+
+  // A slide with def.pocket sends its tip to the phones, which collect them into a list the
+  // audience takes home. Only the audience window sends (relaySend skips previews), and not in
+  // audit runs. The relay keeps one entry per slide, so going back and forth adds nothing.
+  pocket(def, html, index) {
+    if (!def.pocket || !html || this.preview || this.instant) return;
+    const h = document.createElement('div');
+    h.innerHTML = html;
+    const text = html.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    const em = h.querySelector('em')?.textContent.trim() || '';
+    const part = def.stage !== undefined ? ['Idé', 'Plan', 'Bygg', 'Kvalitet', 'Lansering'][def.stage] : def.part || '';
+    relaySend({ type: 'tip', id: def.id, n: index + 1, total: this.defs.length, part, text, em });
   }
 
   // The help line waits until the step's animation has played: action first, words after.

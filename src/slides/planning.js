@@ -47,6 +47,7 @@ function specChip(g, x, y, w, h) {
 
 export default {
   id: 'planning',
+  pocket: true, // its tip goes to the phones' list (see deck.js)
   title: 'Planlegg først',
   steps: 3,
   notes: [

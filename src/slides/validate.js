@@ -47,6 +47,7 @@ const MUTED = { style: 'fill: none; stroke: #6b5a48', 'stroke-width': 2.5, 'stro
 
 export default {
   id: 'validate',
+  pocket: true, // its tip goes to the phones' list (see deck.js)
   title: 'Sjekk ideen først',
   steps: 7,
   notes: [
