@@ -130,7 +130,7 @@ export function createPause(deck, { makeCtx, layer, sync }) {
       g.again.dataset.interactive = '';
       g.again.textContent = 'Ny runde (→)';
       g.again.addEventListener('click', () => again());
-      layer.appendChild(g.again);
+      g.el.appendChild(g.again); // inside a .slide: only there do [data-interactive] elements take clicks
       gsap.fromTo(g.again, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, delay: 1.2 });
     }
   }
