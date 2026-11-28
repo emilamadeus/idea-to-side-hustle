@@ -38,6 +38,7 @@ import { judge as healJudge, BUGS as HEAL_BUGS, W as HEAL_W, H as HEAL_H } from 
             phone ← arena { phase, R, at, now } · the deck's arena-* messages        phone → apos { x, y, a } · afire { x, y, a } · acheer
             deck ← apos / afire { id, x, y, a } · acheer { id }
     deck  → sheet { n, total, part, title }    phone ← sheet { sheet } · state.sheet       the slide the talk is on
+    deck  → pause { on, left }                 phone ← pause { on, left } · state.pause      the break's countdown (ms left)
     deck  → stack                              phone ← stack          the launch stack as a card with links (no wake-up)
     deck  → talk { on } · tip { id, n, total, part, text, em }   phone ← talk { on, tips } · tip { tip } · state.talk/tips
                                                the tip list that replaces the waiting room once the talk starts
@@ -140,7 +141,8 @@ export class Room {
       // reset (locked, closed) sees an older number when it reconnects and forgets its join or orders
       this.roomGen = (await ctx.storage.get('roomGen')) ?? 0;
       this.shopGen = (await ctx.storage.get('shopGen')) ?? 0;
-      this.sheet = (await ctx.storage.get('sheet')) ?? null;          // the slide the talk is on { n, total, part, title }          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
+      this.sheet = (await ctx.storage.get('sheet')) ?? null;
+      this.pause = (await ctx.storage.get('pause')) ?? { on: false, until: 0 };   // the presenter's break, with a countdown          // the slide the talk is on { n, total, part, title }          // kr per sack; the room can set it            // the talk's current part, for the phones' lobby
     });
   }
 
@@ -187,7 +189,7 @@ export class Room {
     server.serializeAttachment({ voter, chopT: 0, chopN: 0 });
     server.send(JSON.stringify(role === 'deck'
       ? { type: 'snapshot', open: this.open, orders: this.orders, theme: this.theme, vote: this.public(), people: this.roster(), price: this.price }
-      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, talk: this.talk, tips: this.tips, sheet: this.sheet, game: this.gameFor(voter), roomGen: this.roomGen, shopGen: this.shopGen }));
+      : { type: 'state', open: this.open, theme: this.theme, vote: this.public(voter), me: this.people[voter] ? this.person(voter) : null, room: this.roster(), where: this.where, price: this.price, talk: this.talk, tips: this.tips, sheet: this.sheet, pause: this.pauseFor(), game: this.gameFor(voter), roomGen: this.roomGen, shopGen: this.shopGen }));
     return new Response(null, { status: 101, webSocket: client });
   }
 
@@ -292,6 +294,13 @@ export class Room {
       await this.ctx.storage.put('orders', this.orders);
       this.send('cust', { type: 'reset', shopGen: this.shopGen });
       this.send('deck', { type: 'snapshot', open: this.open, orders: [] });
+    }
+    // the break: every phone shows the countdown; the presenter can drag it while it runs
+    if (m.type === 'pause') {
+      const left = Math.max(0, Math.min(90 * 60000, Number(m.left) || 0));
+      this.pause = { on: !!m.on, until: Date.now() + left };
+      await this.ctx.storage.put('pause', this.pause);
+      this.send('cust', { type: 'pause', ...(this.pauseFor() || { on: false }) });
     }
     // the launch stack (ship slide): a quiet card on every phone with the three services and links
     if (m.type === 'stack') this.send('cust', { type: 'stack' });
@@ -564,6 +573,13 @@ export class Room {
 
   // ---- the room ----
   person(v) { const p = this.people[v]; return p && { id: v.slice(0, 6), name: p.name || '', n: p.n }; }
+  // the break as a phone sees it: time left rather than a clock time (phones' clocks differ);
+  // a break that ended over half an hour ago is over
+  pauseFor() {
+    const p = this.pause;
+    if (!p?.on || Date.now() - p.until > 30 * 60000) return null;
+    return { on: true, left: Math.max(0, p.until - Date.now()) };
+  }
   roster() { return Object.keys(this.people).map((v) => this.person(v)).sort((a, b) => a.n - b.n); }
   eachPhone(fn) {
     for (const ws of this.ctx.getWebSockets('cust')) { const a = ws.deserializeAttachment() || {}; try { fn(ws, a.voter); } catch {} }

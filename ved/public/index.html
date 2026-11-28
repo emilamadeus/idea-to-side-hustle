@@ -609,6 +609,7 @@
       const m = JSON.parse(e.data);
       if (Array.isArray(m.room)) window.vedRoomNow = m.room;
       if (m.type === 'state' && 'game' in m) window.vedGameNow = m.game; // the running room game (js/play.js, arena.js may load later)
+      if (m.type === 'state') window.vedPauseNow = m.pause || null; // the break (js/pause.js may load later)
       if (typeof m.roomGen === 'number') window.vedRoomGen = m.roomGen; // the room's reset counter (js/room.js may load later)
       if (typeof m.where === 'string') window.vedWhereNow = m.where;
       if (typeof m.talk === 'boolean') window.vedTalkNow = { on: m.talk, tips: m.tips || [], sheet: m.sheet || null }; // the tip list (js/lobby.js may load later)
@@ -666,5 +667,6 @@
 <script type="module" src="/js/room.js"></script>
 <script type="module" src="/js/play.js"></script>
 <script type="module" src="/js/arena.js"></script>
+<script type="module" src="/js/pause.js"></script>
 </body>
 </html>

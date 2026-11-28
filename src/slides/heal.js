@@ -39,7 +39,9 @@ const bugBy = (id) => BUGS.find((b) => b.id === id);
 const pathOf = (pts) => (pts.length ? 'M' + pts.map((q) => `${q[0]} ${q[1]}`).join(' L') + ' Z' : '');
 
 // the last round, for going back to this slide: every ring, and the hits by bug
-let memo = { tries: [], hits: {}, t0: 0, t1: 0 };   // t0: the game opened, t1: the last bug found (or the game closed)
+let memo = { tries: [], hits: {}, t0: 0, t1: 0 };
+// who found the bugs this evening, in order (go-live credits the room with them)
+export const healCredits = () => Object.values(memo.hits).sort((a, b) => a.rank - b.rank).map((t) => t.p?.name || 'Gjest');   // t0: the game opened, t1: the last bug found (or the game closed)
 
 export default {
   id: 'heal',

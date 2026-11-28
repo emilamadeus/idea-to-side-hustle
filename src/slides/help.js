@@ -192,6 +192,7 @@ export const HELP = {
   ],
   'go-live': [
     'Ekte kunder slår en ferdig plan.',
+    'Prisen, designet og feilene kom fra dere.',
     'Live. Ta frem telefonen.',
     'Bestillingene deres, mens vi ser på.',
     'Bilen kjører. Følg med på telefonen.',

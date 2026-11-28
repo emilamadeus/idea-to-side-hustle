@@ -98,3 +98,20 @@ body.linked .nolink { display: none; }
 .design button:hover { color: var(--fg, #fff3e3); border-color: var(--c); }
 .design button.on { color: #1a120c; background: var(--c); border-color: var(--c); }
 .design button.on::before { background: #1a120c; }
+
+/* the break: a button in the header; while paused, a panel over the console with the countdown */
+.pause-btn { all: unset; cursor: pointer; padding: 6px 14px; border-radius: 999px; border: 2px solid var(--deco, #4a3c30);
+  font: 700 13px var(--font-mono, monospace); letter-spacing: .08em; color: var(--muted, #9a8a78); }
+.pause-btn:hover, .pause-btn.on { color: #1a120c; background: var(--accent-2, #ffd23f); border-color: var(--accent-2, #ffd23f); }
+.pause-panel { display: none; position: fixed; inset: 64px 0 0; z-index: 20; place-content: center; justify-items: center; gap: 18px;
+  background: rgba(18, 9, 5, .96); text-align: center; }
+body.paused .pause-panel { display: grid; }
+.pp-cap { font: 700 14px var(--font-mono, monospace); letter-spacing: .3em; color: var(--accent, #ff5a1f); text-transform: uppercase; }
+.pp-time { font: 800 120px/1 var(--font-display, sans-serif); letter-spacing: -.05em; color: var(--fg, #fff3e3); font-variant-numeric: tabular-nums; }
+.pp-range { width: min(70vw, 760px); accent-color: var(--accent, #ff5a1f); height: 34px; cursor: ew-resize; }
+.pp-scale { width: min(70vw, 760px); display: flex; justify-content: space-between; font: 700 13px var(--font-mono, monospace); color: var(--muted, #9a8a78); }
+.pp-row { display: flex; gap: 12px; margin-top: 10px; }
+.pp-row button { all: unset; cursor: pointer; padding: 12px 20px; border-radius: 12px; border: 2px solid var(--deco, #4a3c30); font: 700 15px var(--font-display, sans-serif); color: var(--fg, #fff3e3); }
+.pp-row button:hover { border-color: var(--accent, #ff5a1f); }
+.pp-row .pp-end { background: var(--accent, #ff5a1f); border-color: var(--accent, #ff5a1f); color: #1a0d05; }
+.pp-hint { max-width: 640px; color: var(--muted, #9a8a78); font-size: 14px; }

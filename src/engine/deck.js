@@ -1,4 +1,5 @@
 import { createZoom } from './zoom.js';
+import { createPause } from './pause.js';
 import { relaySend, roomCue } from './relay.js';
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -78,11 +79,18 @@ export async function start(defs, role, theme) {
 
   buildOverview(deck, app.querySelector('.overview'));
   deck.zoom = createZoom(deck, stage); // zoom-out: Z / Shift+Z / O / Esc
+  deck.pause = createPause(deck, { makeCtx, layer: app.querySelector('.slides'), sync }); // the break: K
   bindKeys(deck, app);
   sync.on((m) => {
-    if (m.type === 'hello') deck.emit();
+    if (m.type === 'hello') { deck.emit(); sync.send({ type: 'pause', ...deck.pause.state() }); }
     if (m.type !== 'cmd') return;
     const z = deck.zoom;
+    // the break: the console's pause controls; while paused, next/prev drive the pause (the arena)
+    if (m.action === 'pause') { deck.pause.toggle(); return; }
+    if (m.action === 'pause-min') { deck.pause.setMinutes(Number(m.min) || 0); return; }
+    if (m.action === 'pause-arena') { deck.pause.arena(); return; }
+    if (deck.pause.on && (m.action === 'next' || m.action === 'prev')) { if (m.action === 'next') deck.pause.next(); return; }
+    if (deck.pause.on && m.action !== 'black') return;
     if (m.action === 'next') { if (!z.key({ key: 'ArrowRight' })) deck.next(); }
     if (m.action === 'prev') { if (!z.key({ key: 'ArrowLeft' })) deck.prev(); }
     if (m.action === 'goto') z.open(m.index, m.step ?? 0);
@@ -364,6 +372,9 @@ function bindKeys(deck, app) {
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const k = e.key;
+    // the break (K): while it is on, it takes the keys it needs and keeps the talk where it is
+    if (deck.pause?.key(e)) { e.preventDefault(); return; }
+    if (deck.pause?.on && !['b', 'B', '.', 'f', 'F', 'p', 'P', 'h', 'H'].includes(k)) return;
     if (/^\d$/.test(k)) { digits += k; jump.textContent = `→ ${digits}`; jump.classList.add('on'); return; }
     if (k === 'Enter' && digits && !deck.zoom?.level) {
       deck.go(Number(digits) - 1, 0);

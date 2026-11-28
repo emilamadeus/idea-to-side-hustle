@@ -18,6 +18,7 @@ export function start(defs) {
         <em>Design</em>${[['skog', 'Skog', '#a8d08d'], ['nordisk', 'Nordisk', '#d2693a'], ['rask', 'Rask', '#ffd23f'], ['peis', 'Peis', '#ff7a2f']]
           .map(([k, n, c]) => `<button data-t="${k}" style="--c:${c}">${n}</button>`).join('')}
       </span>
+      <button class="pause-btn" title="Pause (K): alle telefoner viser nedtellingen">Pause</button>
       <button class="timer" title="Click to start/pause, double-click to reset">00:00</button>
       <div class="clock"></div>
     </header>
@@ -34,6 +35,18 @@ export function start(defs) {
       </section>
     </main>
     <footer class="list"></footer>
+    <div class="pause-panel">
+      <div class="pp-cap">Pause</div>
+      <div class="pp-time">10:00</div>
+      <input class="pp-range" type="range" min="0" max="30" step="1" value="10" aria-label="Minutter igjen">
+      <div class="pp-scale"><span>0</span><span>10</span><span>20</span><span>30 min</span></div>
+      <div class="pp-row">
+        <button class="pp-arena">Åpne arenaen</button>
+        <button class="pp-go">Start kampen (→)</button>
+        <button class="pp-end">Fortsett foredraget (K)</button>
+      </div>
+      <p class="pp-hint">Telefonene viser nedtellingen. Arenaen spilles over pausen og lukkes med A; foredraget venter der du var.</p>
+    </div>
     <div class="nolink">
       <p>No audience window connected.</p>
       <button class="open">Open audience window</button>
@@ -77,7 +90,33 @@ export function start(defs) {
     sbar.parentElement.classList.toggle('done', done);
     sready.textContent = done ? 'KLAR' : '';
   };
+  // the break: mirrors the audience window's pause; drag the slider to set the minutes left
+  let pause = { on: false, until: 0, arena: false };
+  const pp = $('.pause-panel'), ppTime = $('.pp-time'), ppRange = $('.pp-range');
+  const two = (n) => String(n).padStart(2, '0');
+  let dragging = false;
+  const showPause = () => {
+    document.body.classList.toggle('paused', pause.on);
+    $('.pause-btn').classList.toggle('on', pause.on);
+    $('.pp-arena').textContent = pause.arena ? 'Lukk arenaen (A)' : 'Åpne arenaen (A)';
+    $('.pp-go').style.display = pause.arena ? '' : 'none';
+  };
+  setInterval(() => {
+    if (!pause.on) return;
+    const ms = Math.max(0, pause.until - Date.now()), sec = Math.ceil(ms / 1000);
+    ppTime.textContent = `${Math.floor(sec / 60)}:${two(sec % 60)}`;
+    if (!dragging) ppRange.value = Math.round(ms / 60000);
+  }, 250);
+  ppRange.addEventListener('pointerdown', () => { dragging = true; });
+  window.addEventListener('pointerup', () => { dragging = false; });
+  ppRange.addEventListener('input', () => sync.send({ type: 'cmd', action: 'pause-min', min: Number(ppRange.value) }));
+  $('.pause-btn').addEventListener('click', () => sync.send({ type: 'cmd', action: 'pause' }));
+  $('.pp-end').addEventListener('click', () => sync.send({ type: 'cmd', action: 'pause' }));
+  $('.pp-arena').addEventListener('click', () => sync.send({ type: 'cmd', action: 'pause-arena' }));
+  $('.pp-go').addEventListener('click', () => sync.send({ type: 'cmd', action: 'next' }));
+
   sync.on((m) => {
+    if (m.type === 'pause') { pause = m; showPause(); return; }
     if (m.type === 'progress') { showProgress(m.p, m.done); return; }
     if (m.type !== 'state') return;
     linked = true;
@@ -150,6 +189,18 @@ export function start(defs) {
   window.addEventListener('keydown', (e) => {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
     const send = (action) => { e.preventDefault(); sync.send({ type: 'cmd', action }); };
+    if (e.target?.closest?.('input')) return;
+    if (e.key === 'k' || e.key === 'K') { send('pause'); return; }
+    if (pause.on) {
+      // paused: arrows set the minutes, A opens/closes the arena, → starts its fight
+      if (e.key === 'a' || e.key === 'A') send('pause-arena');
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const min = Math.round(Math.max(0, pause.until - Date.now()) / 60000) + (e.key === 'ArrowUp' ? 1 : -1);
+        sync.send({ type: 'cmd', action: 'pause-min', min: Math.max(0, Math.min(30, min)) });
+      } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') send('next');
+      return;
+    }
     switch (e.key) {
       case 'ArrowRight': case 'ArrowDown': case 'PageDown': case ' ': send('next'); break;
       case 'ArrowLeft': case 'ArrowUp': case 'PageUp': send('prev'); break;

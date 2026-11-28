@@ -42,6 +42,7 @@ function connect() {
     if (m.people) relayState.people = m.people;
     if (m.type === 'awards') relayState.awards = m.list || [];
     if (typeof m.price === 'number' && (m.type === 'snapshot' || m.type === 'price-set')) relayState.price = m.price; // the room's price for a sack
+    if (m.type === 'price-set' && typeof m.count === 'number') relayState.priceCount = m.count; // how many set it (go-live's credits)
     if (m.type === 'joined' && m.p && !relayState.people.some((p) => p.id === m.p.id)) relayState.people = [...relayState.people, m.p];
     if (m.type === 'joined' && m.p) relayState.people = relayState.people.map((p) => (p.id === m.p.id ? m.p : p));
     // a sudden death ends by itself on the relay; the clicker ends when the holder clicks

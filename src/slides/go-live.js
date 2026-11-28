@@ -5,18 +5,22 @@ import { FILL } from '../engine/props.js';
 import { LANDINGS } from '../engine/landings.js';
 import { relayState, onRelay } from '../engine/relay.js';
 import { liveMap } from '../engine/livemap.js';
+import { healCredits } from './heal.js';
 
 /*
   Lansering, the jaw drop: the firewood shop goes live for real and the room orders from it.
-    0. The finished site on localhost, and a big "Gå live" button.
-    1. Live: the address flips to ved.atladeus.com, the shop opens (for real, through the
+    0. The finished site on localhost.
+    1. Bygget av salen: three cards beside the site credit the room: the design they voted for,
+       the price they set (and how many set it), the bugs they found (and who). Then the big
+       "Gå live" button.
+    2. Live: the address flips to ved.atladeus.com, the shop opens (for real, through the
        relay), the window steps aside and a big QR code appears. "Bestill ved."
-    2. A live map of Norway. Every real order lands as a pin on its address (the camera eases
+    3. A live map of Norway. Every real order lands as a pin on its address (the camera eases
        to frame them all) and as a card in the feed. A small QR stays for latecomers. The order's
        phone gets the SMS from the bug hunt, now on the right day: "Veden kommer i morgen."
-    3. "Kjør": a route along real roads (OSRM, through the relay) through every address, drawn
+    4. "Kjør": a route along real roads (OSRM, through the relay) through every address, drawn
        as the truck drives it. Phones get "Bilen er på vei", then "Levert" at their stop.
-    4. The income: tonight's revenue from the room's own orders counts up over the map.
+    5. The income: tonight's revenue from the room's own orders counts up over the map.
        From idea to income.
 
   Live data: a websocket to the relay (ved/src/worker.js) as the deck. URL and key come from
@@ -27,7 +31,8 @@ import { liveMap } from '../engine/livemap.js';
 
   Layout zones (svg units):
     tip       x 80–540, y 110–240
-    step 0–1  browser x 580–1520, y 150–710 · button x 890–1210, y 735–795
+    step 0–2  browser x 580–1520, y 150–710 · button x 890–1210, y 735–795 (from step 1)
+              · credits (step 1) x 80–520: label y 286, three cards y 310–674, leads to the browser's edge
               (step 1: browser scaled to x 80–550, y 250–530; QR card x 876–1324, y 146–594,
                "Bestill ved." y 680, address y 728)
     step 2–3  feed x 80–520, y 236–640 · small QR x 80–190, y 662–772 · map (DOM) x 580–1520, y 140–780
@@ -58,9 +63,10 @@ export default {
   room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Gå live',
   themed: true, // shows the design the room picked: the zoom-out picture follows it (thumbs/<id>-<theme>.jpg)
-  steps: 5,
+  steps: 6,
   notes: [
     'Siden er ferdig, men den ligger bare på min maskin.',
+    'Og den er bygget av dere: prisen, designet, feilene.',
     'Live. Ta frem telefonen og bestill ved.',
     'Bestillingene kommer inn. Ekte, fra dere. (R spiller av opptak hvis nettet svikter.)',
     'Bilen kjører. Følg med på telefonen.',
@@ -71,7 +77,7 @@ export default {
     const { el, stage, shapes, fx } = ctx;
     el.innerHTML = `
       <div class="pin-tl label">Lansering</div>
-      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.4)">Lanser før det<br>er <em>perfekt</em>.</h2>`;
+      <h2 class="tip" style="position:absolute;left:var(--pad);top:calc(var(--u)*7);font-size:calc(var(--u)*3.4)">Fra idé til<br><em>inntekt</em>.</h2>`;
     const tip = ctx.$('.tip');
     const svg = D.stage(el);
     const control = new URLSearchParams(location.search).get('view') !== 'preview';
@@ -160,7 +166,7 @@ export default {
     function goButton() {
       // a real button: clicking it (or the clicker) takes the step
       const g = D.g(svg, { 'data-unit': '', 'data-interactive': '', style: 'cursor: pointer' });
-      g.addEventListener('click', () => { if (step === 0) ctx.deck?.next(); });
+      g.addEventListener('click', () => { if (step === 0 && ctx.deck?.step === 1) ctx.deck.next(); });
       const glow = D.el('rect', { x: 880, y: 727, width: 340, height: 76, rx: 38, style: 'fill: #ff5a1f', opacity: 0.25 }, g);
       D.el('rect', { x: 890, y: 735, width: 320, height: 60, rx: 30, ...FILL('#ff5a1f', 3) }, g);
       D.text(g, 1050, 775, 'Gå live', 'gl', { 'text-anchor': 'middle', style: 'font: 800 28px var(--font-display); fill: #1a120c' });
@@ -247,7 +253,52 @@ export default {
       } catch { return straight; }
     }
 
+    // ---- step 1: what the room built, credited on the product itself ----
+    function credits(tl) {
+      const g = D.g(svg);
+      D.text(g, 80, 286, 'BYGGET AV SALEN', 'cr', { 'data-unit': '', style: 'font: 700 16px var(--font-mono); letter-spacing: .18em; fill: var(--accent)' });
+      const theme = LANDINGS.find((l) => l.key === relayState.theme) || LANDINGS[3];
+      const voted = relayState.vote?.phase === 'closed' && relayState.vote?.winner;
+      const n = relayState.priceCount || 0;
+      const fixers = healCredits();
+      const names = fixers.length > 3 ? `${fixers.slice(0, 3).join(', ')} +${fixers.length - 3}` : fixers.join(', ');
+      const rows = [
+        ['DESIGNET', theme.name, voted ? 'valgt av salen' : 'standard', '#ff7a2f'],
+        ['PRISEN', `${relayState.price || PRICE} kr`, n ? `satt av ${n} i salen` : 'standardpris', '#ffd23f'],
+        ['FEILENE', fixers.length ? `${fixers.length} funnet` : 'ingen funnet', names, '#8fe3a2'],
+      ];
+      const cards = rows.map(([label, big, small, c], k) => {
+        const y = 310 + k * 128;
+        const card = D.g(g, { 'data-unit': '' });
+        D.p(card, `M520 ${y + 54} H576`, '', { style: `fill: none; stroke: ${c}; stroke-dasharray: 5 6`, 'stroke-width': 2.5, 'data-bg': '' });
+        D.el('rect', { x: 80, y, width: 440, height: 108, rx: 14, style: 'fill: #1d1510; stroke: var(--deco)', 'stroke-width': 2 }, card);
+        D.el('circle', { cx: 116, cy: y + 54, r: 14, ...FILL(c, 2.5) }, card);
+        D.text(card, 146, y + 34, label, 'cl', { style: 'font: 700 13px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
+        const bigT = D.text(card, 146, y + 70, big, 'cb', { style: 'font: 800 32px var(--font-display); letter-spacing: -.02em; fill: var(--fg)' });
+        if (k === 0) P.creditTheme = bigT;   // follows the look if it arrives from the relay later
+        D.text(card, 146, y + 94, small, 'cs', { style: 'font: 600 15px var(--font-display); fill: var(--muted)' });
+        tl.fromTo(card, { opacity: 0, x: -16 }, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' }, 0.3 + k * 0.45);
+        return card;
+      });
+      tl.fromTo(g.firstChild, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.1);
+      P.credits = g;
+      return cards;
+    }
+
     const play = (i, instant) => {
+      // step 1 (the room's credits) was added in front of the button; the rest keep their numbers
+      if (i === 1) {
+        step = 0;
+        const tl = gsap.timeline();
+        credits(tl);
+        P.btn = goButton();
+        tl.fromTo(P.btn.g, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.8);
+        tl.to(P.btn.glow, { opacity: 0.6, duration: 0.8, yoyo: true, repeat: 5 }, 2.2);
+        return tl;
+      }
+      return playOld(i === 0 ? 0 : i - 1, instant);
+    };
+    const playOld = (i, instant) => {
       const tl = gsap.timeline();
       step = i;
       if (i === 0) {
@@ -255,10 +306,7 @@ export default {
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.win = browser();
-        P.btn = goButton();
         tl.fromTo(P.win.g, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 }, 0.2);
-        tl.fromTo(P.btn.g, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.8);
-        tl.to(P.btn.glow, { opacity: 0.6, duration: 0.8, yoyo: true, repeat: 5 }, 1.2);
       }
 
       if (i === 1) {
@@ -271,7 +319,7 @@ export default {
           stage.particles.morphTo(shapes.ring(stage, { r: 7.5, tube: 0.6 }), { duration: 0.9, turbulence: 1.2 });
           setTimeout(() => stage.particles.morphTo(shapes.scatter(stage), { duration: 2.4, turbulence: 0.6 }), 1100);
         }, null, 0.15);
-        tl.to(P.btn.g, { opacity: 0, duration: 0.3 }, 0.4);
+        tl.to([P.btn.g, P.credits].filter(Boolean), { opacity: 0, duration: 0.3 }, 0.4);
         tl.to(P.win.addr, { opacity: 0, duration: 0.15 }, 0.5);
         tl.call(() => { P.win.addr.textContent = HOST; P.win.addr.setAttribute('style', 'font: 700 16px var(--font-mono); fill: var(--fg)'); }, null, 0.65);
         tl.to(P.win.addr, { opacity: 1, duration: 0.2 }, 0.66);
@@ -342,7 +390,11 @@ export default {
       return tl;
     };
 
-    const offTheme = onRelay((m) => { if (m.theme) P.redrawSite?.(m.theme); });
+    const offTheme = onRelay((m) => {
+      if (!m.theme) return;
+      P.redrawSite?.(m.theme);
+      if (P.creditTheme) P.creditTheme.textContent = (LANDINGS.find((l) => l.key === m.theme) || LANDINGS[3]).name;
+    });
     const st = D.stepper(ctx, { reset, play });
     return {
       ...st,
