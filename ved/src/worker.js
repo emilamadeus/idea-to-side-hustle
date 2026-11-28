@@ -418,7 +418,7 @@ export class Room {
     const g = this.g;
     if (!g || !v) return null;
     if (g.kind === 'price') return { type: 'price-open', mine: g.votes[v] ?? null, price: this.price };
-    if (g.kind === 'heal') return { type: 'heal-start', fixed: Object.keys(g.fixed) };
+    if (g.kind === 'heal') return Date.now() - g.t < 4 * 60000 ? { type: 'heal-start', fixed: Object.keys(g.fixed) } : null; // a round left open is over after 4 min
     if (g.kind === 'clicker' && g.holder === v) return { type: 'clicker' };
     if (g.kind === 'arena') return { type: 'arena', phase: g.phase, R: g.R, at: g.at, now: Date.now(), out: g.out?.[v.slice(0, 6)] || null };
     return null;
@@ -500,7 +500,8 @@ export class Room {
       ws.send(JSON.stringify({ type: 'heal-ok', bug: r.bug, ms, rank }));
       this.send('cust', { type: 'heal-fix', bug: r.bug, by: p?.name || 'Gjest', id: v.slice(0, 6) });
       this.send('deck', { type: 'heal-try', p: this.who(v), pts, ok: true, bug: r.bug, ms, rank, tries: g.tries });
-      if (rank >= HEAL_BUGS.length) this.send('cust', { type: 'heal-done' });
+      // all five found: the round is over, so a phone that reloads goes back to the talk
+      if (rank >= HEAL_BUGS.length) { this.g = null; await this.saveGame(); this.send('cust', { type: 'heal-done' }); }
       return;
     }
     if (m.type === 'clicker-next' && g.kind === 'clicker' && g.holder === v) {

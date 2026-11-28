@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
-import { onRelay, relaySend } from '../engine/relay.js';
+import { onRelay, relaySend, roomCue } from '../engine/relay.js';
 import { pageSVG, BUGS, W as PW, H as PH } from '../../ved/public/js/healpage.js';
 
 /*
@@ -188,7 +188,7 @@ export default {
       memo.tries.push(t);
       if (t.ok && !memo.hits[t.bug]) {
         memo.hits[t.bug] = t;
-        if (Object.keys(memo.hits).length >= BUGS.length) memo.t1 = Date.now();
+        if (Object.keys(memo.hits).length >= BUGS.length) { memo.t1 = Date.now(); open = false; roomCue(false); }   // the relay closes the round itself
         heal(P.pg, t.bug);
         const r = ring(P.pg, t);
         gsap.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.25 });
