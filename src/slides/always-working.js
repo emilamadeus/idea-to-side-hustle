@@ -123,8 +123,14 @@ export default {
       // a soft light around the phone itself, not the whole person
       const glow = D.el('ellipse', { cx: px + 12, cy: py + 21, rx: 78, ry: 66, fill: 'url(#aw-glow)', opacity: 0, 'data-bg': '' }, g);
       const phone = D.g(g);
+      // we see its back (the screen faces him): a dark case, the camera bump, a logo
       D.el('rect', { x: px, y: py, width: 24, height: 42, rx: 5, fill: '#0f0a07', style: 'stroke: var(--deco)', 'stroke-width': 2.5 }, phone);
-      const screen = D.el('rect', { x: px + 4, y: py + 5, width: 16, height: 30, rx: 2, style: 'fill: var(--accent-2)', opacity: 0.15 }, phone);
+      D.el('rect', { x: px + 3, y: py + 3, width: 11, height: 15, rx: 3.5, fill: '#2a1f17' }, phone);
+      D.el('circle', { cx: px + 8.5, cy: py + 7.2, r: 2.4, fill: '#07050a', stroke: '#6f5848', 'stroke-width': 1.2 }, phone);
+      D.el('circle', { cx: px + 8.5, cy: py + 13.6, r: 2.4, fill: '#07050a', stroke: '#6f5848', 'stroke-width': 1.2 }, phone);
+      D.el('circle', { cx: px + 12, cy: py + 27, r: 2.6, fill: '#2a1f17' }, phone);
+      // on: the screen's light spills round the edges of the case (the glow does the rest)
+      const screen = D.el('rect', { x: px - 1.5, y: py - 1.5, width: 27, height: 45, rx: 6.5, style: 'fill: none; stroke: #ffd23f', 'stroke-width': 2.5, opacity: 0 }, phone);
       const arcs = D.g(g, { opacity: 0 });
       D.p(arcs, `M${px - 8} ${py + 6} q-10 15 0 30 M${px - 18} ${py} q-12 21 0 42 M${px + 32} ${py + 6} q10 15 0 30 M${px + 42} ${py} q12 21 0 42`, 'acc2', { 'stroke-width': 3 });
       return { glow, phone, screen, arcs, px, py };
@@ -358,7 +364,7 @@ export default {
               tl.fromTo(done, { opacity: 0, scale: 0.7, transformOrigin: '20% 100%' }, { opacity: 1, scale: 1, duration: 0.3, ease: 'back.out(3)' }, 7.2);
               h.fig.expr(tl, { mouth: 'neutral', brows: 'neutral' }, 8.2);
               tl.to(h.glow, { opacity: 0, duration: 0.6 }, 8.2);
-              tl.to(h.screen, { opacity: 0.15, duration: 0.6 }, 8.2);
+              tl.to(h.screen, { opacity: 0, duration: 0.6 }, 8.2);
               setAttention(tl, 1, 8.2);
             },
           ],
@@ -405,7 +411,7 @@ export default {
           tl.to([h.phone, h.glow], { x: up[0] - h.px, y: up[1] - h.py, duration: 0.6, ease: 'power2.inOut' }, base + 0.5);
           h.fig.expr(tl, { eyes: 'down', brows: tired }, base + 0.9);
           tl.to([h.phone, h.glow], { x: 0, y: 0, duration: 0.6, ease: 'power2.inOut' }, base + 2.6);
-          tl.to(h.screen, { opacity: 0.15, duration: 0.3 }, base + 3.1);
+          tl.to(h.screen, { opacity: 0, duration: 0.3 }, base + 3.1);
           tl.to(h.glow, { opacity: 0, duration: 0.4 }, base + 3.1);
           h.fig.expr(tl, { eyes: 'closed', brows: 'neutral' }, base + 3.2);
           tl.call(() => zMe?.restart(), null, base + 3.3);
