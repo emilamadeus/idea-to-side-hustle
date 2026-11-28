@@ -405,13 +405,6 @@ function bindKeys(deck, app) {
       case 'p': case 'P':
         openPresenter(jump);
         break;
-      case 'l': case 'L': {
-        // prototype: compare the illustration look (?look=new), same slide and step
-        const u = new URL(location.href);
-        if (u.searchParams.get('look') === 'new') u.searchParams.delete('look'); else u.searchParams.set('look', 'new');
-        location.href = u.toString();
-        break;
-      }
     }
   });
 }

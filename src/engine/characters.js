@@ -1,7 +1,5 @@
 import gsap from 'gsap';
 import { el, g as group, p as path, inkFor } from './draw.js';
-import { LOOK2 } from './draw.js';
-import { figure2 } from './characters2.js';
 
 /*
   Character kit: flat-filled figures with light ink outlines (reads well on a TV).
@@ -164,7 +162,6 @@ function face(g, { glasses, lashes }) {
 }
 
 export function figure(parent, opts = {}) {
-  if (LOOK2) return figure2(parent, opts); // prototype: the outline-free look (?look=new)
   const {
     x = 0, y = 0, s = 1, pose = 'sit', arms: armKind = 'table', hair = 'short',
     hairColor = PALETTE.hair.dark, skin = PALETTE.skin[0], outfit: kind = 'shirt',
