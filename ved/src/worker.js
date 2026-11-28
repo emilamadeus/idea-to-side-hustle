@@ -38,6 +38,7 @@ import { judge as healJudge, BUGS as HEAL_BUGS, W as HEAL_W, H as HEAL_H } from 
             phone ← arena { phase, R, at, now } · the deck's arena-* messages        phone → apos { x, y, a } · afire { x, y, a } · acheer
             deck ← apos / afire { id, x, y, a } · acheer { id }
     deck  → sheet { n, total, part, title }    phone ← sheet { sheet } · state.sheet       the slide the talk is on
+    deck  → stack                              phone ← stack          the launch stack as a card with links (no wake-up)
     deck  → talk { on } · tip { id, n, total, part, text, em }   phone ← talk { on, tips } · tip { tip } · state.talk/tips
                                                the tip list that replaces the waiting room once the talk starts
     deck  → where { label }                    phone ← where { label }       the talk's current part, shown in the lobby
@@ -292,6 +293,8 @@ export class Room {
       this.send('cust', { type: 'reset', shopGen: this.shopGen });
       this.send('deck', { type: 'snapshot', open: this.open, orders: [] });
     }
+    // the launch stack (ship slide): a quiet card on every phone with the three services and links
+    if (m.type === 'stack') this.send('cust', { type: 'stack' });
     // a message to every open phone: { type: 'broadcast', app, title, text } (the talk's own buzzes)
     if (m.type === 'broadcast') {
       this.send('cust', { type: 'notify', app: String(m.app || '').slice(0, 20), title: String(m.title || '').slice(0, 60), text: String(m.text || '').slice(0, 140), all: true });

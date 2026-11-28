@@ -22,7 +22,7 @@ const STAGES = [
   { stage: 'Plan', tips: ['La AI-en føre en levende spec', 'Definer hele scopet før du starter', 'Planlegg alt før du bygger', 'Del opp instruksjonsfilene'] },
   { stage: 'Bygg', tips: ['Lag fire versjoner, velg én', 'Et bilde slår en beskrivelse', 'Beskriv målet, ikke veien', 'Commit etter hvert steg'] },
   { stage: 'Kvalitet', tips: ['La den sjekke sitt eget arbeid', 'Vis med skjermbilde', 'Ny session når den lapper symptomer'] },
-  { stage: 'Lansering', tips: ['Lanser før det er perfekt'] },
+  { stage: 'Lansering', tips: ['Lanser før det er perfekt', 'Lanser på gratisnivå'] },
 ];
 const REST = [
   'Én session per oppgave', 'Hjelpere til research', 'En vakt hvert 10. minutt', 'Varsel når den trenger deg',

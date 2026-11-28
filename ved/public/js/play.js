@@ -215,6 +215,46 @@ function clicker() {
   $('.pl-remote', c).addEventListener('click', (e) => { e.currentTarget.disabled = true; send({ type: 'clicker-next' }); buzz(30); }, { once: true });
 }
 
+// ---------- the launch stack ----------
+// A quiet card from the ship slide: the three services the talk recommends, with links. No wake-up:
+// it is something to keep, not something to do now.
+const STACK = [
+  ['Cloudflare', 'Hosting, domene og DNS', 'https://www.cloudflare.com'],
+  ['Supabase', 'Database og innlogging', 'https://supabase.com'],
+  ['Resend', 'E-post', 'https://resend.com'],
+];
+function stackCard() {
+  document.querySelector('.pl-stack')?.remove();
+  const o = document.createElement('div');
+  o.className = 'pl-stack';
+  o.innerHTML = `<div class="pl-sheet"><p class="pl-eye">Slik gjør du det</p><h3>Lanser gratis</h3>
+    ${STACK.map(([n, r, u]) => `<a href="${u}" target="_blank" rel="noopener"><b>${n}</b><span>${r}</span><i>${u.replace(/^https:\/\/(www\.)?/, '')} ↗</i></a>`).join('')}
+    <p class="pl-foot">Gratis å starte. Du betaler bare for domenet.</p><button type="button">Lukk</button></div>`;
+  document.body.append(o);
+  o.querySelector('button').addEventListener('click', () => { o.classList.add('out'); setTimeout(() => o.remove(), 400); });
+}
+const css2 = document.createElement('style');
+css2.textContent = `
+  .pl-stack { position: fixed; inset: 0; z-index: 25; display: flex; align-items: flex-end; background: rgba(10,6,4,.55); animation: pl-fade .4s both; }
+  .pl-stack.out { transition: opacity .4s; opacity: 0; }
+  @keyframes pl-fade { from { opacity: 0; } }
+  .pl-sheet { width: 100%; padding: 26px 22px calc(22px + env(safe-area-inset-bottom)); display: grid; gap: 12px; color: #fff3e3;
+    background: #1d1510; border-top: 2px solid rgba(255,190,120,.35); border-radius: 26px 26px 0 0; font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+    animation: pl-up .5s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes pl-up { from { transform: translateY(40px); opacity: 0; } }
+  .pl-sheet .pl-eye { margin: 0; }
+  .pl-sheet h3 { margin: 0 0 4px; font: 800 30px/1 'Bricolage Grotesque', sans-serif; letter-spacing: -.03em; }
+  .pl-sheet a { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 14px 16px; border-radius: 14px; text-decoration: none; color: inherit;
+    background: #241a13; border: 1.5px solid rgba(255,190,120,.25); }
+  .pl-sheet a b { font: 800 19px 'Bricolage Grotesque', sans-serif; }
+  .pl-sheet a span { grid-column: 1; color: #c9ad92; font-size: 14px; }
+  .pl-sheet a i { grid-row: 1 / 3; grid-column: 2; align-self: center; font: 700 12px 'Space Mono', monospace; color: #ffd23f; font-style: normal; }
+  .pl-foot { margin: 2px 0 0; color: #c9ad92; font-size: 14px; }
+  .pl-sheet button { margin-top: 4px; border: 0; border-radius: 99px; padding: 15px; font: 800 17px 'Bricolage Grotesque', sans-serif; color: #1a0d07;
+    background: linear-gradient(180deg, #ffb25e, #ff5a1f); }
+`;
+document.head.append(css2);
+
 // ---------- messages ----------
 const handle = (m) => {
   if (!m?.type) return;
@@ -226,6 +266,7 @@ const handle = (m) => {
   if (m.type === 'heal-fix') healFix(m);
   if (m.type === 'heal-done') healDone();
   if (m.type === 'heal-end' && kind === 'heal') { H = null; close(); }
+  if (m.type === 'stack') stackCard();
   if (m.type === 'clicker') clicker();
   if (m.type === 'clicker-done') finish('<p class="pl-eye">Fjernkontrollen</p><h2>Takk!</h2><p>Se opp på skjermen.</p>', 2400);
   if (m.type === 'clicker-end' && kind === 'clicker') close();

@@ -96,6 +96,11 @@ export const HELP = {
     'Avbrudd etter avbrudd, og kunden venter.',
     'Den finner feilene selv. Du avbrytes én gang.',
   ],
+  ship: [
+    'AI-en tar det kjedelige. Du bestemmer når det er nok.',
+    'Slik gjør du det: tre tjenester, gratis å starte.',
+    'Det eneste du betaler for er domenet.',
+  ],
   heal: [
     'Vis feilen. En ring er tydeligere enn en setning.',
     'Alle forsøkene, og de fem som traff.',

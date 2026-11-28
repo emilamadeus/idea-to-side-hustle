@@ -36,6 +36,7 @@ import htmlDeck from './html-deck.js';
 import projects from './projects.js';
 import skills from './skills.js';
 import goLive from './go-live.js';
+import ship from './ship.js';
 import awards from './awards.js';
 
 // Story order: the journey, three parts and a closing.
@@ -52,7 +53,7 @@ const STAGED = [
   [spec, fullScope, planning, mdFiles],         // Plan
   [readyToBuild, prototypes, visualRef, goal, commits],  // Bygg
   [selfCheck, heal, show, fails],               // Kvalitet (the room circles the bugs)
-  [goLive],                                     // Lansering (placeholder)
+  [ship, goLive],                               // Lansering
 ];
 const PARTS = [
   { name: 'Arbeidsflyt', slides: [kitchen, helpers, watchdog, remote, effort, skills, gateway] },
