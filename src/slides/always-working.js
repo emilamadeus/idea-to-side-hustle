@@ -110,9 +110,15 @@ export default {
     function defs() {
       const d = D.el('defs', {}, svg);
       const rg = D.el('radialGradient', { id: 'aw-glow' }, d);
-      D.el('stop', { offset: '0%', 'stop-color': '#ffd23f', 'stop-opacity': 0.5 }, rg);
-      D.el('stop', { offset: '45%', 'stop-color': '#ffd23f', 'stop-opacity': 0.2 }, rg);
-      D.el('stop', { offset: '100%', 'stop-color': '#ffd23f', 'stop-opacity': 0 }, rg);
+      // a phone screen's light: cool white, not the lamp's yellow
+      D.el('stop', { offset: '0%', 'stop-color': '#dce9ff', 'stop-opacity': 0.42 }, rg);
+      D.el('stop', { offset: '45%', 'stop-color': '#b9d2ff', 'stop-opacity': 0.16 }, rg);
+      D.el('stop', { offset: '100%', 'stop-color': '#b9d2ff', 'stop-opacity': 0 }, rg);
+      // the bright core right behind the case: the screen's light escaping round its edges
+      const core = D.el('radialGradient', { id: 'aw-core' }, d);
+      D.el('stop', { offset: '0%', 'stop-color': '#f2f7ff', 'stop-opacity': 0.9 }, core);
+      D.el('stop', { offset: '55%', 'stop-color': '#dce9ff', 'stop-opacity': 0.45 }, core);
+      D.el('stop', { offset: '100%', 'stop-color': '#dce9ff', 'stop-opacity': 0 }, core);
       const cone = D.el('linearGradient', { id: 'aw-cone', x1: 0, y1: 0, x2: 0, y2: 1 }, d);
       D.el('stop', { offset: '0%', 'stop-color': '#ffd23f', 'stop-opacity': 0.22 }, cone);
       D.el('stop', { offset: '100%', 'stop-color': '#ffd23f', 'stop-opacity': 0 }, cone);
@@ -123,14 +129,13 @@ export default {
       // a soft light around the phone itself, not the whole person
       const glow = D.el('ellipse', { cx: px + 12, cy: py + 21, rx: 78, ry: 66, fill: 'url(#aw-glow)', opacity: 0, 'data-bg': '' }, g);
       const phone = D.g(g);
+      const screen = D.el('ellipse', { cx: px + 12, cy: py + 21, rx: 22, ry: 31, fill: 'url(#aw-core)', opacity: 0, 'data-bg': '' }, phone);
       // we see its back (the screen faces him): a dark case, the camera bump, a logo
       D.el('rect', { x: px, y: py, width: 24, height: 42, rx: 5, fill: '#0f0a07', style: 'stroke: var(--deco)', 'stroke-width': 2.5 }, phone);
       D.el('rect', { x: px + 3, y: py + 3, width: 11, height: 15, rx: 3.5, fill: '#2a1f17' }, phone);
       D.el('circle', { cx: px + 8.5, cy: py + 7.2, r: 2.4, fill: '#07050a', stroke: '#6f5848', 'stroke-width': 1.2 }, phone);
       D.el('circle', { cx: px + 8.5, cy: py + 13.6, r: 2.4, fill: '#07050a', stroke: '#6f5848', 'stroke-width': 1.2 }, phone);
       D.el('circle', { cx: px + 12, cy: py + 27, r: 2.6, fill: '#2a1f17' }, phone);
-      // on: the screen's light spills round the edges of the case (the glow does the rest)
-      const screen = D.el('rect', { x: px - 1.5, y: py - 1.5, width: 27, height: 45, rx: 6.5, style: 'fill: none; stroke: #ffd23f', 'stroke-width': 2.5, opacity: 0 }, phone);
       const arcs = D.g(g, { opacity: 0 });
       D.p(arcs, `M${px - 8} ${py + 6} q-10 15 0 30 M${px - 18} ${py} q-12 21 0 42 M${px + 32} ${py + 6} q10 15 0 30 M${px + 42} ${py} q12 21 0 42`, 'acc2', { 'stroke-width': 3 });
       return { glow, phone, screen, arcs, px, py };
