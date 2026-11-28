@@ -15,7 +15,9 @@ import { chatPhone, FILL } from '../engine/props.js';
     1 file     : one huge CLAUDE.md, opened as a block under its row (Vipps, Release, Design, …),
                  read top to bottom, then the right code.
     several    : the block splits: CLAUDE.md shrinks to an index and docs/ appears where the
-                 block was. It reads three docs, then goes straight to zones.ts and its test.
+                 block was. A nested src/CLAUDE.md opens under src/ (the rows below slide down one).
+                 It reads three docs; the moment it enters src/, the nested file loads by itself
+                 (tagged AUTO); then straight to zones.ts and its test.
     new session: every light goes out (a session remembers nothing); it reads STATUS and HANDOFF.
     stale      : STATUS is three days old; it starts on finished work. "Du har helt rett!"
     fix        : updating STATUS is part of finishing a task.
@@ -38,6 +40,7 @@ const CASES = [{ label: '0 FILER' }, { label: '1 FIL', sub: 'CLAUDE.md / AGENTS.
 // the tree: [id, label, depth, size in k tokens]; folders have no size
 const TREE = [
   ['src', 'src/', 0],
+  ['nested', 'CLAUDE.md', 1, 1],
   ['orders', 'api/orders.ts', 1, 6],
   ['delivery', 'api/delivery.ts', 1, 5],
   ['map', 'ui/Map.tsx', 1, 7],
@@ -59,7 +62,8 @@ const TREE = [
   ['HANDOFF', 'HANDOFF.md', 1, 1],
 ];
 const DOCS = ['docs', 'ARCHITECTURE', 'GOTCHAS', 'TESTING', 'STATUS', 'HANDOFF'];
-const TX = 1020, TW = 460, TY = 186, RH = 29;
+const TX = 1020, TW = 460, TY = 186, RH = 28;
+const NEST = 1; // the nested src/CLAUDE.md: its row opens (the rows below slide down) in case 2
 const BX = 1380, KPX = 12; // size bar: 12 units per k tokens (the largest code file is 7k)
 const BIG = 30; // the one big CLAUDE.md, in k tokens
 const SECTIONS = ['## Vipps', '## Release', '## Design', '## Bydeler', '## Ruter', '## Gamle notater'];
@@ -84,7 +88,7 @@ export default {
     'Samme oppgave, tre oppsett. Til høyre: prosjektet. Det som lyser, er det Claude leser. Tokens er summen.',
     'Ingen filer: den leter seg gjennom koden. Nesten alt lyser. Og den installerer med feil verktøy.',
     'Én fil: den får det til, men leser hele den lange CLAUDE.md hver gang. Dyrt.',
-    'Flere filer: samme innhold, delt opp. En kort CLAUDE.md peker videre, tre filer i docs, så rett til riktig kode.',
+    'Flere filer: samme innhold, delt opp. En kort CLAUDE.md peker videre, tre filer i docs. CLAUDE.md i src/ lastes av seg selv når den går inn der.',
     'Ny session: alt slukker, den husker ingenting. Den leser STATUS og HANDOFF og fortsetter.',
     'STATUS er tre dager gammel. Den starter på pause, som er ferdig. «Du har helt rett!»',
     'Derfor: oppdatering av filene er en del av oppgaven. Da stemmer de for neste session.',
@@ -133,7 +137,8 @@ export default {
       D.p(root, `M${TX} 172 H${TX + TW}`, '', { style: 'fill: none; stroke: var(--deco)', 'stroke-width': 2, 'data-bg': '' });
       P.rows = {};
       TREE.forEach(([id, label, depth, size], k) => {
-        const y = TY + k * RH;
+        // rows below the nested file sit one row up until it opens
+        const y = TY + (k > NEST ? k - 1 : k) * RH;
         const g = D.g(root, { 'data-unit': '' });
         const hl = D.el('rect', { x: TX, y: y - 2, width: TW, height: RH - 4, rx: 4, style: 'fill: #ffd23f', opacity: 0, 'data-bg': '' }, g);
         const folder = size == null;
@@ -147,7 +152,7 @@ export default {
           fill = D.el('rect', { x: BX, y: y + 8, width: 0, height: 10, rx: 3, style: 'fill: #ffd23f', 'data-bg': '' }, g);
         }
         P.rows[id] = { g, hl, name, bar, fill, size, folder, y };
-        if (id === 'claude' || DOCS.includes(id)) gsap.set(g, { opacity: 0 });
+        if (id === 'claude' || id === 'nested' || DOCS.includes(id)) gsap.set(g, { opacity: 0 });
       });
       // case 1: the one big CLAUDE.md, opened under its row (where docs/ will be later)
       const r = P.rows.claude;
@@ -309,22 +314,33 @@ export default {
         tl.to(b.g, { opacity: 0, y: 10, duration: 0.4 }, 0.3);
         r.size = 1;
         tl.to(r.bar, { attr: { width: KPX }, duration: 0.4, ease: 'power2.out' }, 0.4);
-        showRows(tl, DOCS, 0.8);
+        // the nested file opens a row under src/: everything below slides down together
+        const below = TREE.slice(NEST + 1).map(([id]) => P.rows[id].g);
+        tl.to(below, { y: RH, duration: 0.45, ease: 'power2.inOut' }, 0.7);
+        showRows(tl, ['nested'], 1.1);
+        showRows(tl, DOCS, 1.2);
         const c = P.chat, agent = P.desk.agent;
-        read(tl, 'claude', 1.5);
-        ['ARCHITECTURE', 'GOTCHAS', 'TESTING'].forEach((id, k) => read(tl, id, 1.9 + k * 0.3));
-        c.reply(tl, 'Leste ARCHITECTURE, GOTCHAS og TESTING.', 2.2);
-        ['zones', 'zonesT'].forEach((id, k) => read(tl, id, 3.0 + k * 0.3));
-        c.reply(tl, 'Legger bydelen i zones.ts, med test, slik TESTING beskriver.', 3.3);
-        agent.expr(tl, { eyes: 'open', mouth: 'smile' }, 3.3);
-        P.ok = check(tl, 3.6);
-        verdict(tl, 2, true, 3.7);
+        read(tl, 'claude', 1.7);
+        ['ARCHITECTURE', 'GOTCHAS', 'TESTING'].forEach((id, k) => read(tl, id, 2.0 + k * 0.3));
+        c.reply(tl, 'Leste ARCHITECTURE, GOTCHAS og TESTING.', 2.3);
+        // entering src/ loads its CLAUDE.md by itself; nobody had to point to it
+        read(tl, 'nested', 3.0);
+        const nr = P.rows.nested;
+        const auto = D.text(nr.g, BX - 14, nr.y + 19, 'AUTO', 'auto', { 'text-anchor': 'end', style: 'font: 700 14px var(--font-mono); letter-spacing: .1em; fill: var(--accent-2)' });
+        tl.fromTo(auto, { opacity: 0 }, { opacity: 1, duration: 0.3 }, 3.0);
+        P.auto = auto;
+        ['zones', 'zonesT'].forEach((id, k) => read(tl, id, 3.4 + k * 0.3));
+        c.reply(tl, 'Legger bydelen i zones.ts, med test, slik TESTING beskriver.', 3.7);
+        agent.expr(tl, { eyes: 'open', mouth: 'smile' }, 3.7);
+        P.ok = check(tl, 4.0);
+        verdict(tl, 2, true, 4.1);
       }
 
       if (i === 4) {
         // the session ends: Claude remembers nothing. A new one (teal) reads the memory files.
         const { g, agent } = P.desk;
         lightsOut(tl, 0);
+        tl.to(P.auto, { attr: { style: 'font: 700 14px var(--font-mono); letter-spacing: .1em; fill: var(--muted)' }, duration: 0.35 }, 0);
         tl.to([agent.root, P.ok].filter(Boolean), { opacity: 0, duration: 0.4 }, 0.3);
         P.ok = null;
         const s1 = figure(g, { x: 770, y: 470, s: 0.95, arms: 'table', ...AGENT, color: '#2f5b5a' });
