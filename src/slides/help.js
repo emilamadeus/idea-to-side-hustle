@@ -5,11 +5,11 @@
 */
 export const HELP = {
   'md-files': [
-    'Samme oppgave, tre oppsett av instruksjonsfiler.',
-    '0 filer: hver session starter blankt. Den gjetter.',
+    'Det som lyser, er det Claude leser. Det koster tokens.',
+    '0 filer: uten kart leter den gjennom hele koden.',
     '1 fil: bedre, men dyrt: alt leses hver gang og bruker kontekst.',
-    'Flere filer: den leser bare det oppgaven trenger.',
-    'Neste session fortsetter fra STATUS og HANDOFF.',
+    'Flere filer: den går rett til det oppgaven trenger.',
+    'Ny session husker ingenting. Filene er hukommelsen.',
     'Utdatert STATUS sender sessionen tilbake til ferdig arbeid.',
     'Derfor er oppdatering av filene en del av oppgaven.',
   ],
