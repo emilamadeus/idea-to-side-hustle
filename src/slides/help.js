@@ -98,7 +98,7 @@ export const HELP = {
   ],
   ship: [
     'AI-en tar det kjedelige. Du bestemmer når det er nok.',
-    'Slik gjør du det: tre tjenester, gratis å starte.',
+    'AI-en setter opp tjenestene for deg. Gratis å starte.',
     'Det eneste du betaler for er domenet.',
   ],
   heal: [
