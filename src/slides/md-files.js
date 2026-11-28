@@ -268,13 +268,13 @@ export default {
       if (i === 4) {
         // new sessions pick up where the last one stopped
         const { g, agent } = P.cols[2];
-        // the first worker is done and leaves; two new sessions take over
+        // the first worker is done and leaves; a new session takes the same chair (a cut, not a
+        // walk: one fades out, then the other fades in), in another colour so it reads as new
+        const { cx } = P.cols[2];
         tl.to([agent.root, P.ok, P.card], { opacity: 0, duration: 0.4 }, 0);
-        // new sessions stand on the floor in front of the desk (feet at y 760)
-        const s1 = figure(g, { x: 1580, y: 621, s: 0.55, pose: 'stand', arms: 'down', ...AGENT, color: '#8a4a2a' });
-        const s2 = figure(g, { x: 1640, y: 621, s: 0.55, pose: 'stand', arms: 'down', ...AGENT, color: '#a35a2e' });
-        tl.fromTo(s1.root, { opacity: 0, x: -410 }, { x: -410, opacity: 1, duration: 0.6, ease: 'power2.out' }, 0.5); // fades in where it stands
-        tl.fromTo(s2.root, { opacity: 0, x: -380 }, { x: -380, opacity: 1, duration: 0.6, ease: 'power2.out' }, 0.7);
+        const s1 = figure(g, { x: cx - 40, y: 570, s: 0.72, arms: 'table', ...AGENT, color: '#2f5b5a' });
+        g.insertBefore(s1.root, agent.root.nextSibling); // behind the desk, like the first one
+        tl.fromTo(s1.root, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out' }, 0.5);
         ['STATUS', 'HANDOFF'].forEach((name, k) => {
           const dr = P.drawers.find((d) => d.name === name);
           tl.to(dr.dg, { x: -26, duration: 0.3, ease: 'back.out(2)' }, 1.3 + k * 0.3);
@@ -282,13 +282,12 @@ export default {
           dr.dg.querySelector('text').setAttribute('style', 'font: 700 12px var(--font-mono); letter-spacing: .04em; fill: #1a120c');
         });
         s1.expr(tl, { eyes: 'open', mouth: 'smile' }, 1.6);
-        s2.expr(tl, { eyes: 'open', mouth: 'smile' }, 1.9);
         // the app flow: a new session, no explaining needed
         P.chat.clear(tl, 0.2);
         P.chat.user(tl, 'Fortsett.', 0.6, { label: 'NY SESSION' });
         const t = P.chat.think(tl, 1.0, 0.8);
         P.chat.reply(tl, 'Leser STATUS og HANDOFF. Fortsetter der forrige session slapp.', t);
-        P.s1 = s1; P.s2 = s2;
+        P.s1 = s1;
       }
 
       if (i === 5) {
@@ -328,7 +327,6 @@ export default {
         tl.call(() => { P.tag.textContent = 'STATUS · OPPDATERT I DAG'; P.tag.setAttribute('style', 'font: 700 14px var(--font-mono); letter-spacing: .06em; fill: #8fe3a2'); }, null, t + 0.3);
         tl.fromTo(P.tag, { scale: 1.3, transformOrigin: '100% 50%' }, { scale: 1, duration: 0.3, ease: 'back.out(3)' }, t + 0.3);
         P.s1.expr(tl, { eyes: 'open', brows: 'neutral', mouth: 'smile' }, t + 0.4);
-        P.s2.expr(tl, { mouth: 'smile' }, t + 0.5);
         const ok = D.g(g, { 'data-bg': '' });
         D.el('circle', { cx: 1180, cy: 516, r: 20, style: 'fill: #1f9d63; stroke: #1a120c', 'stroke-width': 2.5 }, ok);
         D.p(ok, 'M1171 516 l6 7 l13 -14', '', { style: 'fill: none; stroke: #fff3e3', 'stroke-width': 4, 'stroke-linecap': 'round' });
