@@ -16,6 +16,13 @@ const NS = 'http://www.w3.org/2000/svg';
   don't disappear into the dark background. UI chrome (phones, bubbles, boards) keeps
   its own light outline and doesn't use this.
 */
+/*
+  Prototype of a richer illustration look, behind ?look=new (L toggles it): contact shadows and a
+  shaded side on figures (light from the top left), a heavier outer silhouette with lighter inner
+  lines, and figures that breathe and blink. Off by default until it is chosen.
+*/
+export const LOOK2 = (() => { try { return new URLSearchParams(location.search).get('look') === 'new'; } catch { return false; } })();
+
 export function inkFor(fill) {
   const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(fill ?? '').trim());
   if (!m) return '#1a120c';

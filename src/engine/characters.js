@@ -1,5 +1,5 @@
 import gsap from 'gsap';
-import { el, g as group, p as path, inkFor } from './draw.js';
+import { el, g as group, p as path, inkFor, LOOK2 } from './draw.js';
 
 /*
   Character kit: flat-filled figures with light ink outlines (reads well on a TV).
@@ -40,12 +40,22 @@ export const LOOK = {
 
 // Fills go in style: the deck stylesheet sets fill:none on svg paths, which beats attributes.
 // dark ink outlines, like a rendered illustration; very dark fills get a soft warm edge
-const INK = { style: 'fill: none; stroke: #1a120c', 'stroke-width': 2.6, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
-const fillInk = (fill) => ({ ...INK, style: `fill: ${fill}; stroke: ${inkFor(fill)}` });
+// LOOK2: shapes (the silhouette) get a heavier line, details drawn with fillInk('none') a lighter one
+const INK = { style: 'fill: none; stroke: #1a120c', 'stroke-width': LOOK2 ? 2.2 : 2.6, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' };
+const fillInk = (fill) => ({ ...INK, style: `fill: ${fill}; stroke: ${inkFor(fill)}`, ...(LOOK2 && fill !== 'none' ? { 'stroke-width': 3.4 } : {}) });
+const SHADE = 'rgba(16,8,4,.26)';
+let clipN = 0;
+// a shaded right side inside a shape (light from the top left): the shape is reused as a clip
+function shade(parent, d, sd) {
+  const id = `fs${++clipN}`;
+  const cp = el('clipPath', { id }, parent);
+  path(cp, d, '');
+  path(parent, sd, '', { style: `fill: ${SHADE}; stroke: none`, 'clip-path': `url(#${id})` });
+}
 
 function limb(parent, d, color, w = 20) {
   // thick sleeve with an ink outline: ink stroke underneath, cloth stroke on top
-  path(parent, d, '', { fill: 'none', style: `stroke: ${inkFor(color)}`, 'stroke-width': w + 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
+  path(parent, d, '', { fill: 'none', style: `stroke: ${inkFor(color)}`, 'stroke-width': w + (LOOK2 ? 6.8 : 5), 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
   path(parent, d, '', { fill: 'none', style: `stroke: ${color}`, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' });
 }
 const hand = (parent, x, y, skin, r = 8.5) => el('circle', { cx: x, cy: y, r, ...fillInk(skin) }, parent);
@@ -68,7 +78,9 @@ function outfit(g, kind, color, skin) {
   // neck
   path(g, 'M-10 -32 V-4 H10 V-32', '', fillInk(skin));
   // torso
-  path(g, 'M-12 -8 C-42 -6 -60 6 -62 42 L-64 124 H64 L62 42 C60 6 42 -6 12 -8 Z', '', fillInk(color));
+  const TORSO = 'M-12 -8 C-42 -6 -60 6 -62 42 L-64 124 H64 L62 42 C60 6 42 -6 12 -8 Z';
+  path(g, TORSO, '', fillInk(color));
+  if (LOOK2) shade(g, TORSO, 'M18 -20 C40 30 34 90 26 130 H80 V-20 Z');
   if (kind === 'hoodie') {
     path(g, 'M-28 -10 C-34 -30 34 -30 28 -10', '', fillInk(color));
     path(g, 'M-8 2 v26 M8 2 v26', '', { ...INK, 'stroke-width': 2 });
@@ -171,6 +183,8 @@ export function figure(parent, opts = {}) {
   const wrap = group(parent, { 'data-figure': '' });
   const root = group(wrap, { transform: `translate(${x} ${y}) scale(${flip ? -s : s} ${s})` });
   // long hair sits behind the body, not in front of it
+  if (LOOK2 && pose === 'stand') el('ellipse', { cx: 4, cy: 256, rx: 74, ry: 11, style: `fill: ${SHADE}` }, root);
+  if (LOOK2 && pose === 'sit') el('ellipse', { cx: 6, cy: 126, rx: 76, ry: 9, style: `fill: ${SHADE}` }, root);
   const back = group(root);
   hairBack(back, hair, hairColor);
   const body = group(root, slim ? { transform: 'scale(0.84 1)' } : {});
@@ -188,7 +202,9 @@ export function figure(parent, opts = {}) {
   const head = group(root, { 'data-head': '' });
   // ears + face
   path(head, 'M-30 -68 q-10 2 -7 15 q3 6 9 4 M30 -68 q10 2 7 15 q-3 6 -9 4', '', fillInk(skin));
-  path(head, 'M-31 -70 C-31 -106 31 -106 31 -70 C31 -44 18 -27 0 -25 C-18 -27 -31 -44 -31 -70 Z', '', fillInk(skin));
+  const FACE = 'M-31 -70 C-31 -106 31 -106 31 -70 C31 -44 18 -27 0 -25 C-18 -27 -31 -44 -31 -70 Z';
+  path(head, FACE, '', fillInk(skin));
+  if (LOOK2) shade(head, FACE, 'M14 -110 C30 -84 28 -46 4 -20 H40 V-110 Z');
   const parts = face(head, { glasses, lashes });
   hairFront(head, hair, hairColor);
 
@@ -197,6 +213,7 @@ export function figure(parent, opts = {}) {
     for (const [k, node] of Object.entries(parts[bucket])) node.setAttribute('opacity', k === name ? 1 : 0);
   };
   show('eyes', eyes); show('mouth', mouth); show('brows', brows);
+  if (LOOK2 && pose !== 'lie') idle(body, head, parts, state, wrap);
 
   return {
     root: wrap, inner: root, head,
@@ -210,6 +227,26 @@ export function figure(parent, opts = {}) {
         .call(() => show('mouth', state.mouth === 'talk' ? 'neutral' : state.mouth)).to({}, { duration: speed * 1.4 });
     },
   };
+}
+
+// LOOK2: a slow breath (the chest rises, the head rides on it) and a blink now and then.
+// Both stop by themselves once the figure is no longer in the page.
+function idle(body, head, parts, state, wrap) {
+  const T = 3.2 + Math.random() * 0.8;
+  const br = gsap.to(body, { scaleY: 1.014, scaleX: 1.006, transformOrigin: '50% 100%', duration: T / 2, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: Math.random() * T,
+    onRepeat: () => { if (!wrap.isConnected) br.kill(); } });
+  const hb = gsap.to(head, { y: -1.4, duration: T / 2, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: br.delay(),
+    onRepeat: () => { if (!wrap.isConnected) hb.kill(); } });
+  const blink = () => {
+    if (!wrap.isConnected) return;
+    if (state.eyes === 'open' || state.eyes === 'down') {
+      const was = state.eyes;
+      for (const [k, n] of Object.entries(parts.eyes)) n.setAttribute('opacity', k === 'closed' ? 1 : 0);
+      setTimeout(() => { if (state.eyes === was) for (const [k, n] of Object.entries(parts.eyes)) n.setAttribute('opacity', k === was ? 1 : 0); }, 130);
+    }
+    setTimeout(blink, 2600 + Math.random() * 3400);
+  };
+  setTimeout(blink, 1500 + Math.random() * 3000);
 }
 
 /** Lying figure: head on a pillow (rotated), body under a blanket drawn by the scene. */

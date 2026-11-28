@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import { phones } from '../engine/relay.js';
 import * as D from '../engine/draw.js';
+import { LOOK2 } from '../engine/draw.js';
 import { speech as sharedSpeech } from '../engine/props.js';
 import { figure, lyingHead, PALETTE } from '../engine/characters.js';
 
@@ -217,6 +218,17 @@ export default {
     // ---------- scenes ----------
     const SC = [
       function meeting(g) {
+        // LOOK2: a floor the room stands on (a faint plane and the line where it meets the wall)
+        if (LOOK2) {
+          const d = svg.querySelector('defs');
+          const fl = D.el('radialGradient', { id: 'aw-floor' }, d);
+          D.el('stop', { offset: '0%', 'stop-color': '#ffbe78', 'stop-opacity': 0.09 }, fl);
+          D.el('stop', { offset: '100%', 'stop-color': '#ffbe78', 'stop-opacity': 0 }, fl);
+          const hz = D.el('linearGradient', { id: 'aw-horizon' }, d);
+          for (const [o, a] of [[0, 0], [0.2, 0.18], [0.8, 0.18], [1, 0]]) D.el('stop', { offset: o, 'stop-color': '#ffbe78', 'stop-opacity': a }, hz);
+          D.el('ellipse', { cx: 1015, cy: 600, rx: 500, ry: 190, fill: 'url(#aw-floor)', 'data-bg': '' }, g);
+          D.el('rect', { x: 560, y: 527, width: 910, height: 2, fill: 'url(#aw-horizon)', 'data-bg': '' }, g);
+        }
         // back wall: screen with chart, window with blinds
         const scr = D.g(g, { 'data-unit': '' });
         D.el('rect', { x: 930, y: 268, width: 250, height: 150, rx: 6, ...F('#120c08') }, scr);
@@ -234,6 +246,7 @@ export default {
           hero: { x: 600, y: 545, s: 0.92, arms: 'phone' }, speechAt: [960, 170], tail: [1215, 258], noteAt: [770, 770],
           front(g2) {
             // the table sits in front of everyone at it, the developer included
+            if (LOOK2) D.el('ellipse', { cx: 1040, cy: 700, rx: 470, ry: 20, style: 'fill: rgba(16,8,4,.4); stroke: none', 'data-bg': '' }, g2);
             D.p(g2, 'M600 660 L1460 660 L1390 560 L680 560 Z', '', F(WOOD));
             D.p(g2, 'M600 660 V684 H1460 V660', '', F(WOOD_DARK));
             // laptop with stickers, rubber duck, coffee
