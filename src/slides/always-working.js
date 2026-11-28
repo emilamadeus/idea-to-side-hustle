@@ -303,7 +303,7 @@ export default {
           D.text(unit, x + 28, y + 30, '18:41', 'st', { style: 'font: 700 14px var(--font-mono); fill: var(--fg)' });
           D.text(unit, x + w / 2, y + 58, 'CLAUDE', 'lbl', { 'text-anchor': 'middle', style: 'font: 700 12px var(--font-mono); letter-spacing: .14em; fill: var(--accent)' });
           // her message, right-aligned chat bubble
-          const lines = wrap('Hvordan får jeg dama til å legge vekk telefonen?', 17);
+          const lines = wrap('Hvordan får jeg typen til å legge vekk telefonen?', 17);
           const bh = 18 + lines.length * 23;
           D.el('rect', { x: x + 34, y: y + 74, width: w - 54, height: bh, rx: 16, style: 'fill: #f3e9da' }, unit);
           lines.forEach((l, i) => D.text(unit, x + 48, y + 96 + i * 23, l, 'msg', { style: 'font: 600 17px var(--font-display); fill: #1a120c' }));

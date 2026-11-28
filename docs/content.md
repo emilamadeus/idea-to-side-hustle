@@ -141,7 +141,7 @@ Point: being this productive with AI means you are always working. Notifications
   4. The week: calendar fills with "jobb (litt)".
 - Twists [built]:
   - Meeting: after his reply the lights dim and every phone in the room glows: both colleagues under the table, the presenter's in her blazer pocket. Rubber duck and stickered laptop on the table.
-  - Dinner, last click: she stands up with her phone; her screen zooms in: she is asking Claude "Hvordan får jeg dama til å legge vekk telefonen?" (Claude typing). Then she leaves.
+  - Dinner, last click: she stands up with her phone; her screen zooms in: she is asking Claude "Hvordan får jeg typen til å legge vekk telefonen?" (Claude typing). Then she leaves.
   - Night: an energy can appears on the floor per wake-up; at 06:00, two minutes after the last "Ja.", the alarm clock rings.
   - Calendar: one green FERIE block on Sunday appears last, then flips to "jobb (litt)".
 - Phone moment candidate: "When did you last approve something from an AI at an odd time?"
