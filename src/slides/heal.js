@@ -16,7 +16,7 @@ import { pageSVG, BUGS, W as PW, H as PH } from '../../ved/public/js/healpage.js
 
   Layout zones (svg units):
     tip       x 80–540, y 110–240
-    counters  x 80–520, y 300–600 (game) · finder list x 80–540, y 290–640 (final)
+    counters  x 80–520, y 300–730 (game: found, tries, the clock) · finder list x 80–540, y 290–690 (final)
     page      x 720–994, y 172–765 (game, scale .76; the page is 360 × 780)
     tags      x 1060–1400, at each bug's height (y 270–764, kept above the title block), a dashed lead from the page edge
     final     two pages at scale .68: x 620–865 and x 980–1225, y 230–760, labels y 214
@@ -39,7 +39,7 @@ const bugBy = (id) => BUGS.find((b) => b.id === id);
 const pathOf = (pts) => (pts.length ? 'M' + pts.map((q) => `${q[0]} ${q[1]}`).join(' L') + ' Z' : '');
 
 // the last round, for going back to this slide: every ring, and the hits by bug
-let memo = { tries: [], hits: {} };
+let memo = { tries: [], hits: {}, t0: 0, t1: 0 };   // t0: the game opened, t1: the last bug found (or the game closed)
 
 export default {
   id: 'heal',
@@ -106,7 +106,9 @@ export default {
       if (animate) gsap.fromTo(g, { opacity: 0, x: -14 }, { opacity: 1, x: 0, duration: 0.45, ease: 'power2.out' });
       return g;
     };
+    const elapsed = () => (memo.t0 ? (memo.t1 || Date.now()) - memo.t0 : 0);
     const counts = () => {
+      if (P.clock) P.clock.textContent = secs(elapsed());
       if (!P.found) return;
       P.found.textContent = `${Object.keys(memo.hits).length} / ${BUGS.length}`;
       P.tries.textContent = String(memo.tries.length);
@@ -122,6 +124,11 @@ export default {
       P.found = D.text(c, 80, 412, '', 'cf', { style: 'font: 800 84px var(--font-display); letter-spacing: -.04em; fill: var(--fg)' });
       D.text(c, 80, 490, 'FORSØK', 'ct', { style: 'font: 700 16px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
       P.tries = D.text(c, 80, 564, '', 'cn', { style: 'font: 800 64px var(--font-display); letter-spacing: -.04em; fill: var(--muted)' });
+      // the clock runs until the last bug is found
+      D.text(c, 80, 642, 'TID', 'ck', { style: 'font: 700 16px var(--font-mono); letter-spacing: .16em; fill: var(--muted)' });
+      P.clock = D.text(c, 80, 716, '', 'cc', { style: 'font: 700 60px var(--font-mono); letter-spacing: -.04em; fill: var(--accent-2)' });
+      clearInterval(P.tick);
+      P.tick = setInterval(counts, 100);
       P.counters = c;
       tl.fromTo(c, { opacity: 0 }, { opacity: 1, duration: 0.5 }, 0.5);
       P.tags = [];
@@ -133,6 +140,8 @@ export default {
     const final = (tl, animate) => {
       if (P.view === 'final') return;
       P.view = 'final';
+      clearInterval(P.tick);
+      if (memo.t0 && !memo.t1) memo.t1 = Date.now();
       clearTimeout(autoFinal);
       const old = [P.pg?.g, P.counters, ...(P.tags || [])].filter(Boolean);
       const t0 = animate ? 0.5 : 0;
@@ -142,25 +151,28 @@ export default {
       const fixedPg = page(svg, F[0], 'fa'), allPg = page(svg, F[1], 'fb');
       BUGS.forEach((b) => { if (memo.hits[b.id]) heal(fixedPg, b.id, true); });
       allPg.pg.style.opacity = 0.55;
-      const h1 = head(F[0].x, 'FIKSET', OK), h2 = head(F[1].x, `ALLE FORSØK · ${memo.tries.length}`, MISS);
+      const h1 = head(F[0].x, `FIKSET · ${Object.keys(memo.hits).length} AV ${BUGS.length}`, OK), h2 = head(F[1].x, `ALLE FORSØK · ${memo.tries.length}`, MISS);
       const hits = Object.values(memo.hits).sort((a, b) => a.rank - b.rank);
       hits.forEach((t) => ring(fixedPg, t));
       const all = memo.tries.map((t) => ring(allPg, t, { faint: !t.ok }));
       // the finders
       const list = D.g(svg, { 'data-unit': '' });
       D.text(list, 80, 300, 'FUNNET AV', 'lh', { style: 'font: 700 16px var(--font-mono); letter-spacing: .16em; fill: var(--accent)' });
-      BUGS.forEach((b, k) => {
-        const t = hits[k];
+      const missing = BUGS.filter((b) => !memo.hits[b.id]);
+      [...hits, ...missing].forEach((t, k) => {
         const y = 352 + k * 62;
-        if (t) {
+        if (!t.pts) {   // a bug nobody found
+          D.el('circle', { cx: 96, cy: y, r: 15, style: 'fill: none; stroke: var(--deco); stroke-dasharray: 4 5', 'stroke-width': 2.5 }, list);
+          D.text(list, 126, y - 2, 'Ikke funnet', 'lw', { style: 'font: 800 22px var(--font-display); fill: var(--muted)' });
+          D.text(list, 126, y + 20, t.label, 'lb', { style: 'font: 700 13px var(--font-mono); fill: var(--muted)' });
+        } else {
           D.el('circle', { cx: 96, cy: y, r: 16, style: `fill: ${colorOf(t.p)}; stroke: ${INK}`, 'stroke-width': 2.5 }, list);
           D.text(list, 96, y + 5, String(t.rank), 'ln', { 'text-anchor': 'middle', style: `font: 800 15px var(--font-display); fill: ${INK}` });
           D.text(list, 126, y - 2, (t.p?.name || 'Gjest').slice(0, 16), 'lw', { style: 'font: 800 22px var(--font-display); fill: var(--fg)' });
           D.text(list, 126, y + 20, `${bugBy(t.bug).label} · ${secs(t.ms)}`, 'lb', { style: 'font: 700 13px var(--font-mono); fill: var(--muted)' });
         }
       });
-      const missing = BUGS.filter((b) => !memo.hits[b.id]);
-      if (missing.length) D.text(list, 80, 352 + hits.length * 62, `Ikke funnet: ${missing.map((b) => b.label.toLowerCase()).join(', ')}`, 'lm', { style: 'font: 600 16px var(--font-display); fill: var(--muted)' });
+      if (memo.t0) D.text(list, 80, 682, missing.length ? `Stoppet etter ${secs(elapsed())}` : `Alle fem på ${secs(elapsed())}`, 'lt', { style: 'font: 700 22px var(--font-mono); fill: var(--accent-2)' });
       const fresh = [fixedPg.g, allPg.g, h1, h2, list];
       if (!animate) return;
       tl.fromTo(fresh, { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', stagger: 0.08 }, t0);
@@ -176,6 +188,7 @@ export default {
       memo.tries.push(t);
       if (t.ok && !memo.hits[t.bug]) {
         memo.hits[t.bug] = t;
+        if (Object.keys(memo.hits).length >= BUGS.length) memo.t1 = Date.now();
         heal(P.pg, t.bug);
         const r = ring(P.pg, t);
         gsap.fromTo(r, { opacity: 0 }, { opacity: 1, duration: 0.25 });
@@ -188,7 +201,7 @@ export default {
       counts();
     });
 
-    const reset = () => { svg.innerHTML = ''; P = {}; clearTimeout(autoFinal); };
+    const reset = () => { clearInterval(P.tick); svg.innerHTML = ''; P = {}; clearTimeout(autoFinal); };
     const play = (i, instant) => {
       const tl = gsap.timeline();
       const live = !instant && !ctx.deck?.instant;
@@ -196,7 +209,7 @@ export default {
         stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
         stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
         tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
-        if (live) { memo = { tries: [], hits: {} }; open = true; tl.call(() => relaySend({ type: 'heal-start' }), null, 0.4); }
+        if (live) { memo = { tries: [], hits: {}, t0: Date.now(), t1: 0 }; open = true; tl.call(() => relaySend({ type: 'heal-start' }), null, 0.4); }
         game(tl);
       }
       if (i === 1) {
@@ -208,6 +221,6 @@ export default {
     };
 
     const s = D.stepper(ctx, { reset, play });
-    return { ...s, dispose() { offRelay(); clearTimeout(autoFinal); if (open) { open = false; relaySend({ type: 'heal-end' }); } s.dispose?.(); } };
+    return { ...s, dispose() { offRelay(); clearTimeout(autoFinal); clearInterval(P.tick); if (open) { open = false; relaySend({ type: 'heal-end' }); } s.dispose?.(); } };
   },
 };

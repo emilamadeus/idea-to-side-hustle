@@ -10,7 +10,7 @@ export const W = 360, H = 780;
 
 // box: [x, y, w, h] of what is wrong; the bug's centre must be inside the ring
 export const BUGS = [
-  { id: 'clip', label: 'Kuttet tittel', box: [170, 118, 190, 46] },
+  { id: 'clip', label: 'Kuttet tittel', box: [200, 126, 160, 46] },
   { id: 'typo', label: 'Skrivefeil', box: [38, 378, 152, 20] },
   { id: 'tile', label: 'Skjev boks', box: [184, 468, 68, 70] },
   { id: 'over', label: 'Knapp over prisen', box: [200, 612, 144, 52] },
@@ -68,12 +68,12 @@ export function pageSVG(uid = 'p') {
     const w = 54, x = L + k * (w + 6.5), on = k === 1;
     return `<rect x="${x}" y="566" width="${w}" height="28" rx="14" fill="${on ? '#3a2210' : '#1d130d'}" stroke="${on ? '#ff7a2f' : '#3d2d22'}" stroke-width="1.5"/>${t(x + w / 2, 585, d, `700 12px ${DISP}`, on ? '#ffb25e' : '#c9ad92', 'text-anchor="middle"')}`;
   }).join('');
-  return `<svg class="hp" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  return inlineFills(`<svg class="hp" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
   <defs><clipPath id="hp-cut-${uid}"><rect width="${W}" height="${H}" rx="26"/></clipPath></defs>
   <style>
     .hp text { font-kerning: normal; }
-    .hp-h2 { font-size: 68px; transition: font-size .8s cubic-bezier(.2,.9,.2,1), transform .8s cubic-bezier(.2,.9,.2,1); }
-    .hp-fixed .hp-h2 { font-size: 40px; transform: translateY(-12px); }
+    .hp .hp-h2 { font-size: 50px; transform: translateX(60px); transition: font-size .8s cubic-bezier(.2,.9,.2,1), transform .8s cubic-bezier(.2,.9,.2,1); }
+    .hp .hp-fixed .hp-h2 { font-size: 40px; transform: translateY(-9px); }
     .hp-l { opacity: 1; transition: opacity .3s; } .hp-r { opacity: 0; transition: opacity .3s .25s; }
     .hp-fixed .hp-l { opacity: 0; } .hp-fixed .hp-r { opacity: 1; }
     .hp-tile { transform: translate(0px, 7px) rotate(2.5deg); transform-box: fill-box; transform-origin: center; transition: transform .7s cubic-bezier(.2,1.4,.4,1); }
@@ -82,8 +82,8 @@ export function pageSVG(uid = 'p') {
     .hp-fixed .hp-bad { transform: translate(-60px, 50px) scale(.9); opacity: 0; }
     .hp-ok { opacity: 0; transform: translateY(-8px); transition: opacity .5s .35s, transform .6s .35s cubic-bezier(.2,1.4,.4,1); }
     .hp-fixed .hp-ok { opacity: 1; transform: none; }
-    .hp-faint { fill: #352820; transition: fill .8s; }
-    .hp-fixed .hp-faint { fill: #a08a74; }
+    .hp .hp-faint { fill: #3b2d23; transition: fill .8s; }
+    .hp .hp-fixed .hp-faint { fill: #a08a74; }
   </style>
   <g clip-path="url(#hp-cut-${uid})">
     <rect width="${W}" height="${H}" fill="#150d08"/>
@@ -93,7 +93,7 @@ export function pageSVG(uid = 'p') {
     <path d="M318 27 H340 M318 34 H340 M318 41 H340" stroke="#c9ad92" stroke-width="2" stroke-linecap="round"/>
     ${t(18, 78, 'VEDLEVERING · HELE NORGE', `700 9.5px ${MONO}; letter-spacing: .16em`, '#ff7a2f')}
     ${t(16, 114, 'Ved på døra,', `800 40px ${DISP}; letter-spacing: -.04em`, '#fff3e3')}
-    <g data-bug="clip"><text class="hp-h2" x="16" y="164" style="font-family: ${DISP}; font-weight: 800; letter-spacing: -.04em" fill="#ffb25e">hele vinteren.</text></g>
+    <g data-bug="clip"><text class="hp-h2" x="16" y="161" style="font-family: ${DISP}; font-weight: 800; letter-spacing: -.04em" fill="#ffb25e">hele vinteren.</text></g>
     ${t(18, 178, 'Tørr bjørkeved, levert og stablet ved døra.', `500 12.5px ${DISP}`, '#c9ad92')}
     ${t(18, 196, 'Fra 129 kr per sekk. Pause når du vil.', `500 12.5px ${DISP}`, '#c9ad92')}
     <rect x="16" y="208" width="98" height="26" rx="13" fill="#1d130d" stroke="#3d2d22" stroke-width="1.5"/>${t(65, 225, '★ 4,8 · 312', `700 11px ${DISP}`, '#ffd23f', 'text-anchor="middle"')}
@@ -117,11 +117,22 @@ export function pageSVG(uid = 'p') {
     <g data-bug="over">
       <g class="hp-ok"><rect x="${L}" y="668" width="${R - L}" height="40" rx="20" fill="#ff7a2f" stroke="#1a120c" stroke-width="2"/>
         ${t(180, 693, 'Bestill', `800 15px ${DISP}`, '#1a120c', 'text-anchor="middle"')}</g>
-      <g class="hp-bad"><rect x="222" y="624" width="110" height="38" rx="19" fill="#ff7a2f" stroke="#1a120c" stroke-width="2"/>
-        ${t(277, 648, 'Bestill', `800 14px ${DISP}`, '#1a120c', 'text-anchor="middle"')}</g>
+      <g class="hp-bad"><rect x="222" y="633" width="110" height="38" rx="19" fill="#ff7a2f" stroke="#1a120c" stroke-width="2"/>
+        ${t(277, 657, 'Bestill', `800 14px ${DISP}`, '#1a120c', 'text-anchor="middle"')}</g>
     </g>
     <g data-bug="faint"><text class="hp-faint" x="180" y="727" text-anchor="middle" style="font: 500 11px ${DISP}">Ingen betaling i dag. Avbestill når du vil.</text></g>
     ${t(18, 770, 'Ved · Hele Norge', `500 11px ${DISP}`, '#6f5848')}${t(342, 770, 'Personvern · Vilkår', `500 11px ${DISP}`, '#6f5848', 'text-anchor="end"')}
   </g>
-</svg>`;
+</svg>`);
+}
+// a host page may style svg text (the deck does); a style attribute beats that, a fill attribute does not
+function inlineFills(svg) {
+  return svg.replace(/<(text|tspan)\b([^>]*?)>/g, (all, tag, attrs) => {
+    const f = attrs.match(/\sfill="([^"]+)"/);
+    if (!f) return all;
+    let a = attrs.replace(f[0], '');
+    if (/\sstyle="/.test(a)) a = a.replace(/\sstyle="([^"]*)"/, (_, st) => ` style="${st}; fill: ${f[1]}"`);
+    else a += ` style="fill: ${f[1]}"`;
+    return `<${tag}${a}>`;
+  });
 }
