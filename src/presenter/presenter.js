@@ -37,12 +37,12 @@ export function start(defs) {
     <footer class="list"></footer>
     <div class="pause-panel">
       <div class="pp-cap">Pause</div>
-      <div class="pp-time">10:00</div>
-      <input class="pp-range" type="range" min="0" max="30" step="1" value="10" aria-label="Minutter igjen">
-      <div class="pp-scale"><span>0</span><span>10</span><span>20</span><span>30 min</span></div>
+      <div class="pp-time">5:00</div>
+      <input class="pp-range" type="range" min="0" max="10" step="1" value="5" aria-label="Minutter igjen">
+      <div class="pp-scale"><span>0</span><span>5</span><span>10 min</span></div>
       <div class="pp-row">
         <button class="pp-arena">Åpne arenaen</button>
-        <button class="pp-go">Start kampen (→)</button>
+        <button class="pp-go">Start kampen / ny runde (→)</button>
         <button class="pp-end">Fortsett foredraget (K)</button>
       </div>
       <p class="pp-hint">Telefonene viser nedtellingen. Arenaen spilles over pausen og lukkes med A; foredraget venter der du var.</p>
@@ -197,7 +197,7 @@ export function start(defs) {
       else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         e.preventDefault();
         const min = Math.round(Math.max(0, pause.until - Date.now()) / 60000) + (e.key === 'ArrowUp' ? 1 : -1);
-        sync.send({ type: 'cmd', action: 'pause-min', min: Math.max(0, Math.min(30, min)) });
+        sync.send({ type: 'cmd', action: 'pause-min', min: Math.max(0, Math.min(10, min)) });
       } else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') send('next');
       return;
     }

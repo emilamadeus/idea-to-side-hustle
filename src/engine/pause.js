@@ -9,16 +9,17 @@ import arenaDef from '../slides/arena.js';
 
     K           pause / back to the talk
     ↑ ↓         one minute more / less          (or drag the ruler, or the console's slider)
-    A           the arena during the break: the arena slide is mounted on top of the pause, as a
-                guest; → starts the fight; A again closes it. The arena slide itself stays where
+    A           the arena during the break (or the Spill arenaen button): the arena slide is mounted on
+                top of the pause, as a guest; → starts the fight, and after a round → (or the Ny runde
+                button) opens a new lobby; A again closes it. The arena slide itself stays where
                 it is in the talk and plays as usual when you get there.
     → ← Space   while paused they drive the arena (if open) and nothing else
 
-  The countdown is a ruler (0–30 minutes) under the clock: the handle shows the minutes left
+  The countdown is a ruler (0–10 minutes, 5 to start) under the clock: the handle shows the minutes left
   and moves as time runs; drag it to set the time. At zero the clock pulses: time to start.
 */
 
-const MAX = 30;
+const MAX = 10;
 const two = (n) => String(n).padStart(2, '0');
 const fmt = (ms) => { const s = Math.ceil(Math.max(0, ms) / 1000); return `${Math.floor(s / 60)}:${two(s % 60)}`; };
 
@@ -27,7 +28,7 @@ export function createPause(deck, { makeCtx, layer, sync }) {
 
   const css = document.createElement('style');
   css.textContent = `
-    .slide.pause-sheet { z-index: 40; background: var(--bg, #120905); }
+    .slide.pause-sheet { z-index: 40; background: var(--bg, #120905); user-select: none; -webkit-user-select: none; }
     .pause-sheet .pz-cup { position: absolute; left: 50%; top: calc(var(--u)*8); width: calc(var(--u)*9); margin-left: calc(var(--u)*-4.5); overflow: visible; }
     .pause-sheet .pz-cup .steam { fill: none; stroke: var(--muted); stroke-width: 4; stroke-linecap: round; opacity: 0; animation: pzs 3s ease-in-out infinite; }
     .pause-sheet .pz-cup .steam:nth-of-type(2) { animation-delay: 1s; } .pause-sheet .pz-cup .steam:nth-of-type(3) { animation-delay: 2s; }
@@ -39,6 +40,11 @@ export function createPause(deck, { makeCtx, layer, sync }) {
     .pause-sheet .pz-back { position: absolute; left: 0; right: 0; top: calc(var(--u)*41.5); text-align: center; font-size: calc(var(--u)*2.1); color: var(--muted); }
     .pause-sheet .pz-ruler { position: absolute; left: 22%; width: 56%; top: calc(var(--u)*33); height: calc(var(--u)*6.5); cursor: ew-resize; touch-action: none; }
     .pause-sheet .pz-ruler svg { width: 100%; height: 100%; overflow: visible; }
+    .pz-btn { position: absolute; left: 50%; transform: translateX(-50%); padding: calc(var(--u)*.9) calc(var(--u)*2.2); border-radius: 99px; cursor: pointer;
+      background: #1d1510; border: 2px solid var(--deco); color: var(--fg); font: 700 calc(var(--u)*1.5) var(--font-mono); letter-spacing: .12em; user-select: none; }
+    .pz-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .pause-sheet .pz-btn { top: calc(var(--u)*46.5); }
+    .pz-btn.again { z-index: 45; left: calc(var(--u)*5); transform: none; top: calc(var(--u)*46); background: var(--accent); border-color: #1a120c; color: #1a120c; }
     .pause-chip { position: absolute; left: 50%; top: calc(var(--u)*1.6); transform: translateX(-50%); z-index: 45; padding: calc(var(--u)*.5) calc(var(--u)*1.4);
       border-radius: 99px; background: #1d1510; border: 2px solid var(--deco); font: 700 calc(var(--u)*1.3) var(--font-mono); letter-spacing: .14em; color: var(--fg); }
   `;
@@ -59,8 +65,8 @@ export function createPause(deck, { makeCtx, layer, sync }) {
     const W = 1000, H = 120, x0 = 20, x1 = W - 20, y = 60;
     const xs = (m) => x0 + (m / MAX) * (x1 - x0);
     let s = `<path d="M${x0} ${y} H${x1}" stroke="var(--deco)" stroke-width="3"/>`;
-    for (let m = 0; m <= MAX; m++) {
-      const big = m % 5 === 0;
+    for (let h = 0; h <= MAX * 2; h++) {
+      const m = h / 2, big = h % 2 === 0;
       s += `<path d="M${xs(m)} ${y} v${big ? -26 : -12}" stroke="var(--deco)" stroke-width="${big ? 3 : 2}"/>`;
       if (big) s += `<text x="${xs(m)}" y="${y + 34}" text-anchor="middle" style="font: 700 26px var(--font-mono); fill: var(--muted)">${m}</text>`;
     }
@@ -84,7 +90,8 @@ export function createPause(deck, { makeCtx, layer, sync }) {
       </svg>
       <div class="pz-time"></div>
       <div class="pz-ruler" data-interactive><svg></svg></div>
-      <div class="pz-back"></div>`;
+      <div class="pz-back"></div>
+      <button class="pz-btn" data-interactive>Spill arenaen (A)</button>`;
     layer.appendChild(el);
     const r = ruler(el.querySelector('.pz-ruler svg'));
     // drag the ruler: the minutes under the pointer become the time left
@@ -95,7 +102,8 @@ export function createPause(deck, { makeCtx, layer, sync }) {
       return Math.max(0, Math.min(MAX, Math.round(((vx - r.x0) / (r.x1 - r.x0)) * MAX)));
     };
     let dragging = false;
-    area.addEventListener('pointerdown', (e) => { dragging = true; area.setPointerCapture(e.pointerId); setMinutes(fromX(e.clientX)); });
+    el.querySelector('.pz-btn').addEventListener('click', () => arenaOpen());
+    area.addEventListener('pointerdown', (e) => { e.preventDefault(); dragging = true; area.setPointerCapture(e.pointerId); setMinutes(fromX(e.clientX)); });
     area.addEventListener('pointermove', (e) => { if (dragging) setMinutes(fromX(e.clientX)); });
     area.addEventListener('pointerup', () => { dragging = false; });
     return { el, r, time: el.querySelector('.pz-time'), back: el.querySelector('.pz-back'), run: el.querySelector('.pz-run'), knob: el.querySelector('.pz-knob') };
@@ -114,6 +122,17 @@ export function createPause(deck, { makeCtx, layer, sync }) {
       knob.setAttribute('transform', `translate(${x} ${r.y})`);
     }
     if (P.chip) P.chip.textContent = `PAUSE · ${fmt(ms)}`;
+    // a round is over: offer the next one
+    const g = P.guest;
+    if (g && !g.again && g.inst.phase === 'done') {
+      g.again = document.createElement('button');
+      g.again.className = 'pz-btn again';
+      g.again.dataset.interactive = '';
+      g.again.textContent = 'Ny runde (→)';
+      g.again.addEventListener('click', () => again());
+      layer.appendChild(g.again);
+      gsap.fromTo(g.again, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, delay: 1.2 });
+    }
   }
 
   function setMinutes(m) {
@@ -148,19 +167,23 @@ export function createPause(deck, { makeCtx, layer, sync }) {
     const g = P.guest;
     if (!g) return;
     P.guest = null;
-    g.ctx._dispose(); g.inst.dispose?.(); g.el.remove();
+    g.ctx._dispose(); g.inst.dispose?.(); g.el.remove(); g.again?.remove();
     P.chip?.remove(); P.chip = null;
     if (P.el) P.el.el.style.visibility = '';
     tell();
   }
+  // a new round: a fresh lobby the phones join again
+  function again() { arenaClose(); arenaOpen(); }
   function arenaNext() {
     const g = P.guest;
-    if (!g || g.step >= 1) return;
+    if (!g) return;
+    if (g.inst.phase === 'done') return again();
+    if (g.step >= 1) return;
     g.step = 1;
     g.inst.step?.(1, 1);
   }
 
-  function start(minutes = 10) {
+  function start(minutes = 5) {
     if (P.on) return;
     P.on = true;
     deck.zoom?.close?.();

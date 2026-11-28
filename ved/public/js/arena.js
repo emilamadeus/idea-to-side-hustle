@@ -400,7 +400,7 @@ function end(m) {
   if (!m.name) return close();              // the talk moved on mid-round
   A.ended = true;
   const me = m.winner && m.winner === meId;
-  const c = card(me ? '<p class="ar-eye">Arenaen</p><h2>Du vant.</h2><div class="ar-place">1<small>sist igjen</small></div><p>Se opp på skjermen.</p>'
+  const c = card(me ? '<p class="ar-eye">Arenaen</p><h2>Du vant.</h2><p>Se opp på skjermen.</p>'
     : `<p class="ar-eye">Arenaen</p><h2>${esc(m.name)} vant.</h2><p>Se opp på skjermen.</p>`);
   if (me) { c.classList.add('ar-win'); buzz([80, 60, 80, 60, 300]); }
   setTimeout(() => close(), 7000);

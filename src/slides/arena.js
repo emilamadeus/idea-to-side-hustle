@@ -105,12 +105,15 @@ export default {
     // ---------- the game ----------
     const fire = (p, x, y, a) => {
       if (G.phase !== 'fight' || G.t < G.start) return;
-      if (p.cd > 0.05 && !p.bot) return;           // phones keep their own cooldown; this only stops floods
-      p.cd = CD;
+      // phones keep their own cooldown; network jitter can bunch two shots, so this only stops floods
+      if (!p.bot && p.cd > 0) return;
+      p.cd = p.bot ? CD : 0.12;
       G.bullets.push({ o: p, x: x + Math.cos(a) * (PR + 4), y: y + Math.sin(a) * (PR + 4), vx: Math.cos(a) * BSPD, vy: Math.sin(a) * BSPD, life: BLIFE, px: x, py: y });
     };
+    // every bullet that lands counts (two quick hits are two lives); the white ring after a hit is
+    // only a flash, not a shield
     const hurt = (p, by) => {
-      if (!p.alive || p.inv > 0) return;
+      if (!p.alive) return;
       p.hp -= 1; p.inv = INV; p.shake = 0.3; p.flash = 1;
       G.hits.push(p.k, by ? by.k : -1);
       burst(p, by ? by.color : '#ff5a1f');
@@ -438,6 +441,6 @@ export default {
     };
 
     const s = D.stepper(ctx, { reset, play });
-    return { ...s, dispose() { offRelay(); stop(); G = null; } };
+    return { ...s, get phase() { return G?.phase; }, dispose() { offRelay(); stop(); G = null; } };
   },
 };
