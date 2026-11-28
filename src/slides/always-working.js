@@ -219,9 +219,7 @@ export default {
         sceneLoops.push(pres.talk(0.16));
         // her phone, in the blazer pocket (lights up in the reveal)
         const pocket = D.g(g, { opacity: 0 });
-        D.el('ellipse', { cx: 1236, cy: 392, rx: 46, ry: 36, fill: 'url(#aw-glow)', 'data-bg': '' }, pocket);
         D.el('rect', { x: 1228, y: 380, width: 16, height: 24, rx: 3, ...F('#ffd23f') }, pocket);
-        let glows = null;
         return {
           hero: { x: 600, y: 545, s: 0.92, arms: 'phone' }, speechAt: [960, 170], tail: [1215, 258], noteAt: [770, 770],
           front(g2) {
@@ -238,13 +236,10 @@ export default {
             D.p(g2, 'M993 604 l10 3 l-10 3 Z', '', F('#ff8a3d'));
             D.el('circle', { cx: 987, cy: 601, r: 1.8, fill: '#1a120c' }, g2);
             D.el('rect', { x: 1110, y: 586, width: 34, height: 40, rx: 4, ...F(CREAM) }, g2);
-            // light from phones under the table, revealed later
-            glows = [860, 1000].map((x) => D.el('ellipse', { cx: x, cy: 566, rx: 66, ry: 30, fill: 'url(#aw-glow)', opacity: 0, 'data-bg': '' }, g2));
           },
           extra(tl) {
-            // the reveal: lights dim and every phone in the room is lit; he is not special
+            // the reveal: lights dim and the others look down too; only his phone glows
             tl.to(night, { opacity: 0.32, duration: 0.8 }, 4.0);
-            tl.to(glows, { opacity: 1, duration: 0.5, stagger: 0.25 }, 4.3);
             c1.expr(tl, { eyes: 'down' }, 4.3);
             c2.expr(tl, { eyes: 'down' }, 4.55);
             tl.to(pocket, { opacity: 1, duration: 0.4 }, 4.9);
