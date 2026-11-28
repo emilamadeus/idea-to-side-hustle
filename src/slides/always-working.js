@@ -217,9 +217,6 @@ export default {
         // presenter
         const pres = figure(g, { x: 1250, y: 330, s: 0.82, pose: 'stand', arms: 'point', flip: true, hair: 'curly', hairColor: PALETTE.hair.brown, skin: PALETTE.skin[1], outfit: 'blazer', color: PALETTE.cloth.wine, mouth: 'talk' });
         sceneLoops.push(pres.talk(0.16));
-        // her phone, in the blazer pocket (lights up in the reveal)
-        const pocket = D.g(g, { opacity: 0 });
-        D.el('rect', { x: 1228, y: 380, width: 16, height: 24, rx: 3, ...F('#ffd23f') }, pocket);
         return {
           hero: { x: 600, y: 545, s: 0.92, arms: 'phone' }, speechAt: [960, 170], tail: [1215, 258], noteAt: [770, 770],
           front(g2) {
@@ -242,7 +239,6 @@ export default {
             tl.to(night, { opacity: 0.32, duration: 0.8 }, 4.0);
             c1.expr(tl, { eyes: 'down' }, 4.3);
             c2.expr(tl, { eyes: 'down' }, 4.55);
-            tl.to(pocket, { opacity: 1, duration: 0.4 }, 4.9);
             pres.expr(tl, { eyes: 'down' }, 4.9);
           },
         };

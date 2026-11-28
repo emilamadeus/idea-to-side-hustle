@@ -140,7 +140,7 @@ Point: being this productive with AI means you are always working. Notifications
   3. Night, three clicks, same wake-up each time (buzz, eyes open, phone up, answer, phone back, asleep): 03:12 "Watchdog: alt kjører. 3 sessions jobber." → "Bra."; 04:37 "Session 2 lurer på: Postgres eller SQLite?" → "Postgres." (partner wakes, gives a look); 05:58 "Alt ferdig. Starte neste batch?" → "Ja." (dawn in the window, partner stays awake, annoyed).
   4. The week: calendar fills with "jobb (litt)".
 - Twists [built]:
-  - Meeting: after his reply the lights dim and the others look down too (the presenter's phone shows in her blazer pocket); only his phone glows. Rubber duck and stickered laptop on the table.
+  - Meeting: after his reply the lights dim and the others look down too; only his phone glows. Rubber duck and stickered laptop on the table.
   - Dinner, last click: she stands up with her phone; her screen zooms in: she is asking Claude "Hvordan får jeg typen til å legge vekk telefonen?" (Claude typing). Then she leaves.
   - Night: an energy can appears on the floor per wake-up; at 06:00, two minutes after the last "Ja.", the alarm clock rings.
   - Calendar: one green FERIE block on Sunday appears last, then flips to "jobb (litt)".
