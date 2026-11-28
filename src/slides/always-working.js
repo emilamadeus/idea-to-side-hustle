@@ -110,7 +110,8 @@ export default {
     function defs() {
       const d = D.el('defs', {}, svg);
       const rg = D.el('radialGradient', { id: 'aw-glow' }, d);
-      D.el('stop', { offset: '0%', 'stop-color': '#ffd23f', 'stop-opacity': 0.55 }, rg);
+      D.el('stop', { offset: '0%', 'stop-color': '#ffd23f', 'stop-opacity': 0.5 }, rg);
+      D.el('stop', { offset: '45%', 'stop-color': '#ffd23f', 'stop-opacity': 0.2 }, rg);
       D.el('stop', { offset: '100%', 'stop-color': '#ffd23f', 'stop-opacity': 0 }, rg);
       const cone = D.el('linearGradient', { id: 'aw-cone', x1: 0, y1: 0, x2: 0, y2: 1 }, d);
       D.el('stop', { offset: '0%', 'stop-color': '#ffd23f', 'stop-opacity': 0.22 }, cone);
@@ -119,7 +120,8 @@ export default {
 
     // ---------- the main character + their phone ----------
     function phoneAt(g, px, py) {
-      const glow = D.el('ellipse', { cx: px + 12, cy: py + 10, rx: 130, ry: 100, fill: 'url(#aw-glow)', opacity: 0, 'data-bg': '' }, g);
+      // a soft light around the phone itself, not the whole person
+      const glow = D.el('ellipse', { cx: px + 12, cy: py + 21, rx: 78, ry: 66, fill: 'url(#aw-glow)', opacity: 0, 'data-bg': '' }, g);
       const phone = D.g(g);
       D.el('rect', { x: px, y: py, width: 24, height: 42, rx: 5, fill: '#0f0a07', style: 'stroke: var(--deco)', 'stroke-width': 2.5 }, phone);
       const screen = D.el('rect', { x: px + 4, y: py + 5, width: 16, height: 30, rx: 2, style: 'fill: var(--accent-2)', opacity: 0.15 }, phone);
