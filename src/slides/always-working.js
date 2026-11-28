@@ -2,6 +2,7 @@ import gsap from 'gsap';
 import { phones } from '../engine/relay.js';
 import * as D from '../engine/draw.js';
 import { LOOK2 } from '../engine/draw.js';
+import { solid, lightOf } from '../engine/characters2.js';
 import { speech as sharedSpeech } from '../engine/props.js';
 import { figure, lyingHead, PALETTE } from '../engine/characters.js';
 
@@ -68,7 +69,9 @@ const wrap = (str, max) => {
 // Shared look for the main character
 const ME = { hair: 'messy', hairColor: PALETTE.hair.brown, skin: PALETTE.skin[0], outfit: 'hoodie', color: PALETTE.cloth.slate, glasses: true };
 const WOOD = '#4a3020', WOOD_DARK = '#2e1d13', CLOTH = '#e7dccb', CREAM = '#efe4d2';
-const F = (fill) => ({ style: `fill: ${fill}; stroke: ${D.inkFor(fill)}`, 'stroke-width': 2.6, 'stroke-linejoin': 'round' }); // dark ink, like a render
+const F = (fill) => LOOK2
+  ? { style: `fill: ${fill}; stroke: none` } // the outline-free look: shapes by colour and light
+  : { style: `fill: ${fill}; stroke: ${D.inkFor(fill)}`, 'stroke-width': 2.6, 'stroke-linejoin': 'round' }; // dark ink, like a render
 
 // Build steps: each scene is one step, the dinner gets two extra beats.
 // (Scenes 1, lunch, and 4, Christmas Eve, are kept in SCENES but no longer played.)
@@ -120,6 +123,9 @@ export default {
       D.el('stop', { offset: '0%', 'stop-color': '#f2f7ff', 'stop-opacity': 0.9 }, core);
       D.el('stop', { offset: '55%', 'stop-color': '#dce9ff', 'stop-opacity': 0.45 }, core);
       D.el('stop', { offset: '100%', 'stop-color': '#dce9ff', 'stop-opacity': 0 }, core);
+      const cg = D.el('radialGradient', { id: 'aw-candle' }, d);
+      D.el('stop', { offset: '0%', 'stop-color': '#ffb347', 'stop-opacity': 0.42 }, cg);
+      D.el('stop', { offset: '100%', 'stop-color': '#ffb347', 'stop-opacity': 0 }, cg);
       const cone = D.el('linearGradient', { id: 'aw-cone', x1: 0, y1: 0, x2: 0, y2: 1 }, d);
       D.el('stop', { offset: '0%', 'stop-color': '#ffd23f', 'stop-opacity': 0.22 }, cone);
       D.el('stop', { offset: '100%', 'stop-color': '#ffd23f', 'stop-opacity': 0 }, cone);
@@ -132,7 +138,8 @@ export default {
       const phone = D.g(g);
       const screen = D.el('ellipse', { cx: px + 12, cy: py + 21, rx: 22, ry: 31, fill: 'url(#aw-core)', opacity: 0, 'data-bg': '' }, phone);
       // we see its back (the screen faces him): a dark case, the camera bump, a logo
-      D.el('rect', { x: px, y: py, width: 24, height: 42, rx: 5, fill: '#0f0a07', style: 'stroke: var(--deco)', 'stroke-width': 2.5 }, phone);
+      if (LOOK2) solid(phone, `M${px + 5} ${py} H${px + 19} a5 5 0 0 1 5 5 V${py + 37} a5 5 0 0 1 -5 5 H${px + 5} a5 5 0 0 1 -5 -5 V${py + 5} a5 5 0 0 1 5 -5 Z`, '#1c1410', { rim: 2.4 });
+      else D.el('rect', { x: px, y: py, width: 24, height: 42, rx: 5, fill: '#0f0a07', style: 'stroke: var(--deco)', 'stroke-width': 2.5 }, phone);
       D.el('rect', { x: px + 3, y: py + 3, width: 11, height: 15, rx: 3.5, fill: '#2a1f17' }, phone);
       D.el('circle', { cx: px + 8.5, cy: py + 7.2, r: 2.4, fill: '#07050a', stroke: '#6f5848', 'stroke-width': 1.2 }, phone);
       D.el('circle', { cx: px + 8.5, cy: py + 13.6, r: 2.4, fill: '#07050a', stroke: '#6f5848', 'stroke-width': 1.2 }, phone);
@@ -191,8 +198,13 @@ export default {
       sceneLoops.push(gsap.fromTo(st, { y: 6, opacity: 0.2 }, { y: -10, opacity: 0.8, duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut' }));
     };
     const candle = (g, x, y) => {
-      D.el('rect', { x: x - 8, y, width: 16, height: 74, rx: 3, ...F(CREAM) }, g);
-      const flame = D.p(g, `M${x} ${y - 4} q-11 -18 0 -36 q11 16 0 36 Z`, '', { style: 'fill: var(--accent-2); stroke: var(--accent)', 'stroke-width': 2 });
+      if (LOOK2) {
+        // a light source: a warm pool around the flame, the wax lit on the left, shaded on the right
+        const glow = D.el('ellipse', { cx: x, cy: y - 18, rx: 70, ry: 70, fill: 'url(#aw-candle)', 'data-bg': '' }, g);
+        sceneLoops.push(gsap.to(glow, { opacity: 0.8, duration: 0.5, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: Math.random() * 0.4 }));
+        solid(g, `M${x - 8} ${y + 3} a3 3 0 0 1 3 -3 H${x + 5} a3 3 0 0 1 3 3 V${y + 74} H${x - 8} Z`, CREAM, { sh: `M${x + 2} ${y - 10} H${x + 20} V${y + 90} H${x + 2} Z`, rim: 0, tShadow: 0.18 });
+      } else D.el('rect', { x: x - 8, y, width: 16, height: 74, rx: 3, ...F(CREAM) }, g);
+      const flame = D.p(g, `M${x} ${y - 4} q-11 -18 0 -36 q11 16 0 36 Z`, '', LOOK2 ? { style: 'fill: #ffe7a0; stroke: #ff9a3c', 'stroke-width': 3 } : { style: 'fill: var(--accent-2); stroke: var(--accent)', 'stroke-width': 2 });
       sceneLoops.push(gsap.to(flame, { scaleY: 0.86, scaleX: 1.12, transformOrigin: '50% 100%', duration: 0.18, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: Math.random() * 0.3 }));
       return flame;
     };
@@ -202,7 +214,12 @@ export default {
       D.p(g, `M${x} ${y + 34} V${y + 66} M${x - 14} ${y + 66} H${x + 14}`, 'ln');
     };
     const plate = (g, x, y, food = 'pasta') => {
-      D.el('ellipse', { cx: x, cy: y, rx: 74, ry: 17, ...F(CREAM) }, g);
+      if (LOOK2) {
+        // outline-free: a soft shadow under the plate, the rim, and the well a shade darker
+        D.el('ellipse', { cx: x + 4, cy: y + 5, rx: 76, ry: 17, style: 'fill: rgba(60,36,20,.28); stroke: none' }, g);
+        D.el('ellipse', { cx: x, cy: y, rx: 74, ry: 17, style: 'fill: #fbf4e8; stroke: none' }, g);
+        D.el('ellipse', { cx: x + 2, cy: y + 1, rx: 52, ry: 11, style: 'fill: #e6d8c3; stroke: none' }, g);
+      } else D.el('ellipse', { cx: x, cy: y, rx: 74, ry: 17, ...F(CREAM) }, g);
       if (food === 'pasta') D.p(g, `M${x - 36} ${y - 2} q12 -22 30 -10 q14 -18 34 -4 q12 -6 14 8 Z`, '', F('#d9a441'));
       if (food === 'sandwich') {
         D.p(g, `M${x - 40} ${y - 4} L${x + 30} ${y - 22} L${x + 40} ${y - 4} Z`, '', F('#d4a35a'));
@@ -231,7 +248,8 @@ export default {
         }
         // back wall: screen with chart, window with blinds
         const scr = D.g(g, { 'data-unit': '' });
-        D.el('rect', { x: 930, y: 268, width: 250, height: 150, rx: 6, ...F('#120c08') }, scr);
+        D.el('rect', { x: 930, y: 268, width: 250, height: 150, rx: 6, ...F(LOOK2 ? '#2a1e16' : '#120c08') }, scr);
+        if (LOOK2) D.el('rect', { x: 938, y: 276, width: 234, height: 134, rx: 3, style: 'fill: #140d09; stroke: none' }, scr);
         D.p(scr, 'M955 393 L1010 363 L1060 373 L1110 318 L1160 334', 'acc');
         D.text(scr, 950, 296, 'Q4', 'mono', { style: 'font: 700 18px var(--font-mono); fill: var(--muted)' });
         D.el('rect', { x: 1320, y: 250, width: 140, height: 170, ...F('#1b2330') }, g);
@@ -249,6 +267,11 @@ export default {
             if (LOOK2) D.el('ellipse', { cx: 1040, cy: 700, rx: 470, ry: 20, style: 'fill: rgba(16,8,4,.4); stroke: none', 'data-bg': '' }, g2);
             D.p(g2, 'M600 660 L1460 660 L1390 560 L680 560 Z', '', F(WOOD));
             D.p(g2, 'M600 660 V684 H1460 V660', '', F(WOOD_DARK));
+            if (LOOK2) {
+              // the table top catches the light along its near edge and fades toward the back
+              D.p(g2, 'M604 658 L1456 658', '', { style: `fill: none; stroke: ${lightOf(WOOD, 0.35)}`, 'stroke-width': 3, 'stroke-linecap': 'round' });
+              D.p(g2, 'M680 560 L1390 560 L1404 580 L666 580 Z', '', { style: 'fill: rgba(20,10,6,.35); stroke: none' });
+            }
             // laptop with stickers, rubber duck, coffee
             D.el('rect', { x: 860, y: 590, width: 70, height: 46, rx: 4, ...F('#1d1d22') }, g2);
             D.el('circle', { cx: 878, cy: 604, r: 6, style: 'fill: var(--accent)' }, g2);
