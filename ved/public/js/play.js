@@ -1,8 +1,9 @@
 // The room's games on the phone, each a full-screen card in the talk's look:
 //   price   a slider: what would you pay for a sack, delivered? (the median becomes the price)
-//   bug     spot the bug: one of the SMS cards is wrong; the first to tap it, with times
+//   heal    ring rundt feilen: the order page with five bugs; a ring round one heals it on every phone
 //   clicker you hold the deck's next button, for one click
 // Messages come through window.vedHook (chained after vote.js, lobby.js and room.js).
+import { pageSVG, BUGS, W as PW, H as PH } from './healpage.js';
 const $ = (s, r = document) => r.querySelector(s);
 const send = (m) => window.vedSend?.(m);
 const buzz = (p) => { try { navigator.vibrate?.(p); } catch {} };
@@ -37,18 +38,23 @@ css.textContent = `
   .pl-range::-webkit-slider-thumb { -webkit-appearance: none; width: 38px; height: 38px; margin-top: -14px; border-radius: 50%; background: #fff3e3; border: 3px solid #1a120c; box-shadow: 0 6px 18px rgba(0,0,0,.6); }
   .pl-range::-moz-range-thumb { width: 34px; height: 34px; border-radius: 50%; background: #fff3e3; border: 3px solid #1a120c; }
   .pl-scale { display: flex; justify-content: space-between; font: 700 12px 'Space Mono', monospace; color: #74604d; margin-top: -8px; }
-  /* bug */
-  .pl-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .pl-col { border: 2px solid rgba(255,190,120,.35); border-radius: 14px; padding: 10px; display: grid; gap: 8px; background: rgba(36,26,19,.7); }
-  .pl-col > b { font: 700 11px 'Space Mono', monospace; letter-spacing: .14em; color: #c9ad92; }
-  .pl-card { border: 2px solid rgba(255,190,120,.4); border-radius: 10px; padding: 10px 8px; text-align: left; background: #1d1510; color: #fff3e3; cursor: pointer;
-    font: 800 19px 'Bricolage Grotesque', sans-serif; touch-action: manipulation; }
-  .pl-card small { display: block; font: 700 11px 'Space Mono', monospace; letter-spacing: .08em; color: #c9ad92; margin-bottom: 2px; }
-  .pl-card.static { cursor: default; opacity: .85; }
-  .pl-card.bad { animation: pl-shake .35s; border-color: #ff6f9c; }
-  .pl-card.ok { border-color: #8fe3a2; box-shadow: 0 0 0 3px #8fe3a2; }
+  /* heal */
+  .pl.heal { justify-content: flex-start; gap: 10px; touch-action: none; }
+  .pl-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .pl-row h2 { font-size: clamp(24px, 7vw, 32px); }
+  .pl-count { font: 700 15px 'Space Mono', monospace; color: #ffd23f; white-space: nowrap; }
+  .pl-page { position: relative; flex: 1; min-height: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .pl-page > svg { position: absolute; inset: 0; width: 100%; height: 100%; filter: drop-shadow(0 18px 40px rgba(0,0,0,.6)); }
+  .pl-page > svg.hp { border-radius: 0; }
+  .pl-ink path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .pl-ink .draw { stroke: #ffd23f; stroke-width: 4; }
+  .pl-ink .hit { stroke: #8fe3a2; stroke-width: 4; filter: drop-shadow(0 0 6px rgba(143,227,162,.8)); }
+  .pl-ink .miss { stroke: #ff6f9c; stroke-width: 4; transition: opacity .9s .5s; }
+  .pl-ink .miss.gone { opacity: 0; }
+  .pl-ink .shake { animation: pl-shake .35s; transform-box: fill-box; }
+  .pl-msg { min-height: 22px; font: 600 15px 'Bricolage Grotesque', sans-serif; color: #c9ad92; text-align: center; transition: color .2s; }
+  .pl-msg.ok { color: #8fe3a2; } .pl-msg.bad { color: #ff9cb8; }
   @keyframes pl-shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
-  .pl-timer { font: 700 15px 'Space Mono', monospace; color: #ffd23f; }
   /* clicker */
   .pl-remote { width: min(62vw, 240px); aspect-ratio: 1; margin: 8px auto; border-radius: 50%; border: 0; cursor: pointer;
     background: radial-gradient(circle at 40% 35%, #ffb25e, #ff5a1f 60%, #c23d0e); color: #1a0d07; font: 800 30px 'Bricolage Grotesque', sans-serif;
@@ -61,7 +67,7 @@ css.textContent = `
 document.head.append(css);
 
 let card = null, kind = null;
-const WAKE = { price: 'Sett prisen', bug: 'Finn feilen', clicker: 'Fjernkontrollen' };
+const WAKE = { price: 'Sett prisen', heal: 'Ring rundt feilen', clicker: 'Fjernkontrollen' };
 function open(k, html) {
   const again = kind === k;
   close(true);
@@ -75,7 +81,7 @@ function open(k, html) {
 }
 function close(now) {
   if (!card) return;
-  const c = card; card = null; kind = null;
+  const c = card; card = null; kind = null; H = null;
   window.vedWakeCancel?.();
   clearInterval(c._timer);
   if (now) { c.remove(); return; }
@@ -114,34 +120,90 @@ function priceSet(m) {
   buzz([40, 60, 40]);
 }
 
-// ---------- bug ----------
-function bugStart() {
-  const c = open('bug', `<p class="pl-eye">Finn feilen</p>
-    <h2>Én SMS kommer på feil dag. Trykk på den.</h2>
-    <p>SMS-en sier «Veden kommer i morgen».</p>
-    <div class="pl-cols">
-      <div class="pl-col"><b>RUTEPLANEN</b>
-        <div class="pl-card static"><small>FROGNER</small>Onsdag</div>
-        <div class="pl-card static"><small>GRÜNERLØKKA</small>Torsdag</div></div>
-      <div class="pl-col"><b>SMS-ENE</b>
-        <button class="pl-card" data-card="sms-frogner" type="button"><small>FROGNER</small>Tirsdag</button>
-        <button class="pl-card" data-card="sms-grunerlokka" type="button"><small>GRÜNERLØKKA</small>Tirsdag</button></div>
-    </div>
-    <div class="pl-timer">0,0 s</div>`);
-  const t0 = Date.now(), tm = $('.pl-timer', c);
-  c._timer = setInterval(() => { tm.textContent = `${((Date.now() - t0) / 1000).toFixed(1).replace('.', ',')} s`; }, 100);
-  c.querySelectorAll('[data-card]').forEach((b) => b.addEventListener('click', () => { c._last = b; send({ type: 'bug-tap', card: b.dataset.card }); }));
+// ---------- heal ----------
+// Draw a ring round a bug on the order page. The relay judges it: a hit heals that bug on every
+// phone (and on the TV); a miss shakes and fades. One bug per ring, and a tight one.
+const WHY = {
+  line: 'Tegn en ring rundt feilen.', many: 'Én feil per ring.', big: 'Ring tettere rundt feilen.',
+  none: 'Ingen feil der.', done: 'Den er allerede fikset.', slow: 'Litt roligere.',
+};
+const NS = 'http://www.w3.org/2000/svg';
+let H = null;
+function healStart(m) {
+  const fixed = new Set(m.fixed || []);
+  if (kind === 'heal' && H) { fixed.forEach((id) => healApply(id)); return; }   // a reconnect: keep the card
+  const c = open('heal', `<div class="pl-row"><h2>Ring rundt en feil</h2><span class="pl-count"></span></div>
+    <div class="pl-page">${pageSVG('phone')}<svg class="pl-ink" viewBox="0 0 ${PW} ${PH}" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <p class="pl-msg">Fem feil. Én ring per feil.</p>`);
+  c.classList.add('heal');
+  H = { c, fixed: new Set(), ink: $('.pl-ink', c), msg: $('.pl-msg', c), count: $('.pl-count', c), pending: null };
+  fixed.forEach((id) => healApply(id, true));
+  healCount();
+  // no scrolling or zooming while drawing
+  c.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+  c.addEventListener('gesturestart', (e) => e.preventDefault());
+  const ink = H.ink;
+  let pts = null, path = null;
+  const at = (e) => { const p = ink.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; const q = p.matrixTransform(ink.getScreenCTM().inverse()); return [q.x, q.y]; };
+  const d = (ps) => 'M' + ps.map((q) => `${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(' L');
+  ink.addEventListener('pointerdown', (e) => {
+    if (H.pending) return;
+    ink.setPointerCapture?.(e.pointerId);
+    pts = [at(e)];
+    path = document.createElementNS(NS, 'path'); path.setAttribute('class', 'draw'); ink.append(path);
+  });
+  ink.addEventListener('pointermove', (e) => {
+    if (!pts) return;
+    const q = at(e), l = pts[pts.length - 1];
+    if (Math.hypot(q[0] - l[0], q[1] - l[1]) < 3) return;
+    pts.push(q); path.setAttribute('d', d(pts));
+  });
+  const up = () => {
+    if (!pts) return;
+    const ps = pts, el = path; pts = null; path = null;
+    el.setAttribute('d', d(ps) + ' Z');
+    // at most 64 points go to the relay
+    const step = Math.max(1, Math.ceil(ps.length / 64));
+    const out = ps.filter((_, k) => k % step === 0).map((q) => [Math.round(q[0]), Math.round(q[1])]);
+    H.pending = el;
+    if (!send({ type: 'heal-circle', pts: out })) healMiss({ reason: 'slow' });
+    setTimeout(() => { if (H?.pending === el) healMiss({ reason: 'slow' }); }, 4000);
+  };
+  ink.addEventListener('pointerup', up); ink.addEventListener('pointercancel', up);
 }
-function bugWrong() {
-  if (kind !== 'bug' || !card?._last) return;
-  const b = card._last; b.classList.remove('bad'); void b.offsetWidth; b.classList.add('bad'); buzz(60);
+function healApply(id, instant) {
+  if (!H || H.fixed.has(id)) return;
+  H.fixed.add(id);
+  const g = H.c.querySelector(`[data-bug="${id}"]`);
+  if (!g) return;
+  if (instant) { g.querySelectorAll('*').forEach((n) => { n.style.transition = 'none'; }); g.classList.add('hp-fixed'); requestAnimationFrame(() => g.querySelectorAll('*').forEach((n) => { n.style.transition = ''; })); }
+  else g.classList.add('hp-fixed');
 }
-function bugOk(m) {
-  if (kind !== 'bug') return;
-  card._last?.classList.add('ok');
+const healCount = () => { if (H) H.count.textContent = `${H.fixed.size} / ${BUGS.length}`; };
+const say = (text, cls = '') => { if (!H) return; H.msg.textContent = text; H.msg.className = `pl-msg ${cls}`; };
+function healOk(m) {
+  if (kind !== 'heal' || !H) return;
+  const el = H.pending; H.pending = null;
+  if (el) el.setAttribute('class', 'hit');
+  healApply(m.bug); healCount();
+  say(m.rank === 1 ? `Først! ${(m.ms / 1000).toFixed(1).replace('.', ',')} s` : `Funnet! Nummer ${m.rank}.`, 'ok');
   buzz([30, 40, 90]);
-  setTimeout(() => finish(`<p class="pl-eye">Funnet</p><h2>${m.rank === 1 ? 'Først!' : `Nummer ${m.rank}.`}</h2>
-    <div class="pl-big">${(m.ms / 1000).toFixed(1).replace('.', ',')}<small>s</small></div><p>Se opp på skjermen.</p>`, 4000), 500);
+}
+function healMiss(m) {
+  if (kind !== 'heal' || !H) return;
+  const el = H.pending; H.pending = null;
+  if (el) { el.setAttribute('class', 'miss shake'); requestAnimationFrame(() => el.classList.add('gone')); setTimeout(() => el.remove(), 1500); }
+  say(WHY[m.reason] || WHY.none, 'bad');
+  buzz(50);
+}
+function healFix(m) {
+  if (kind !== 'heal' || !H || H.fixed.has(m.bug)) return;
+  healApply(m.bug); healCount();
+  say(`${m.by} fant en feil.`);
+}
+function healDone() {
+  if (kind !== 'heal') return;
+  setTimeout(() => { H = null; finish('<p class="pl-eye">Ring rundt feilen</p><h2>Alle fem er funnet.</h2><p>Se opp på skjermen.</p>', 4200); }, 1400);
 }
 
 // ---------- clicker ----------
@@ -158,10 +220,12 @@ const handle = (m) => {
   if (!m?.type) return;
   if (m.type === 'price-open') priceOpen(m);
   if (m.type === 'price-set') priceSet(m);
-  if (m.type === 'bug-start') bugStart();
-  if (m.type === 'bug-wrong') bugWrong();
-  if (m.type === 'bug-ok') bugOk(m);
-  if (m.type === 'bug-end' && kind === 'bug') close();
+  if (m.type === 'heal-start') healStart(m);
+  if (m.type === 'heal-ok') healOk(m);
+  if (m.type === 'heal-miss') healMiss(m);
+  if (m.type === 'heal-fix') healFix(m);
+  if (m.type === 'heal-done') healDone();
+  if (m.type === 'heal-end' && kind === 'heal') { H = null; close(); }
   if (m.type === 'clicker') clicker();
   if (m.type === 'clicker-done') finish('<p class="pl-eye">Fjernkontrollen</p><h2>Takk!</h2><p>Se opp på skjermen.</p>', 2400);
   if (m.type === 'clicker-end' && kind === 'clicker') close();
@@ -173,3 +237,4 @@ window.vedHook = (m) => {
   handle(m);
   if (m.type === 'state' && m.game) handle(m.game);   // joined mid-game: pick it up
 };
+if (window.vedGameNow) handle(window.vedGameNow);   // the game was running before this script loaded

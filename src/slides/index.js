@@ -26,6 +26,7 @@ import knowAGuy from './know-a-guy.js';
 import selfCheck from './self-check.js';
 import planning from './planning.js';
 import show from './show.js';
+import heal from './heal.js';
 import fails from './fails.js';
 import gateway from './gateway.js';
 import prototypes from './prototypes.js';
@@ -50,7 +51,7 @@ const STAGED = [
   [validate, price],                            // Idé (the room sets the price)
   [spec, fullScope, planning, mdFiles],         // Plan
   [readyToBuild, prototypes, visualRef, goal, commits],  // Bygg
-  [selfCheck, show, fails],                     // Kvalitet
+  [selfCheck, heal, show, fails],               // Kvalitet (the room circles the bugs)
   [goLive],                                     // Lansering (placeholder)
 ];
 const PARTS = [

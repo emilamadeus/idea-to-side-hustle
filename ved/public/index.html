@@ -608,6 +608,7 @@
     ws.onmessage = (e) => {
       const m = JSON.parse(e.data);
       if (Array.isArray(m.room)) window.vedRoomNow = m.room;
+      if (m.type === 'state' && 'game' in m) window.vedGameNow = m.game; // the running room game (js/play.js, arena.js may load later)
       if (typeof m.roomGen === 'number') window.vedRoomGen = m.roomGen; // the room's reset counter (js/room.js may load later)
       if (typeof m.where === 'string') window.vedWhereNow = m.where;
       if (typeof m.talk === 'boolean') window.vedTalkNow = { on: m.talk, tips: m.tips || [], sheet: m.sheet || null }; // the tip list (js/lobby.js may load later)

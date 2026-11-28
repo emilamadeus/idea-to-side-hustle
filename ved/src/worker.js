@@ -1,3 +1,4 @@
+import { judge as healJudge, BUGS as HEAL_BUGS, W as HEAL_W, H as HEAL_H } from '../public/js/healpage.js';
 /*
   ved.atladeus.com: the firewood shop from the talk, live.
     GET  /            the order page (static, ./public)
@@ -27,8 +28,9 @@
     deck  → light { mode, delay, dur } · light-off                              the finale light-up (runs until light-off; capped at 10 min)
     deck  → price-open · price-close         phone ← price-open · price-set { price, mine }   phone → price { kr }
             deck ← price-state · price-vote { p, kr } · price-set { price, count }
-    deck  → bug-start · bug-end              phone ← bug-start · bug-ok { ms, rank } · bug-wrong   phone → bug-tap { card }
-            deck ← bug-found { p, ms, rank }
+    deck  → heal-start · heal-end            phone ← heal-start { fixed } · heal-ok { bug, ms, rank } · heal-miss { reason }
+                                             · heal-fix { bug, by } (every phone) · heal-done   phone → heal-circle { pts }
+            deck ← heal-try { p, pts, ok, bug, reason, ms, rank, tries } (every circle, hit or miss)
     deck  → clicker-start · clicker-end      phone ← clicker · clicker-done · clicker-end   phone → clicker-next
             deck ← clicker-holder { p } · clicker-next { p }
     deck  → arena-open { R } · arena-go { delay } · arena-out { id, rank, total, by } · arena-end { winner, name }
@@ -249,7 +251,7 @@ export class Room {
       this.eachPhone((ws, v) => ws.send(JSON.stringify({ type: 'light', mode: m.mode || 'wave', start, now: Date.now(), dur: Math.min(Number(m.dur) || 14000, 600000), n: this.people[v]?.n || 1, total, theme: this.theme })));
     }
     if (m.type === 'light-off') this.send('cust', { type: 'light-off' });
-    if (['price-open', 'price-close', 'bug-start', 'bug-end', 'clicker-start', 'clicker-end'].includes(m.type)) await this.deckGame(m);
+    if (['price-open', 'price-close', 'heal-start', 'heal-end', 'clicker-start', 'clicker-end'].includes(m.type)) await this.deckGame(m);
     if (typeof m.type === 'string' && m.type.startsWith('arena-')) await this.arenaDeck(m, raw);
     // the tip list on the phones: the talk starts (title's first click), then each tip slide adds one
     if (m.type === 'talk') {
@@ -337,7 +339,7 @@ export class Room {
       ws.send(JSON.stringify({ type: 'me', me: this.person(a.voter), total: Object.keys(this.people).length }));
       return;
     }
-    if (['price', 'bug-tap', 'clicker-next'].includes(m.type) && a.voter) return this.phoneGame(ws, a.voter, m);
+    if (['price', 'heal-circle', 'clicker-next'].includes(m.type) && a.voter) return this.phoneGame(ws, a.voter, m);
     if (['apos', 'afire', 'acheer'].includes(m.type) && a.voter && this.g?.kind === 'arena') return this.arenaPhone(ws, a, m);
     if (m.type === 'watch-ack' && this.alert && !this.alert.acked && m.k === this.alert.k && this.people[a.voter]?.watch === m.k) {
       this.alert.acked = true;
@@ -401,7 +403,7 @@ export class Room {
 
   // ---- room games: one runs at a time, kept in storage (the object sleeps between messages) ----
   //   price   the room sets the price of a sack: a slider on every phone, the median wins
-  //   bug     spot the bug: the first to tap the wrong card, with times
+  //   heal    ring rundt feilen: five bugs on the order page; a ring round one heals it on every phone
   //   clicker one random phone gets the deck's next button for a single click
   async saveGame() { if (this.g) await this.ctx.storage.put('game', this.g); else await this.ctx.storage.delete('game'); }
   // the phones on the line now, in join order (named people first, then the rest)
@@ -416,7 +418,7 @@ export class Room {
     const g = this.g;
     if (!g || !v) return null;
     if (g.kind === 'price') return { type: 'price-open', mine: g.votes[v] ?? null, price: this.price };
-    if (g.kind === 'bug') return g.found[v] ? null : { type: 'bug-start' };
+    if (g.kind === 'heal') return { type: 'heal-start', fixed: Object.keys(g.fixed) };
     if (g.kind === 'clicker' && g.holder === v) return { type: 'clicker' };
     if (g.kind === 'arena') return { type: 'arena', phase: g.phase, R: g.R, at: g.at, now: Date.now(), out: g.out?.[v.slice(0, 6)] || null };
     return null;
@@ -440,10 +442,11 @@ export class Room {
       this.eachPhone((ws, v) => ws.send(JSON.stringify({ type: 'price-set', price: this.price, mine: votes[v] ?? null })));
       this.send('deck', { type: 'price-set', price: this.price, count: vals.length });
     }
-    if (m.type === 'bug-start') {
-      this.g = { kind: 'bug', t: Date.now(), found: {} };
+    if (m.type === 'heal-start') {
+      this.g = { kind: 'heal', t: Date.now(), fixed: {}, tries: 0 };
+      this.healLast = new Map();
       await this.saveGame();
-      this.send('cust', { type: 'bug-start' });
+      this.send('cust', { type: 'heal-start', fixed: [] });
     }
     if (m.type === 'clicker-start') {
       const phones = this.connected();
@@ -472,14 +475,33 @@ export class Room {
       this.send('deck', { type: 'price-vote', p: this.who(v), kr });
       if (!this.priceTimer) this.priceTimer = setTimeout(async () => { this.priceTimer = null; await this.saveGame(); }, 400);
     }
-    if (m.type === 'bug-tap' && g.kind === 'bug' && !g.found[v]) {
-      if (m.card !== 'sms-grunerlokka') { ws.send(JSON.stringify({ type: 'bug-wrong' })); return; }
-      const ms = Date.now() - g.t, rank = Object.keys(g.found).length + 1;
-      g.found[v] = { ms, rank };
-      if (this.people[v] && (!this.people[v].bugMs || ms < this.people[v].bugMs)) { this.people[v].bugMs = ms; await this.ctx.storage.put('people', this.people); }
+    if (m.type === 'heal-circle' && g.kind === 'heal') {
+      // one ring a second per phone, and never more than 60 in a round
+      const now = Date.now();
+      this.healLast ??= new Map();
+      const last = this.healLast.get(v) || { t: 0, n: 0 };
+      if (now - last.t < 900 || last.n >= 60) { ws.send(JSON.stringify({ type: 'heal-miss', reason: 'slow' })); return; }
+      this.healLast.set(v, { t: now, n: last.n + 1 });
+      const pts = (Array.isArray(m.pts) ? m.pts : []).slice(0, 80)
+        .map((q) => [Math.max(0, Math.min(HEAL_W, Math.round(Number(q?.[0]) || 0))), Math.max(0, Math.min(HEAL_H, Math.round(Number(q?.[1]) || 0)))]);
+      const r = healJudge(pts, Object.keys(g.fixed));
+      g.tries = (g.tries || 0) + 1;
+      const ms = now - g.t;
+      if (!r.ok) {
+        ws.send(JSON.stringify({ type: 'heal-miss', reason: r.reason }));
+        this.send('deck', { type: 'heal-try', p: this.who(v), pts, ok: false, bug: r.bug || null, reason: r.reason, ms, tries: g.tries });
+        return;
+      }
+      const rank = Object.keys(g.fixed).length + 1;
+      g.fixed[r.bug] = { v: v.slice(0, 6), ms, rank };
       await this.saveGame();
-      ws.send(JSON.stringify({ type: 'bug-ok', ms, rank }));
-      this.send('deck', { type: 'bug-found', p: this.who(v), ms, rank });
+      const p = this.people[v];
+      if (p) { p.healN = (p.healN || 0) + 1; if (!p.healMs || ms < p.healMs) p.healMs = ms; await this.ctx.storage.put('people', this.people); }
+      ws.send(JSON.stringify({ type: 'heal-ok', bug: r.bug, ms, rank }));
+      this.send('cust', { type: 'heal-fix', bug: r.bug, by: p?.name || 'Gjest', id: v.slice(0, 6) });
+      this.send('deck', { type: 'heal-try', p: this.who(v), pts, ok: true, bug: r.bug, ms, rank, tries: g.tries });
+      if (rank >= HEAL_BUGS.length) this.send('cust', { type: 'heal-done' });
+      return;
     }
     if (m.type === 'clicker-next' && g.kind === 'clicker' && g.holder === v) {
       this.g = null; await this.saveGame();
@@ -546,9 +568,9 @@ export class Room {
   awards() {
     const P = this.people, nameOf = (v, fallback) => (P[v]?.name || fallback || 'Gjest');
     const out = [];
-    // the bug hunt (Kvalitet): the fastest to find the SMS on the wrong day
-    const bug = Object.entries(P).filter(([, p]) => p.bugMs > 0).sort((a, b) => a[1].bugMs - b[1].bugMs)[0];
-    if (bug) out.push({ title: 'Skarpeste øye', voter: bug[0], name: nameOf(bug[0]), detail: `fant feilen på ${(bug[1].bugMs / 1000).toFixed(1).replace('.', ',')} s` });
+    // ring rundt feilen (Kvalitet): the fastest to circle a bug
+    const bug = Object.entries(P).filter(([, p]) => p.healMs > 0).sort((a, b) => a[1].healMs - b[1].healMs)[0];
+    if (bug) out.push({ title: 'Skarpeste øye', voter: bug[0], name: nameOf(bug[0]), detail: `fant en feil på ${(bug[1].healMs / 1000).toFixed(1).replace('.', ',')} s` });
     const first = [...this.orders].sort((a, b) => a.t - b.t)[0];
     if (first) out.push({ title: 'Første kunde', voter: first.voter, name: nameOf(first.voter, first.navn), detail: first.sted || first.adresse });
     const far = [...this.orders].sort((a, b) => km(DEPOT, [b.lon, b.lat]) - km(DEPOT, [a.lon, a.lat]))[0];

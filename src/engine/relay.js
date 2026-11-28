@@ -55,8 +55,8 @@ connect();
 
 // The TV's cue that a room activity is open: a yellow phone cell in the title block. It follows
 // the commands that open and close an activity on the phones; a slide without def.room clears it.
-const CUE_ON = ['price-open', 'bug-start', 'clicker-start', 'arena-open', 'vote-open', 'sudden-start', 'watch-start'];
-const CUE_OFF = ['price-close', 'bug-end', 'clicker-end', 'arena-end', 'vote-close', 'watch-end', 'reset', 'people-reset'];
+const CUE_ON = ['price-open', 'heal-start', 'clicker-start', 'arena-open', 'vote-open', 'sudden-start', 'watch-start'];
+const CUE_OFF = ['price-close', 'heal-end', 'clicker-end', 'arena-end', 'vote-close', 'watch-end', 'reset', 'people-reset'];
 export function roomCue(on) {
   if (typeof document === 'undefined') return;
   document.body.classList.toggle('room-on', !!on);

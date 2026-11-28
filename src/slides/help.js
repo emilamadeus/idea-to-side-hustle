@@ -96,8 +96,11 @@ export const HELP = {
     'Avbrudd etter avbrudd, og kunden venter.',
     'Den finner feilene selv. Du avbrytes én gang.',
   ],
+  heal: [
+    'Vis feilen. En ring er tydeligere enn en setning.',
+    'Alle forsøkene, og de fem som traff.',
+  ],
   fails: [
-    'Finn feilen før AI-en får prøve.',
     'Lange sessions lapper gjerne symptomer.',
     '«Fikset!» uten at den har sjekket.',
     'Hver lapp gjør sessionen lengre og konteksten tyngre.',

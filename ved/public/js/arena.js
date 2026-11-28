@@ -423,3 +423,4 @@ window.vedHook = (m) => {
   handle(m);
   if (m.type === 'state' && m.game?.type === 'arena') handle(m.game);
 };
+if (window.vedGameNow?.type === 'arena') handle(window.vedGameNow);   // the game was running before this script loaded

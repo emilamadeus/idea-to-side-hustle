@@ -1,20 +1,16 @@
 import gsap from 'gsap';
 import * as D from '../engine/draw.js';
 import { chatPhone, attempt, tokenMeter, FILL } from '../engine/props.js';
-import { onRelay, relaySend } from '../engine/relay.js';
 
 /*
   Where it fails: confident wrong answers, and patching symptoms instead of the cause.
   Illustrative story, the firewood subscription: customers in Grünerløkka get the
   "veden kommer i morgen" SMS two days early. The route plan (left) is right; the SMS (right) is not.
-    0. Spot the bug: the two panels, no hint. Every phone gets the same four cards and taps the one
-       that is wrong; the first finders and their times fill the board (x 1060–1480, y 560–760).
-       Left: the question (x 80–540, y 300–440). With no phones the board stays empty.
-    1. The bug: Grünerløkka is delivered Thursday, its SMS goes out Tuesday.
-    2. Patch 1: resend the SMS. Still Tuesday. FIKSET!
-    3. Patch 2: rebuild the SMS queue. Still Tuesday. FIKSET! (bigger)
-    4. Patch 3: send every SMS a day later. Grünerløkka right, Frogner now wrong. FIKSET!!
-    5. New session, asked for the cause: postcode 0552 sits under Frogner in bydeler.json.
+    0. The bug: Grünerløkka is delivered Thursday, its SMS goes out Tuesday.
+    1. Patch 1: resend the SMS. Still Tuesday. FIKSET!
+    2. Patch 2: rebuild the SMS queue. Still Tuesday. FIKSET! (bigger)
+    3. Patch 3: send every SMS a day later. Grünerløkka right, Frogner now wrong. FIKSET!!
+    4. New session, asked for the cause: postcode 0552 sits under Frogner in bydeler.json.
        One line. The stamps fall off; both districts match.
 
   Layout zones (svg units):
@@ -30,11 +26,9 @@ const OK = '#8fe3a2', BAD = '#ff6f9c';
 
 export default {
   id: 'fails',
-  room: true, // the room takes part from their phones (a badge in the zoom-out)
   title: 'Der den feiler',
-  steps: 6,
+  steps: 5,
   notes: [
-    'Finn feilen selv. Telefonen: én SMS kommer på feil dag. Trykk på den.',
     'Grünerløkka får veden torsdag, men SMS-en kommer tirsdag.',
     'Lapp 1: send SMS-ene på nytt. Fikset. Ikke fikset.',
     'Lapp 2: bygg SMS-køen på nytt. Fikset. Ikke fikset.',
@@ -52,22 +46,6 @@ export default {
     let P = {};
 
     const reset = () => { svg.innerHTML = ''; P = {}; };
-    let hunting = false;
-    const endHunt = () => { if (hunting) { hunting = false; relaySend({ type: 'bug-end' }); } };
-    const offRelay = onRelay((m) => {
-      if (m.type !== 'bug-found' || !P.board || !hunting) return;
-      const k = P.board.rows.length;
-      if (k >= 5) { P.board.more.textContent = `+ ${m.rank - 5} til`; return; }
-      const y = 640 + k * 26;
-      const row = D.g(P.board.g);
-      D.text(row, 1084, y, `${m.rank}.`, 'br', { style: 'font: 700 18px var(--font-mono); fill: var(--accent-2)' });
-      D.text(row, 1124, y, m.p?.name || 'Gjest', 'bn', { style: 'font: 800 19px var(--font-display); fill: var(--fg)' });
-      D.text(row, 1456, y, `${(m.ms / 1000).toFixed(1).replace('.', ',')} s`, 'bt', { 'text-anchor': 'end', style: 'font: 700 18px var(--font-mono); fill: var(--muted)' });
-      gsap.fromTo(row, { opacity: 0, x: -10 }, { opacity: 1, x: 0, duration: 0.35 });
-      P.board.rows.push(row);
-      P.board.empty.style.opacity = 0;
-    });
-
     // a day card: what the route plan says, or what the SMS says; set(day, ok)
     function day(g, x, label, d, ok = true) {
       const c = D.g(g, { 'data-bg': '' });
@@ -97,7 +75,7 @@ export default {
       return g;
     };
 
-    // the panels and day cards, shared by the hunt and the story
+    // the panels and day cards: the route plan (the truth) and the SMS
     const panels = (tl, at, hint = true) => {
       P.real = panel(svg, 600, 'RUTEPLANEN', false);
       P.app = panel(svg, 1060, 'SMS-ENE', true);
@@ -107,43 +85,12 @@ export default {
       };
       tl.fromTo([P.real, P.app, ...P.days.real, ...P.days.app], { opacity: 0 }, { opacity: 1, duration: 0.5 }, at);
     };
-    const play = (i, instant) => {
-      if (i > 0) {
-        if (i === 1) endHunt();
-        return playOld(i - 1, instant);
-      }
-      // step 0: the room hunts the bug
-      const tl = gsap.timeline();
-      const live = !instant && !ctx.deck?.instant;
-      stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
-      stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
-      tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
-      panels(tl, 0.5, false);   // no hint: the wrong card is not marked while the room hunts
-      // the SMS says "the firewood comes tomorrow": one of them is on the wrong day
-      P.ask = D.g(svg, { 'data-unit': '' });
-      D.text(P.ask, 80, 330, 'FINN FEILEN', 'aq', { style: 'font: 700 16px var(--font-mono); letter-spacing: .16em; fill: var(--accent)' });
-      D.text(P.ask, 80, 380, 'Én SMS kommer', 'a1', { style: 'font: 800 36px var(--font-display); fill: var(--fg)' });
-      D.text(P.ask, 80, 422, 'på feil dag.', 'a2', { style: 'font: 800 36px var(--font-display); fill: var(--fg)' });
-      D.text(P.ask, 80, 470, 'SMS-en: «Veden kommer i morgen.»', 'a3', { style: 'font: 600 19px var(--font-display); fill: var(--muted)' });
-      tl.fromTo(P.ask, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5 }, 0.3);
-      // who found it, and how fast
-      const g = D.g(svg, { 'data-unit': '' });
-      D.el('rect', { x: 1060, y: 560, width: 420, height: 200, rx: 10, style: 'fill: #1d1510; stroke: var(--deco)', 'stroke-width': 2.5, 'data-bg': '' }, g);
-      D.text(g, 1084, 598, 'FUNNET AV', 'bh', { style: 'font: 700 15px var(--font-mono); letter-spacing: .14em; fill: var(--muted)' });
-      const empty = D.text(g, 1084, 650, 'Ingen ennå', 'be', { style: 'font: 600 18px var(--font-display); fill: var(--muted)' });
-      const more = D.text(g, 1456, 598, '', 'bm', { 'text-anchor': 'end', style: 'font: 700 15px var(--font-mono); fill: var(--muted)' });
-      P.board = { g, rows: [], empty, more };
-      tl.fromTo(g, { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.8);
-      if (live) { hunting = true; tl.call(() => relaySend({ type: 'bug-start' }), null, 0.9); }
-      return tl;
-    };
-
-    const playOld = (i, instant) => {
+    const play = (i) => {
       const tl = gsap.timeline();
       if (i === 0) {
-        // the hunt's question and board make way for the chat and the patches
-        tl.to([P.ask, P.board?.g].filter(Boolean), { opacity: 0, duration: 0.4 }, 0);
-        tl.call(() => { P.ask?.remove(); P.board?.g.remove(); }, null, 0.45);
+        stage.particles.morphTo(shapes.scatter(stage), { duration: 2, turbulence: 0.3 });
+        stage.fly({ pos: [0, 0, 14], look: [0, 0, 0], duration: 2 });
+        tl.add(fx.rise(tip, { stagger: 0.015 }), 0);
         P.att = attempt(svg, 560, 120);
         P.att.show(tl, 'FORSØK 1 · SAMME SESSION', 0.3);
         P.tok = tokenMeter(svg, 1180, 140, 280, { max: 60 });
@@ -151,8 +98,7 @@ export default {
         P.tok.set(tl, 8, 1.8);
         P.chat = chatPhone(svg, 80, 262, 440, 520, { app: 'Claude', size: 18 });
         tl.fromTo(P.chat.root, { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5 }, 0.3);
-        if (!P.real) panels(tl, 0.5);
-        else P.days.app[1].set(tl, 'Tirsdag', false, 1.4);   // the answer, with the ring
+        panels(tl, 0.5);
         // the mismatch
         P.ring = D.g(svg, { 'data-bg': '' });
         D.p(P.ring, D.roughEllipse(1385, 352, 96, 70), 'pencil');
@@ -232,7 +178,6 @@ export default {
       return tl;
     };
 
-    const s = D.stepper(ctx, { reset, play });
-    return { ...s, dispose() { offRelay(); endHunt(); } };
+    return D.stepper(ctx, { reset, play });
   },
 };
