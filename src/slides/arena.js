@@ -8,7 +8,7 @@ import { onRelay, relaySend, relayState, relayControl } from '../engine/relay.js
   a button to shoot, three lives. Last one standing wins. The TV shows the whole arena; each phone
   shows the whole arena too, with its own dot labelled Du.
     0. The arena opens. Phones join as dots and can move (no shooting yet).
-    1. Start: 3-2-1, then the fight. After 20 s the ring closes in; outside it you lose lives.
+    1. Start: 3-2-1, then the fight. After 8 s the ring closes in; outside it you lose lives.
        The last one left is named on the left. The presenter can click on at any moment.
 
   Who decides what:
@@ -26,7 +26,7 @@ import { onRelay, relaySend, relayState, relayControl } from '../engine/relay.js
 
 // the same numbers are in ved/public/js/arena.js (the phone)
 const PR = 18, SPEED = 210, BSPD = 420, BLIFE = 1.15, BR = 6, CD = 0.45, INV = 0.7, HP = 3;
-const HOLD = 20, SHRINK = 45, RING_MIN = 0.12, RING_HIT = 2.5;
+const HOLD = 8, SHRINK = 30, RING_MIN = 0.12, RING_HIT = 2.5;
 const CX = 1060, CY = 470, RAD = 370;
 const DOT = ['#ff7a2f', '#ffd23f', '#8fe3a2', '#7fd0ff', '#ff6f9c', '#c9a6ff', '#ffb25e', '#9be7b0'];
 const colorOf = (n) => DOT[((n || 1) - 1 + DOT.length * 100) % DOT.length];
@@ -40,7 +40,7 @@ export default {
   steps: 2,
   notes: [
     'Telefonene er kontrollere nå. Styr med venstre tommel, skyt med høyre. Øv dere litt.',
-    'Klikk for start. Tre liv hver. Ringen krymper etter 20 sekunder. Klikk videre når dere vil.',
+    'Klikk for start. Tre liv hver. Ringen krymper etter 8 sekunder. Klikk videre når dere vil.',
   ],
 
   create(ctx) {
@@ -169,7 +169,7 @@ export default {
     const step = (dt) => {
       G.t += dt;
       const fight = G.phase === 'fight' && G.t >= G.start;
-      // the ring: still for 20 s, then it closes in over 45 s
+      // the ring: still for 8 s, then it closes in over 30 s
       if (G.phase === 'fight') {
         const k = Math.max(0, Math.min(1, (G.t - G.start - HOLD) / SHRINK));
         G.ringR = G.R * (1 - (1 - RING_MIN) * (k * k * (3 - 2 * k)));
